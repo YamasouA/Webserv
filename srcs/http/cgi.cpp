@@ -250,15 +250,20 @@ void Cgi::run_handler() {
 	for (; it != envs.end(); ++it) {
 		std::string env_exp = it->first + "=" + it->second;
         tmp_vec.push_back(env_exp);
-//        tmp_vec.push_back(it->first + "=" + it->second);
-        envs_ptr[i] = (char *)tmp_vec.back().c_str();
-//        std::cerr << "env_exp: " << env_exp << std::endl;
-//        envs_ptr[i] = new char[env_exp.length() + 1];
-//		envs_ptr[i] = (char *)env_exp.c_str();
+    }
+    for (std::vector<std::string>::iterator vec_it = tmp_vec.begin(); vec_it != tmp_vec.end(); ++vec_it) {
+        envs_ptr[i] = (char*)vec_it->c_str();
         std::cerr << "envs_ptr[i]: " << envs_ptr[i] << std::endl;
         std::cerr << "i: " << i << std::endl;
 		i++;
-	}
+    }
+//        tmp_vec.push_back(it->first + "=" + it->second);
+//        std::cerr << "envs_ptr in vec: " << (char *)tmp_vec.back().c_str() << std::endl;
+//        std::cerr << "envs_prt in loop: " << envs_ptr[i] << std::endl;
+//        std::cerr << "env_exp: " << env_exp << std::endl;
+//        envs_ptr[i] = new char[env_exp.length() + 1];
+//		envs_ptr[i] = (char *)env_exp.c_str();
+//	}
 	envs_ptr[envs.size()] = 0;
     for (size_t j = 0; envs_ptr[j]; ++j) {
         std::cerr << "j:" << j << std::endl;
