@@ -220,10 +220,16 @@ void Cgi::set_env() {
 	for (; it != header_fields.end(); it++) {
 		std::string envs_var = "HTTP_";
 		std::string http_req_field;
-		std::transform(it->first.begin(), it->first.end(), http_req_field.begin(), ::toupper);
+		std::cout << "it->first: " << it->first << " it->second: " << it->second << std::endl;
+		std::transform(it->first.begin(), it->first.end(), std::back_inserter(http_req_field), ::toupper);
+		std::cout << "fix: " << http_req_field<< std::endl;
 		std::replace(http_req_field.begin(), http_req_field.end(), '-', '_');
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
+	}
+	std::map<std::string, std::string>::iterator it2 = envs.begin();
+	for (; it2 != envs.end(); it2++) {
+		std::cout << "envs: " << it2->first  << " = " << it2->second << std::endl;
 	}
 
 	fix_up();
@@ -253,8 +259,8 @@ void Cgi::run_handler() {
     }
     for (std::vector<std::string>::iterator vec_it = tmp_vec.begin(); vec_it != tmp_vec.end(); ++vec_it) {
         envs_ptr[i] = (char*)vec_it->c_str();
-        std::cerr << "envs_ptr[i]: " << envs_ptr[i] << std::endl;
-        std::cerr << "i: " << i << std::endl;
+        //std::cerr << "envs_ptr[i]: " << envs_ptr[i] << std::endl;
+        //std::cerr << "i: " << i << std::endl;
 		i++;
     }
 //        tmp_vec.push_back(it->first + "=" + it->second);
@@ -265,15 +271,16 @@ void Cgi::run_handler() {
 //		envs_ptr[i] = (char *)env_exp.c_str();
 //	}
 	envs_ptr[envs.size()] = 0;
+	/*
     for (size_t j = 0; envs_ptr[j]; ++j) {
         std::cerr << "j:" << j << std::endl;
         std::cerr << "envs_ptr: " << envs_ptr[j] << std::endl;
-    }
-    std::cerr << "SCRIPT_NAME: " << envs["SCRIPT_NAME"] << std::endl;
+    }*/
+    //std::cerr << "SCRIPT_NAME: " << envs["SCRIPT_NAME"] << std::endl;
 //    std::string tmp_script_name = envs["SCRIPT_NAME"];
 //    std::string path = join_path(tmp_script_name);
     std::string path = join_path();
-    std::cerr << "SCRIPT_NAME after join: " << path.c_str() << std::endl;
+    //std::cerr << "SCRIPT_NAME after join: " << path.c_str() << std::endl;
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }
@@ -285,7 +292,7 @@ void Cgi::fork_process() {
 
 	pipe(fd);
 //	reset_env();
-//	set_env();
+	set_env();
 
 	pid = fork();
 	// 子プロセス
