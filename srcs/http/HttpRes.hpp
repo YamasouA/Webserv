@@ -100,6 +100,7 @@ class HttpRes {
 		virtualServer vServer;
         Kqueue* connection;
 		int fd;
+        Cgi cgi;
 
 		Location target;
 		void write_file();
@@ -145,6 +146,8 @@ class HttpRes {
         bool isAllowMethod(std::string method);
         std::string join_path();
         void set_body(std::string strs);
+        void set_cgi(Cgi cgi);
+        Cgi get_cgi() const;
 		void createResponse();
         void runHandlers();
 		std::string buf;

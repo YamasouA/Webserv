@@ -188,6 +188,14 @@ void HttpRes::set_body(std::string strs)
     this->body = strs;
 }
 
+void HttpRes::set_cgi(Cgi cgi) {
+    this->cgi = cgi;
+}
+
+Cgi HttpRes::get_cgi() const {
+    return cgi;
+}
+
 void HttpRes::read_file() {
 	std::string buf[1024];
 
@@ -635,7 +643,16 @@ void HttpRes::header_filter() {
 
 	// chunkedは無視
 
-	// keep-alive系は問答無用でcloseする？
+	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
+	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
+	for (; it != cgi_headers.end(); it++) {
+		buf += it->first;
+		buf += ": ";
+		buf += it->second;
+		buf += "\r\n";
+	}
+
+    // keep-alive系は問答無用でcloseする？
     // keep-alive looks better managed with flags.
 //    std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
 //    if (header_fields["connection"] == "keep-alive") {
@@ -1223,15 +1240,17 @@ bool HttpRes::is_cgi() {
 
 
 void HttpRes::runHandlers() {
+	int handler_status = 0;
 	if (is_cgi()) {
         std::cout << "=== cgi ===" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
+        handler_status = cgi.parse_cgi_response();
+        sendHeader(); //tmp here
 //        std::cout << cgi.buf << std::endl;
 	} else {
-		int handler_status = 0;
 //  	  static int i = 0;
 		handler_status = return_redirect();
 		if (handler_status != DECLINED) {

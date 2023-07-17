@@ -1,5 +1,7 @@
 #include "cgi.hpp"
 
+Cgi::Cgi() {}
+
 Cgi::Cgi(const httpReq& request, Location location)
 :httpreq(request),
     target(location),
@@ -13,6 +15,7 @@ Cgi::Cgi(const httpReq& request, Location location)
 }
 
 Cgi::Cgi(const Cgi& src)
+:header_fields(src.getHeaderFields())
 {
     (void)src;
 }
@@ -22,12 +25,17 @@ Cgi& Cgi::operator=(const Cgi& rhs)
     if (this == &rhs) {
         return *this;
     }
+    this->header_fields = rhs.getHeaderFields();
     return *this;
 }
 
 Cgi::~Cgi()
 {}
 
+
+std::map<std::string, std::string> Cgi::getHeaderFields() const {
+    return header_fields;
+}
 
 //std::string Cgi::join_path(std::string& script_name) {
 std::string Cgi::join_path() {

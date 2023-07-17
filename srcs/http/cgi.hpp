@@ -7,12 +7,15 @@
 
 class Cgi {
     public:
+        Cgi();
         Cgi(const httpReq& request, Location location);
         Cgi(const Cgi& src);
         Cgi& operator=(const Cgi& rhs);
         ~Cgi();
 
         void run_cgi();
+        std::map<std::string, std::string> getHeaderFields() const;
+        int parse_cgi_response();
         std::string buf;
     private:
         void fork_process();
@@ -24,7 +27,7 @@ class Cgi {
         bool check_meta_var(std::string var1, std::string var2);
         std::string join_path();
 //        std::string join_path(std::string& script_name);
-        int parse_cgi_response();
+//        int parse_cgi_response();
 
         httpReq httpreq;
         Location target;
