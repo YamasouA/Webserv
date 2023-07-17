@@ -317,11 +317,11 @@ void Cgi::fork_process() {
 }
 
 // ==== tmp func in cgi ====
-bool Cgi::checkHeaderEnd(int& idx)
+bool Cgi::checkHeaderEnd(size_t& idx)
 {
     if (buf[idx] == '\015') {
         ++idx;
-        expect('\012');
+        expect('\012', idx);
         return true;
     } else if (buf[idx] == '\012') {
         ++idx;
@@ -331,7 +331,27 @@ bool Cgi::checkHeaderEnd(int& idx)
     }
 }
 
-std::string Cgi::getToken(char delimiter, int& idx)
+void Cgi::skipSpace(size_t& idx)
+{
+	while (buf[idx] == ' ' || buf[idx] == '\t') {
+		++idx;
+	}
+}
+
+void Cgi::setHeaderField(const std::string& name, const std::string value)
+{
+    this->header_fields.insert(std::make_pair(name, value));
+}
+
+void Cgi::trim(std::string& str)
+{
+	std::string::size_type left = str.find_first_not_of("\t ");
+	if (left != std::string::npos) {
+		std::string::size_type right = str.find_last_not_of("\t ");
+		str = str.substr(left, right - left + 1);
+	}
+}
+std::string Cgi::getToken(char delimiter, size_t& idx)
 {
 	std::string token = "";
 	while(idx < buf.length()) {
@@ -347,7 +367,7 @@ std::string Cgi::getToken(char delimiter, int& idx)
 		std::cout << "ko getToken" << std::endl;
 		throw SyntaxException("syntax error in getToken");
 	}
-	expect(delimiter);
+	expect(delimiter, idx);
     if (token.find(' ') != std::string::npos) {
         std::cerr << "status 400" << std::endl;
     }
@@ -355,7 +375,7 @@ std::string Cgi::getToken(char delimiter, int& idx)
 	return token;
 }
 
-std::string Cgi::getToken_to_eol(int& idx) {
+std::string Cgi::getToken_to_eol(size_t& idx) {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -373,7 +393,7 @@ std::string Cgi::getToken_to_eol(int& idx) {
 	return line;
 }
 
-std::string Cgi::getToken_to_eof(int& idx) {
+std::string Cgi::getToken_to_eof(size_t& idx) {
 	std::string body = "";
 	while (idx < buf.length()) {
 		body += buf[idx];
@@ -385,7 +405,7 @@ std::string Cgi::getToken_to_eof(int& idx) {
 // ==== tmp func in cgi end ====
 
 void Cgi::fixUp(int& status) {
-    if (header_fields.length() == 0) {
+    if (header_fields.size() == 0) {
         status = 502;
         return;
     }
@@ -403,22 +423,30 @@ void Cgi::fixUp(int& status) {
 
 }
 
+void Cgi::expect(char c, size_t& idx)
+{
+    if (buf[idx] != c) {
+        std::cerr << "no expected " << c << std::endl;
+    }
+    ++idx;
+}
+
 //have status in cgi class?
 int Cgi::parse_cgi_response() {
     int status = 200;
-    int idx = 0;
-    for (; idx < buf.length(); ++i) {
-        if (checkHeaderEnd) {
+    size_t idx = 0;
+    for (; idx < buf.length(); ++idx) {
+        if (checkHeaderEnd(idx)) {
             break;
         }
         std::string field_name = getToken(':', idx);
-        skipSpace();
+        skipSpace(idx);
         std::string field_value = getToken_to_eol(idx);
         trim(field_value);
         setHeaderField(field_name, field_value);
     }
     cgi_body = getToken_to_eof(idx);
-    fixUp();
+    fixUp(status);
     return status;
 }
 
@@ -436,8 +464,9 @@ void Cgi::run_cgi() {
     char tmp_buf;
 //    waitpid(-1, NULL, 0);
 
-    for (size_t i = 0; read(0, &tmp_buf, 1) > 0; ++i) {
-        buf[i] = tmp_buf;
+    //for (size_t i = 0; read(0, &tmp_buf, 1) > 0; ++i) {
+    while (read(0, &tmp_buf, 1) > 0) {
+        buf += tmp_buf;
     }
     std::cout << "cgi output: " << buf << std::endl;
 
@@ -445,4 +474,16 @@ void Cgi::run_cgi() {
 	dup2(backup_stdout, STDOUT_FILENO);
 	close(backup_stdin);
 	close(backup_stdout);
+}
+
+Cgi::SyntaxException::SyntaxException(const std::string& what_arg)
+:msg(what_arg)
+{}
+
+Cgi::SyntaxException::~SyntaxException() throw()
+{}
+
+const char* Cgi::SyntaxException::what(void) const throw() //noexcept c++11~
+{
+	return msg.c_str();
 }

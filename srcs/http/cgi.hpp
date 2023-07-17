@@ -13,7 +13,7 @@ class Cgi {
         ~Cgi();
 
         void run_cgi();
-        char buf[1024];
+        std::string buf;
     private:
         void fork_process();
         void run_handler();
@@ -28,8 +28,26 @@ class Cgi {
 
         httpReq httpreq;
         Location target;
+		std::string cgi_body;
         std::map<std::string, std::string> envs; // or sep all var
         std::map<std::string, std::string> header_fields;
+		void fixUp(int& status);
+		std::string getToken_to_eof(size_t& idx);
+		std::string getToken_to_eol(size_t& idx);
+		std::string getToken(char delimiter, size_t& idx);
+		bool checkHeaderEnd(size_t& idx);
+		void skipSpace(size_t& idx);
+		void setHeaderField(const std::string& name, const std::string value);
+		void trim(std::string& str);
+		void expect(char c, size_t& idx);
+		class SyntaxException: public std::exception {
+			public:
+				explicit SyntaxException(const std::string& what_arg);
+				~SyntaxException() throw();
+				virtual const char* what() const throw(); // throw() = noexcept
+			private:
+				std::string msg;
+		};
 };
 
 #endif
