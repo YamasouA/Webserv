@@ -316,6 +316,112 @@ void Cgi::fork_process() {
 //	return pid;
 }
 
+// ==== tmp func in cgi ====
+bool Cgi::checkHeaderEnd(int& idx)
+{
+    if (buf[idx] == '\015') {
+        ++idx;
+        expect('\012');
+        return true;
+    } else if (buf[idx] == '\012') {
+        ++idx;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+std::string Cgi::getToken(char delimiter, int& idx)
+{
+	std::string token = "";
+	while(idx < buf.length()) {
+		if (buf[idx] == delimiter) {
+			break;
+		}
+		token += buf[idx];
+		idx++;
+	}
+	if (idx == buf.length()) {
+		std::cout << "delimiter: " << delimiter << std::endl;
+		std::cout << "token: " << token<< std::endl;
+		std::cout << "ko getToken" << std::endl;
+		throw SyntaxException("syntax error in getToken");
+	}
+	expect(delimiter);
+    if (token.find(' ') != std::string::npos) {
+        std::cerr << "status 400" << std::endl;
+    }
+//	trim(token);
+	return token;
+}
+
+std::string Cgi::getToken_to_eol(int& idx) {
+	std::string line = "";
+	while (idx < buf.length()) {
+		if (buf[idx] == '\015') {
+			if (buf[idx+1] == '\012') {
+				idx += 2;
+				return line;
+			}
+		} else if (buf[idx] == '\012') {
+			idx++;
+			return line;
+		}
+		line += buf[idx];
+		idx++;
+	}
+	return line;
+}
+
+std::string Cgi::getToken_to_eof(int& idx) {
+	std::string body = "";
+	while (idx < buf.length()) {
+		body += buf[idx];
+		idx++;
+	}
+	return body;
+}
+
+// ==== tmp func in cgi end ====
+
+void Cgi::fixUp(int& status) {
+    if (header_fields.length() == 0) {
+        status = 502;
+        return;
+    }
+    if (header_fields.count("Status") == 1) {
+        std::stringstream ss;
+        ss << header_fields["Status"];
+        ss >> status;
+//        if (status < 100 || 600 <= status) {
+//            status = 502; //?
+//        }
+    }
+//    if (header_fields.count("Content-Type") != 1) {
+//        //
+//    }
+
+}
+
+//have status in cgi class?
+int Cgi::parse_cgi_response() {
+    int status = 200;
+    int idx = 0;
+    for (; idx < buf.length(); ++i) {
+        if (checkHeaderEnd) {
+            break;
+        }
+        std::string field_name = getToken(':', idx);
+        skipSpace();
+        std::string field_value = getToken_to_eol(idx);
+        trim(field_value);
+        setHeaderField(field_name, field_value);
+    }
+    cgi_body = getToken_to_eof(idx);
+    fixUp();
+    return status;
+}
+
 void Cgi::run_cgi() {
 	int backup_stdin = dup(STDIN_FILENO);
 	int backup_stdout = dup(STDOUT_FILENO);
@@ -339,5 +445,4 @@ void Cgi::run_cgi() {
 	dup2(backup_stdout, STDOUT_FILENO);
 	close(backup_stdin);
 	close(backup_stdout);
-    //parse cgi_response
 }

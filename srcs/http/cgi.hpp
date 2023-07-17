@@ -24,10 +24,12 @@ class Cgi {
         bool check_meta_var(std::string var1, std::string var2);
         std::string join_path();
 //        std::string join_path(std::string& script_name);
+        int parse_cgi_response();
 
         httpReq httpreq;
         Location target;
         std::map<std::string, std::string> envs; // or sep all var
+        std::map<std::string, std::string> header_fields;
 };
 
 #endif
