@@ -279,16 +279,16 @@ void Cgi::run_handler() {
 //		envs_ptr[i] = (char *)env_exp.c_str();
 //	}
 	envs_ptr[envs.size()] = 0;
-	/*
     for (size_t j = 0; envs_ptr[j]; ++j) {
         std::cerr << "j:" << j << std::endl;
         std::cerr << "envs_ptr: " << envs_ptr[j] << std::endl;
-    }*/
+    }
     //std::cerr << "SCRIPT_NAME: " << envs["SCRIPT_NAME"] << std::endl;
 //    std::string tmp_script_name = envs["SCRIPT_NAME"];
 //    std::string path = join_path(tmp_script_name);
     std::string path = join_path();
     //std::cerr << "SCRIPT_NAME after join: " << path.c_str() << std::endl;
+	std::cout << "path: " << path << std::endl;
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }
@@ -443,13 +443,16 @@ void Cgi::expect(char c, size_t& idx)
 int Cgi::parse_cgi_response() {
     int status = 200;
     size_t idx = 0;
-    for (; idx < buf.length(); ++idx) {
+    //for (; idx < buf.length(); ++idx) {
+	while (idx < buf.length()) {
         if (checkHeaderEnd(idx)) {
             break;
         }
         std::string field_name = getToken(':', idx);
+		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
         std::string field_value = getToken_to_eol(idx);
+		std::cout << "field_value: " << field_value<< std::endl;
         trim(field_value);
         setHeaderField(field_name, field_value);
     }
@@ -476,7 +479,7 @@ void Cgi::run_cgi() {
     while (read(0, &tmp_buf, 1) > 0) {
         buf += tmp_buf;
     }
-    std::cout << "cgi output: " << buf << std::endl;
+    std::cout << "cgi output: " << std::endl << buf << std::endl << std::endl;
 
 	dup2(backup_stdin, STDIN_FILENO);
 	dup2(backup_stdout, STDOUT_FILENO);
