@@ -1250,20 +1250,29 @@ void HttpRes::runHandlers() {
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
         handler_status = cgi.parse_cgi_response();
-        status_code = handler_status;
-        cgi.getHeaderFields().erase("Status");
-        set_cgi(cgi);
-//        std::cout << cgi.buf << std::endl;
-        sendHeader(); //tmp here
-        out_buf = cgi.getCgiBody();
-        if (cgi.getHeaderFields().count("Content-Length")) {
-            std::stringstream ss(cgi.getHeaderFields()["Content-Length"]);
-            ss >> body_size;
-        } else {
-            body_size = out_buf.length();
-        }
+        if (cgi.getResType() == DOCUMENT) {
+            status_code = handler_status;
+            cgi.getHeaderFields().erase("Status");
+            set_cgi(cgi);
+    //        std::cout << cgi.buf << std::endl;
+            sendHeader(); //tmp here
+            out_buf = cgi.getCgiBody();
+            if (cgi.getHeaderFields().count("Content-Length")) {
+                std::stringstream ss(cgi.getHeaderFields()["Content-Length"]);
+                ss >> body_size;
+            } else {
+                body_size = out_buf.length();
+            }
 
-        return finalize_res(status_code);
+            return finalize_res(status_code);
+        } else if (cgi.getResType() == LOCAL_REDIRECT) {
+
+        } else if (cgi.getResType() == CLIENT_REDIRECT) {
+            //status_code = 302;
+
+        } else if (cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+
+        }
 //        std::cout << cgi.buf << std::endl;
 	} else {
 //  	  static int i = 0;

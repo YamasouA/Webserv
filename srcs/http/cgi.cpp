@@ -41,6 +41,10 @@ std::string Cgi::getCgiBody() const {
     return cgi_body;
 }
 
+int Cgi::getResType() const {
+    return resType;
+}
+
 //std::string Cgi::join_path(std::string& script_name) {
 std::string Cgi::join_path() {
     std::cerr << "===== join_path =====" << std::endl;
@@ -333,7 +337,7 @@ bool Cgi::isLocalRedirect() {
 		return false;
 	if (header_fields["Location"] == "" || cgi_body == "")
 		return false;
-	if (header_fields["Location"][0] != "/")
+	if (header_fields["Location"][0] != '/')
 		return false;
 	return true;
 }
@@ -342,7 +346,7 @@ bool Cgi::isClientRedirect() {
 	if (header_fields["Location"] == "")
 		return false;
 	std::string abs_path = header_fields["Location"];
-	if(abs_path.compare(0, 5, "https") != 0 && 
+	if(abs_path.compare(0, 5, "https") != 0 &&
 	abs_path.compare(0, 4, "http") != 0) {
 		return false;
 	}
@@ -350,7 +354,7 @@ bool Cgi::isClientRedirect() {
 }
 
 void Cgi::detectResType() {
-	if (header_fields["Content-Type"] == 1) {
+	if (header_fields.count("Content-Type") == 1) {
 		resType = DOCUMENT;
 	} else if (isLocalRedirect()) {
 		resType = LOCAL_REDIRECT;
@@ -359,8 +363,9 @@ void Cgi::detectResType() {
 			resType = CLIENT_REDIRECT;
 		else
 			resType = CLIENT_REDIRECT_WITH_DOC;
-	}
-	// タイプに一致しない場合
+	} else {
+	    // タイプに一致しない場合
+    }
 }
 
 // ==== tmp func in cgi ====
@@ -464,6 +469,7 @@ void Cgi::fixUp(int& status) {
 //            status = 502; //?
 //        }
     }
+    detectResType();
 //    if (header_fields.count("Content-Type") != 1) {
 //        //
 //    }

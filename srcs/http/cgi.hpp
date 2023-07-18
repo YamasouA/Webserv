@@ -5,6 +5,14 @@
 #include "httpReq.hpp"
 #include "../conf/Location.hpp"
 
+
+enum response_types {
+    DOCUMENT = 0,
+    LOCAL_REDIRECT = 1,
+    CLIENT_REDIRECT = 2,
+    CLIENT_REDIRECT_WITH_DOC = 3
+};
+
 class Cgi {
     public:
         Cgi();
@@ -16,8 +24,10 @@ class Cgi {
         void run_cgi();
         std::map<std::string, std::string> getHeaderFields() const;
         std::string getCgiBody() const;
+        int getResType() const;
         int parse_cgi_response();
         std::string buf;
+
     private:
         void fork_process();
         void run_handler();
@@ -33,6 +43,7 @@ class Cgi {
         httpReq httpreq;
         Location target;
 		std::string cgi_body;
+        int resType;
         std::map<std::string, std::string> envs; // or sep all var
         std::map<std::string, std::string> header_fields;
 		void fixUp(int& status);
@@ -44,6 +55,11 @@ class Cgi {
 		void setHeaderField(const std::string& name, const std::string value);
 		void trim(std::string& str);
 		void expect(char c, size_t& idx);
+
+        bool isLocalRedirect();
+        bool isClientRedirect();
+        void detectResType();
+
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);
