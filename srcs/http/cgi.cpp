@@ -37,6 +37,10 @@ std::map<std::string, std::string> Cgi::getHeaderFields() const {
     return header_fields;
 }
 
+std::string Cgi::getCgiBody() const {
+    return cgi_body;
+}
+
 //std::string Cgi::join_path(std::string& script_name) {
 std::string Cgi::join_path() {
     std::cerr << "===== join_path =====" << std::endl;
@@ -279,16 +283,16 @@ void Cgi::run_handler() {
 //		envs_ptr[i] = (char *)env_exp.c_str();
 //	}
 	envs_ptr[envs.size()] = 0;
-    for (size_t j = 0; envs_ptr[j]; ++j) {
-        std::cerr << "j:" << j << std::endl;
-        std::cerr << "envs_ptr: " << envs_ptr[j] << std::endl;
-    }
+//    for (size_t j = 0; envs_ptr[j]; ++j) {
+//        std::cerr << "j:" << j << std::endl;
+//        std::cerr << "envs_ptr: " << envs_ptr[j] << std::endl;
+//    }
     //std::cerr << "SCRIPT_NAME: " << envs["SCRIPT_NAME"] << std::endl;
 //    std::string tmp_script_name = envs["SCRIPT_NAME"];
 //    std::string path = join_path(tmp_script_name);
     std::string path = join_path();
     //std::cerr << "SCRIPT_NAME after join: " << path.c_str() << std::endl;
-	std::cout << "path: " << path << std::endl;
+	std::cerr << "path: " << path << std::endl;
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }

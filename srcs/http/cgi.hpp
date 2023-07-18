@@ -15,6 +15,7 @@ class Cgi {
 
         void run_cgi();
         std::map<std::string, std::string> getHeaderFields() const;
+        std::string getCgiBody() const;
         int parse_cgi_response();
         std::string buf;
     private:

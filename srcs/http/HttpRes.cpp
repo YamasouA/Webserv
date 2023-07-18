@@ -645,7 +645,9 @@ void HttpRes::header_filter() {
 
 	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
 	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
-	for (; it != cgi_headers.end(); it++) {
+	for (; it != cgi_headers.end(); ++it) {
+//        std::cout << "cgi i: " << i << std::endl;
+        std::cout << it->first << ": " << it->second << std::endl;
 		buf += it->first;
 		buf += ": ";
 		buf += it->second;
@@ -1248,7 +1250,20 @@ void HttpRes::runHandlers() {
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
         handler_status = cgi.parse_cgi_response();
+        status_code = handler_status;
+        cgi.getHeaderFields().erase("Status");
+        set_cgi(cgi);
+//        std::cout << cgi.buf << std::endl;
         sendHeader(); //tmp here
+        out_buf = cgi.getCgiBody();
+        if (cgi.getHeaderFields().count("Content-Length")) {
+            std::stringstream ss(cgi.getHeaderFields()["Content-Length"]);
+            ss >> body_size;
+        } else {
+            body_size = out_buf.length();
+        }
+
+        return finalize_res(status_code);
 //        std::cout << cgi.buf << std::endl;
 	} else {
 //  	  static int i = 0;
