@@ -328,6 +328,41 @@ void Cgi::fork_process() {
 //	return pid;
 }
 
+bool Cgi::isLocalRedirect() {
+	if (header_fields.size() != 1)
+		return false;
+	if (header_fields["Location"] == "" || cgi_body == "")
+		return false;
+	if (header_fields["Location"][0] != "/")
+		return false;
+	return true;
+}
+
+bool Cgi::isClientRedirect() {
+	if (header_fields["Location"] == "")
+		return false;
+	std::string abs_path = header_fields["Location"];
+	if(abs_path.compare(0, 5, "https") != 0 && 
+	abs_path.compare(0, 4, "http") != 0) {
+		return false;
+	}
+	return true;
+}
+
+void Cgi::detectResType() {
+	if (header_fields["Content-Type"] == 1) {
+		resType = DOCUMENT;
+	} else if (isLocalRedirect()) {
+		resType = LOCAL_REDIRECT;
+	} else if (isClientRedirect()) {
+		if (cgi_body == "")
+			resType = CLIENT_REDIRECT;
+		else
+			resType = CLIENT_REDIRECT_WITH_DOC;
+	}
+	// タイプに一致しない場合
+}
+
 // ==== tmp func in cgi ====
 bool Cgi::checkHeaderEnd(size_t& idx)
 {
