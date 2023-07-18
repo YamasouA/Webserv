@@ -647,6 +647,8 @@ void HttpRes::header_filter() {
 	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
 	for (; it != cgi_headers.end(); ++it) {
 //        std::cout << "cgi i: " << i << std::endl;
+		if (it->first == "Location")
+			continue;
         std::cout << it->first << ": " << it->second << std::endl;
 		buf += it->first;
 		buf += ": ";
@@ -1267,12 +1269,13 @@ void HttpRes::runHandlers() {
             return finalize_res(status_code);
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
 
-        } else if (cgi.getResType() == CLIENT_REDIRECT) {
-            //status_code = 302;
+        } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+            status_code = 302;
+			redirect_path = cgi.getHeaderFields["Location"];
+			body = cgi.get_cgi_body();
+			header_filter();
 
-        } else if (cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-
-        }
+			return finalize_res(status_code);
 //        std::cout << cgi.buf << std::endl;
 	} else {
 //  	  static int i = 0;
