@@ -173,9 +173,9 @@ std::string HttpRes::join_path() {
 	}
 	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
 		//file_path = file_path.substr(1);
-		if (file_path.size() >= 1) { //
-			file_path = file_path.substr(1);
-        }
+//		if (file_path.size() >= 1) { //
+//			file_path = file_path.substr(1);
+//        }
 	}
 	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cout << "join_path: " << path_root + config_path + file_path << std::endl;
@@ -1235,7 +1235,9 @@ bool HttpRes::is_cgi() {
 //    std::cout << "loc cgi: " << location.get_cgi_ext() << std::endl;
 //	if (location.get_cgi_path() != "") {
     std::vector<std::string> vec = location.get_cgi_ext();
-	if (vec[0] != "") {
+    std::string path = httpreq.getUri();
+    if (path.find(vec[0]) != std::string::npos) {
+//	if (vec[0] != "") {
 		return true;
 	}
     std::cout << "=== no cgi ===" << std::endl;
@@ -1256,7 +1258,7 @@ void HttpRes::runHandlers() {
             status_code = handler_status;
             cgi.getHeaderFields().erase("Status");
             set_cgi(cgi);
-    //        std::cout << cgi.buf << std::endl;
+//            std::cout << cgi.buf << std::endl;
             sendHeader(); //tmp here
             out_buf = cgi.getCgiBody();
             if (cgi.getHeaderFields().count("Content-Length")) {
@@ -1268,15 +1270,17 @@ void HttpRes::runHandlers() {
 
             return finalize_res(status_code);
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
-
+            httpreq.setUri(cgi.getHeaderFields()["Location"]);
+            return runHandlers();
         } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
             status_code = 302;
-			redirect_path = cgi.getHeaderFields["Location"];
-			body = cgi.get_cgi_body();
+			redirect_path = cgi.getHeaderFields()["Location"];
+			body = cgi.getCgiBody();
 			header_filter();
 
 			return finalize_res(status_code);
 //        std::cout << cgi.buf << std::endl;
+        }
 	} else {
 //  	  static int i = 0;
 		handler_status = return_redirect();
