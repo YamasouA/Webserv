@@ -950,18 +950,18 @@ int HttpRes::redirect_handler() {
         content_length_n = 0;
     }
 
-    if (status_code >= 490) { //49x ~ 5xx
+//    if (status_code >= 490) { //49x ~ 5xx
 //        switch (status_code) {
 //            case HTTP_TO_HTTPS:
 //            case HTTPS_CERT_ERROR:
 //            case HTTPS_NO_CERT:
 //            case HTTP_REQUEST_HEADER_TOO_LARGE:
-                status_code = BAD_REQUEST;
+//                status_code = BAD_REQUEST;
                 // or err_status = BAD_REQUEST;
 //        }
-    } else {
-        std::cout << "unknown status code" << std::endl;
-    }
+//    } else {
+//        std::cout << "unknown status code" << std::endl;
+//    }
     // create new tmp file ?
     // or map<status_code, err_page_content> ?
     // if We create a new file, how do We handle mtime?
@@ -1273,6 +1273,8 @@ void HttpRes::runHandlers() {
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
 			if (httpreq.isRedirectLimit()) {
 				std::cerr << "cnt" << std::endl;
+                status_code = 500;
+                return finalize_res(status_code);
 			}
             httpreq.setUri(cgi.getHeaderFields()["Location"]);
 			httpreq.incrementRedirectCnt();

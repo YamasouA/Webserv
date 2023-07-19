@@ -6,12 +6,14 @@ httpReq::httpReq()
 httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
+    redirect_cnt(0),
     keep_alive(0)
 {}
 
 httpReq::httpReq(const httpReq& src)
 :client_ip(src.getClientIP()),
     port(src.getPort()),
+    redirect_cnt(src.getRedirectCnt()),
     method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
@@ -38,6 +40,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->content_body = rhs.getContentBody();
     this->keep_alive = rhs.getKeepAlive();
     this->cgi_envs = rhs.get_meta_variables();
+    this->redirect_cnt = rhs.getRedirectCnt();
     return *this;
 }
 
@@ -124,6 +127,10 @@ int httpReq::getKeepAlive() const
 //{
 //    return this->header_info;
 //}
+
+int httpReq::getRedirectCnt() const {
+    return this->redirect_cnt;
+}
 
 bool httpReq::isRedirectLimit() {
 	return redirect_cnt >= kRedirectLimit;
