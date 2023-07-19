@@ -335,7 +335,7 @@ void Cgi::fork_process() {
 bool Cgi::isLocalRedirect() {
 	if (header_fields.size() != 1)
 		return false;
-	if (header_fields["Location"] == "" || cgi_body == "")
+	if (header_fields["Location"] == "" || cgi_body != "")
 		return false;
 	if (header_fields["Location"][0] != '/')
 		return false;
@@ -366,6 +366,7 @@ void Cgi::detectResType() {
 	} else {
 	    // タイプに一致しない場合
     }
+	std::cout << "resType: " << resType << std::endl;
 }
 
 // ==== tmp func in cgi ====

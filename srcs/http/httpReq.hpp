@@ -40,11 +40,15 @@ class httpReq {
         bool isSpace(char c);
 		std::string toLower(std::string str);
 		int content_length;
+		bool isRedirectLimit();
+		void incrementRedirectCnt();
     private:
         std::string buf;
         size_t idx;
         std::string client_ip;
         int port;
+		int redirect_cnt;
+		static const int kRedirectLimit = 10;
 
         std::string method;
         std::string uri;

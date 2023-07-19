@@ -1254,6 +1254,7 @@ void HttpRes::runHandlers() {
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
         handler_status = cgi.parse_cgi_response();
+		std::cout << "resType: " << cgi.getResType() << std::endl;
         if (cgi.getResType() == DOCUMENT) {
             status_code = handler_status;
             cgi.getHeaderFields().erase("Status");
@@ -1270,7 +1271,11 @@ void HttpRes::runHandlers() {
 
             return finalize_res(status_code);
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
+			if (httpreq.isRedirectLimit()) {
+				std::cerr << "cnt" << std::endl;
+			}
             httpreq.setUri(cgi.getHeaderFields()["Location"]);
+			httpreq.incrementRedirectCnt();
             return runHandlers();
         } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
             status_code = 302;

@@ -125,6 +125,14 @@ int httpReq::getKeepAlive() const
 //    return this->header_info;
 //}
 
+bool httpReq::isRedirectLimit() {
+	return redirect_cnt >= kRedirectLimit;
+}
+
+void httpReq::incrementRedirectCnt() {
+	redirect_cnt++;
+}
+
 void httpReq::skipSpace()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t') {
