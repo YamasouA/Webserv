@@ -173,9 +173,9 @@ std::string HttpRes::join_path() {
 	}
 	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
 		//file_path = file_path.substr(1);
-		if (file_path.size() >= 1) { //
-			file_path = file_path.substr(1);
-        }
+//		if (file_path.size() >= 1) { //
+//			file_path = file_path.substr(1);
+//        }
 	}
 	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cout << "join_path: " << path_root + config_path + file_path << std::endl;
@@ -186,6 +186,14 @@ std::string HttpRes::join_path() {
 void HttpRes::set_body(std::string strs)
 {
     this->body = strs;
+}
+
+void HttpRes::set_cgi(Cgi cgi) {
+    this->cgi = cgi;
+}
+
+Cgi HttpRes::get_cgi() const {
+    return cgi;
 }
 
 void HttpRes::read_file() {
@@ -635,7 +643,20 @@ void HttpRes::header_filter() {
 
 	// chunkedは無視
 
-	// keep-alive系は問答無用でcloseする？
+	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
+	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
+	for (; it != cgi_headers.end(); ++it) {
+//        std::cout << "cgi i: " << i << std::endl;
+		if (it->first == "Location")
+			continue;
+        std::cout << it->first << ": " << it->second << std::endl;
+		buf += it->first;
+		buf += ": ";
+		buf += it->second;
+		buf += "\r\n";
+	}
+
+    // keep-alive系は問答無用でcloseする？
     // keep-alive looks better managed with flags.
 //    std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
 //    if (header_fields["connection"] == "keep-alive") {
@@ -929,18 +950,18 @@ int HttpRes::redirect_handler() {
         content_length_n = 0;
     }
 
-    if (status_code >= 490) { //49x ~ 5xx
+//    if (status_code >= 490) { //49x ~ 5xx
 //        switch (status_code) {
 //            case HTTP_TO_HTTPS:
 //            case HTTPS_CERT_ERROR:
 //            case HTTPS_NO_CERT:
 //            case HTTP_REQUEST_HEADER_TOO_LARGE:
-                status_code = BAD_REQUEST;
+//                status_code = BAD_REQUEST;
                 // or err_status = BAD_REQUEST;
 //        }
-    } else {
-        std::cout << "unknown status code" << std::endl;
-    }
+//    } else {
+//        std::cout << "unknown status code" << std::endl;
+//    }
     // create new tmp file ?
     // or map<status_code, err_page_content> ?
     // if We create a new file, how do We handle mtime?
@@ -1208,24 +1229,83 @@ int HttpRes::auto_index_handler() {
 
 }
 
-void HttpRes::runHandlers() {
-    int handler_status = 0;
-//    static int i = 0;
-	handler_status = return_redirect();
-	if (handler_status != DECLINED) {
-		finalize_res(handler_status);
+bool HttpRes::is_cgi() {
+	Location location = get_uri2location(httpreq.getUri()); //req uri?
+    std::cout << "Location: " << location << std::endl;
+//    std::cout << "loc cgi: " << location.get_cgi_ext() << std::endl;
+//	if (location.get_cgi_path() != "") {
+    std::vector<std::string> vec = location.get_cgi_ext();
+    std::string path = httpreq.getUri();
+    if (path.find(vec[0]) != std::string::npos) {
+//	if (vec[0] != "") {
+		return true;
 	}
-    handler_status = static_handler();
-    if (handler_status != DECLINED) {
-        std::cout << "in finalize" << std::endl;
-        return finalize_res(handler_status);
-    }
-    handler_status = auto_index_handler();
-    if (handler_status != DECLINED) {
-        std::cout << "in finalize" << std::endl;
-        return finalize_res(handler_status);
-    }
-//    std::cout << "run handler i: " << i++ << std::endl;
-    //std::cout << "handler status after static handler: " << handler_status << std::endl;
-//	dav_delete_handler();
+    std::cout << "=== no cgi ===" << std::endl;
+	return false;
+}
+
+
+void HttpRes::runHandlers() {
+	int handler_status = 0;
+	if (is_cgi()) {
+        std::cout << "=== cgi ===" << std::endl;
+	    Location location = get_uri2location(httpreq.getUri()); //req uri?
+        httpreq.set_meta_variables(location);
+		Cgi cgi(httpreq ,location);
+		cgi.run_cgi();
+        handler_status = cgi.parse_cgi_response();
+		std::cout << "resType: " << cgi.getResType() << std::endl;
+        if (cgi.getResType() == DOCUMENT) {
+            status_code = handler_status;
+            cgi.getHeaderFields().erase("Status");
+            set_cgi(cgi);
+//            std::cout << cgi.buf << std::endl;
+            sendHeader(); //tmp here
+            out_buf = cgi.getCgiBody();
+            if (cgi.getHeaderFields().count("Content-Length")) {
+                std::stringstream ss(cgi.getHeaderFields()["Content-Length"]);
+                ss >> body_size;
+            } else {
+                body_size = out_buf.length();
+            }
+
+            return finalize_res(status_code);
+        } else if (cgi.getResType() == LOCAL_REDIRECT) {
+			if (httpreq.isRedirectLimit()) {
+				std::cerr << "cnt" << std::endl;
+                status_code = 500;
+                return finalize_res(status_code);
+			}
+            httpreq.setUri(cgi.getHeaderFields()["Location"]);
+			httpreq.incrementRedirectCnt();
+            return runHandlers();
+        } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+            status_code = 302;
+			redirect_path = cgi.getHeaderFields()["Location"];
+			body = cgi.getCgiBody();
+			header_filter();
+
+			return finalize_res(status_code);
+//        std::cout << cgi.buf << std::endl;
+        }
+	} else {
+//  	  static int i = 0;
+		handler_status = return_redirect();
+		if (handler_status != DECLINED) {
+			finalize_res(handler_status);
+		}
+    	handler_status = static_handler();
+    	if (handler_status != DECLINED) {
+    	    std::cout << "in finalize" << std::endl;
+    	    return finalize_res(handler_status);
+    	}
+    	handler_status = auto_index_handler();
+    	if (handler_status != DECLINED) {
+    	    std::cout << "in finalize" << std::endl;
+    	    return finalize_res(handler_status);
+    	}
+//  	  std::cout << "run handler i: " << i++ << std::endl;
+    	//std::cout << "handler status after static handler: " << handler_status << std::endl;
+//		dav_delete_handler();
+	}
 }

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include "../conf/Location.hpp"
 
 class httpReq {
     public:
@@ -16,13 +17,17 @@ class httpReq {
         httpReq& operator=(const httpReq& rhs);
         ~httpReq();
 
-
+        void setClientIP(std::string client_ip);
+        void setPort(int port);
         void setMethod(const std::string&);
         void setUri(const std::string&);
         void setVersion(const std::string&);
         void setContentBody(const std::string&);
 		void setHeaderField(const std::string& name, const std::string value);
+        void set_meta_variables(Location loc);
 
+        std::string getClientIP() const;
+        int getPort() const;
         std::string getMethod() const;
         std::string getUri() const;
         std::string getVersion() const;
@@ -30,19 +35,28 @@ class httpReq {
         int getContentLength() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
+        std::map<std::string, std::string> get_meta_variables() const;
+        int getRedirectCnt() const;
 		void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
 		int content_length;
+		bool isRedirectLimit();
+		void incrementRedirectCnt();
     private:
         std::string buf;
         size_t idx;
+        std::string client_ip;
+        int port;
+		int redirect_cnt;
+		static const int kRedirectLimit = 10;
 
         std::string method;
         std::string uri;
         std::string args;
         std::string version;
         std::map<std::string, std::string> header_fields;
+        std::map<std::string, std::string> cgi_envs;
         std::string content_body;
 		bool parse_error;
         int keep_alive;

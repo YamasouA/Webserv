@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include "../Kqueue.hpp"
+#include "cgi.hpp"
 
 enum server_state {
     OK = 0,
@@ -99,6 +100,7 @@ class HttpRes {
 		virtualServer vServer;
         Kqueue* connection;
 		int fd;
+        Cgi cgi;
 
 		Location target;
 		void write_file();
@@ -131,6 +133,7 @@ class HttpRes {
         int send_error_page();
         int auto_index_handler();
         std::string create_auto_index_html(std::map<std::string, dir_t> index_of);
+		bool is_cgi();
         std::string join_path_autoindex();
 
         //void createDate();
@@ -143,6 +146,8 @@ class HttpRes {
         bool isAllowMethod(std::string method);
         std::string join_path();
         void set_body(std::string strs);
+        void set_cgi(Cgi cgi);
+        Cgi get_cgi() const;
 		void createResponse();
         void runHandlers();
 		std::string buf;

@@ -15,6 +15,7 @@ Location::Location(const Location& src) {
 	this->depth = src.depth;
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
+	this->cgi_ext = src.cgi_ext;
 }
 
 Location& Location::operator=(const Location& src)
@@ -35,6 +36,7 @@ Location& Location::operator=(const Location& src)
 	this->depth = src.depth;
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
+	this->cgi_ext = src.cgi_ext;
 	return *this;
 }
 
@@ -99,6 +101,10 @@ void Location::set_depth(int depth){
 void Location::set_alias(std::string alias)
 {
 	this->alias = alias;
+}
+
+void Location::set_cgi_ext(std::vector<std::string> tokens) {
+	this->cgi_ext = tokens;
 }
 
 void Location::set_error_pages(std::vector<std::string> tokens)
@@ -179,6 +185,11 @@ std::string Location::get_error_page(int status_code) const{
 std::map<int, std::string> Location::get_error_pages() const{
 	return error_pages;
 }
+
+std::vector<std::string> Location::get_cgi_ext() const {
+	return cgi_ext;
+}
+
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			const std::vector<std::string> tmp = obj.get_methods();
 			stream << "====== Location data =====" << std::endl
@@ -200,6 +211,11 @@ std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			for (; it != map.end(); it++) {
 				stream << "status_code: " << it->first
 				<< ", path: " << it->second << std::endl;
+			}
+			stream << "cgi_extension: ";
+			const std::vector<std::string> tmp3 = obj.get_cgi_ext();
+			for (std::vector<std::string>::const_iterator it = tmp3.begin(); it != tmp3.end(); ++it) {
+				stream << *it << " ";
 			}
 			stream << "locations: ";
 			const std::vector<Location> tmp2 = obj.get_locations();

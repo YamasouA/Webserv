@@ -6,14 +6,19 @@ httpReq::httpReq()
 httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
+    redirect_cnt(0),
     keep_alive(0)
 {}
 
 httpReq::httpReq(const httpReq& src)
-:method(src.getMethod()),
+:client_ip(src.getClientIP()),
+    port(src.getPort()),
+    redirect_cnt(src.getRedirectCnt()),
+    method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
     header_fields(src.getHeaderFields()),
+    cgi_envs(src.get_meta_variables()),
     content_body(src.getContentBody()),
 	parse_error(false),
     keep_alive(src.getKeepAlive())
@@ -26,17 +31,29 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     if (this == &rhs) {
         return *this;
     }
+    this->client_ip = rhs.getClientIP();
+    this->port = rhs.getPort();
     this->method = rhs.getMethod();
     this->uri = rhs.getUri();
     this->version = rhs.getVersion();
     this->header_fields = rhs.getHeaderFields();
     this->content_body = rhs.getContentBody();
     this->keep_alive = rhs.getKeepAlive();
+    this->cgi_envs = rhs.get_meta_variables();
+    this->redirect_cnt = rhs.getRedirectCnt();
     return *this;
 }
 
 httpReq::~httpReq()
 {
+}
+
+void httpReq::setClientIP(std::string client_ip) {
+    this->client_ip = client_ip;
+}
+
+void httpReq::setPort(int port) {
+    this->port = port;
 }
 
 void httpReq::setMethod(const std::string& token)
@@ -62,6 +79,14 @@ void httpReq::setContentBody(const std::string& token)
 void httpReq::setHeaderField(const std::string& name, const std::string value)
 {
     this->header_fields.insert(std::make_pair(name, value));
+}
+
+std::string httpReq::getClientIP() const {
+    return this->client_ip;
+}
+
+int httpReq::getPort() const {
+    return this->port;
 }
 
 std::string httpReq::getMethod() const
@@ -102,6 +127,18 @@ int httpReq::getKeepAlive() const
 //{
 //    return this->header_info;
 //}
+
+int httpReq::getRedirectCnt() const {
+    return this->redirect_cnt;
+}
+
+bool httpReq::isRedirectLimit() {
+	return redirect_cnt >= kRedirectLimit;
+}
+
+void httpReq::incrementRedirectCnt() {
+	redirect_cnt++;
+}
 
 void httpReq::skipSpace()
 {
@@ -413,6 +450,54 @@ void httpReq::parseRequest()
     }
     content_body = getToken_to_eof();
     fix_up();
+}
+
+std::map<std::string, std::string> httpReq::get_meta_variables() const {
+    return cgi_envs;
+}
+
+void httpReq::set_meta_variables(Location loc) {
+    std::map<std::string, std::string> header_fields = getHeaderFields();
+    if (getContentLength()) {
+        cgi_envs["CONTENT_LENGTH"] = getContentLength(); //　メタ変数名後で大文字にする
+    }
+    if (header_fields["content_type"].length() > 0) {
+        cgi_envs["CONTENT_TYPE"] = header_fields["content_type"];
+    }
+    cgi_envs["GETAWAY_INTERFACE"] = "CGI/1.1";
+	// Locationで取得したcgi拡張子とマッチするものがあるときにPATH_INFOを区切る
+	std::vector<std::string> ext = loc.get_cgi_ext();
+	for (std::vector<std::string>::iterator it = ext.begin(); it != ext.end(); it++) {
+		std::string::size_type idx = uri.find(*it);
+		std::cout << "uri: " << uri << std::endl;
+		std::cout << "ext: " << *it<< std::endl;
+		std::cout << "idx: " << idx << std::endl;
+		size_t len = (*it).size();
+		if (idx == std::string::npos)
+			continue;
+		if ((uri[idx + len] != '\0' && uri[idx + len] == '/') || uri[idx + len] == '\0') {
+			std::cout << "SET_SCRIPT_NAME" << std::endl;
+			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
+			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
+		}
+	}
+//    cgi_envs["paht_translated"] = //完全飾ドメイン名(プロトコルの後ろから最初の'/'まで);
+    cgi_envs["PATH_TRANSLATED"] = header_fields["host"]; // FQDNをセットする
+//    struct sockaddr_in client_addr = get_client_addr();
+//    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
+    cgi_envs["REMOTE_ADDR"] = getClientIP();//恐らくacceptの第二引数でとれる値; inet系使えないと無理では？
+    cgi_envs["REMOTE_HOST"] = cgi_envs["REMOTE_ADDR"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
+//    cgi_envs["REMOTE_HOST"] = header_fields["host"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
+	cgi_envs["REQUEST_METHOD"] = getMethod();
+    cgi_envs["SERVER_NAME"] = header_fields["host"];
+    std::stringstream ss;
+    std::string port_str;
+    ss << getPort();
+    ss >> port_str;
+    cgi_envs["SERVER_PORT"] = port_str;//port番号; urlからparse時にportを保存する<= ではなくhtonsなどでsocketから取得する？ or config fileから?(一つのserverに複数portあった時が厳しい)
+    cgi_envs["SERVER_PROTOCOL"] = "HTTP/1.1";
+    cgi_envs["SERVER_SOFTWARE"] = "WebServe";
+    //cgi_envs["script_name"] = getUri(); //どうやってどこまでがscript_name(uri)でどこからがpath_infoなのかをみるか？
 }
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {

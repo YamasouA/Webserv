@@ -229,6 +229,9 @@ Location configParser::parseLocation() {
 		} else if (directive == "error_page") {
 			const std::string pages = getToken(';');
 			location.set_error_pages(methodsSplit(pages, ' '));
+		} else if (directive == "cgi_ext") {
+			const std::string exts = getToken(';');
+			location.set_cgi_ext(methodsSplit(exts, ' '));
 		} else if (directive == "") {
             // comment out
             continue;

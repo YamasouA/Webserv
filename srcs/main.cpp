@@ -10,10 +10,42 @@
 #include "Kqueue.hpp"
 #include "Client.hpp"
 #include "conf/configParser.hpp"
-//#include "http/httpParser.hpp"
+///#include "http/httpParser.hpp"
 #include "http/httpReq.hpp"
 #include <map>
 #include <utility>
+
+
+std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
+	std::string ip;
+	(void) buf;
+	(void) len;
+	// 1バイトずつアクセスできるようにする
+	const u_int8_t *ap = (const u_int8_t *)&addr->s_addr;
+    std::stringstream ss;
+    for (size_t i = 0; ap[i] != '\0'; ++i) {
+        std::cout << "ap: " << i << "   :" << ap[i] << std::endl;
+    }
+    std::cout << std::endl;
+    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3]; //もしint系とchar系ごっちゃに出来なかった場合は一つずつap[i]を変換
+	//ip += ap[0] + "." + ap[1] + "." + ap[2] + "." + ap[3];
+    ss >> ip;
+	return ip;
+}
+
+std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
+	std::string ip;
+	(void) buf;
+	(void) len;
+    char *p = (char *)addr;
+    std::stringstream ss;
+    ss << (int)p[0] << "." << (int)p[1] << "." << (int)p[2] << "." << (int)p[3]; //もしint系とchar系ごっちゃに出来なかった場合は一つずつap[i]を変換
+    ss >> ip;
+//    std::cout << "ap[0]: " << (((int)p[0])) << std::endl;
+//    std::cout << "ap[0]: " << (((int)p[0])&0xff) << std::endl;
+	return ip;
+//	return inet_ntop4(addr, buf, len);
+}
 
 //std::map<int, virtualServer> initialize_fd(configParser conf, Kqueue kqueue) {
 void initialize_fd(configParser conf, Kqueue &kqueue, std::map<int, virtualServer>& fd_config_map) {
@@ -74,6 +106,8 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
     std::cout << "req: " << buf << std::endl;
     //httpParser httpparser(buf);
     httpReq httpreq(buf);
+    httpreq.setClientIP(client.get_client_ip());
+    httpreq.setPort(client.get_port());
     httpreq.parseRequest();
 	std::cout << "Here" << std::endl;
 	client.set_fd(fd);
@@ -141,12 +175,28 @@ int main(int argc, char *argv[]) {
 			} else if (fd_config_map.count(event_fd) == 1) {
 				std::cout << "first register" << std::endl;
 				Client client;
+                struct sockaddr_in client_addr;
+                socklen_t sock_len = sizeof(client_addr);
 				// ここのevent_fdはconfigで設定されてるserverのfd
-				acceptfd = accept(event_fd, NULL, NULL);
+				acceptfd = accept(event_fd, (struct sockaddr *)&client_addr, &sock_len);
+//				acceptfd = accept(event_fd, NULL, NULL);
 				if (acceptfd == -1) {
 					std::cerr << "Accept socket error" << std::endl;
 					continue;
 				}
+//                printf("accepted connection from %s, port=%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+//	            const unsigned char *ap = (const unsigned char *)&client_addr.sin_addr.s_addr;
+//                std::cout << "IP raw: " << client_addr.sin_addr.s_addr << std::endl;
+//                printf("IP printf %x\n", client_addr.sin_addr.s_addr);
+//                std::cout << "ap[0]: " << ap[0] << std::endl;
+                std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
+                std::cout << "IP: " << client_ip << std::endl;
+                client.set_client_ip(client_ip); // or Have the one after adapting inet_ntoa
+                struct sockaddr_in sin;
+                socklen_t addrlen = sizeof(sin);
+                getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
+                int port_num = ntohs(sin.sin_port);
+                client.set_port(port_num);
 				//fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 				//fd_client_map.insert(std::make_pair(acceptfd, client));
 				//std::cout << "sleep1" << std::endl;

@@ -23,6 +23,7 @@ class Location {
 		void set_depth(int depth);
 		void set_alias(std::string alias);
 		void set_error_pages(std::vector<std::string> tokens);
+		void set_cgi_ext(std::vector<std::string> tokens);
 		std::vector<Location> get_locations() const;
 		std::string get_uri() const;
 		std::vector<std::string> get_methods() const;
@@ -37,6 +38,7 @@ class Location {
 		std::map<int, std::string> get_error_pages() const;
 		int get_depth() const;
 		std::string get_alias() const;
+		std::vector<std::string> get_cgi_ext() const;
 		Location(const Location& src);
 		Location();
 		Location& operator=(const Location& src);
@@ -54,6 +56,7 @@ class Location {
 		bool autoindex;
 		size_t max_body_size;
 		std::vector<Location> locations;
+		std::vector<std::string> cgi_ext;
 };
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj);

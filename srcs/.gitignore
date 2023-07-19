@@ -11,3 +11,5 @@ out
 *.txt
 **/*.conf
 .devcontainer/devcontainer.json
+*.pl
+*.py
