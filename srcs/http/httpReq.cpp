@@ -207,6 +207,18 @@ std::string httpReq::getToken_to_eol() {
 	return line;
 }
 
+std::string httpReq::getChunk() {
+	std::string chunkNum;
+	chunkNum = getToken_to_eol();
+	while (chunkSize > 0) {
+		body += read();
+		content_length += chunkSize;
+		chunkSize = getToken_to_eol();
+	}
+	discard_trailer();
+	header_fields["Transfer-Encoding"].erase();
+}
+
 std::string httpReq::getToken_to_eof() {
 	std::string body = "";
 	while (idx < buf.length()) {
@@ -441,7 +453,10 @@ void httpReq::parseRequest()
         setHeaderField(toLower(field_name), field_value);
 //        header_info.push_back(header_field);
     }
-    content_body = getToken_to_eof();
+	if (header_fields["Transfer-Encoding"] == "chunked")
+		content_body = getChunk();
+	else
+		content_body = getToken_to_eof();
     fix_up();
 }
 
