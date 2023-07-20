@@ -224,19 +224,23 @@ void httpReq::parseChunk() {
         return;
     }
 	std::stringstream(tmp) >> std::hex >> chunkSize;
+    std::cout << "size: " << chunkSize << std::endl;
 	while (chunkSize > 0) {
         std::cout << "=========ok============" << std::endl;
-		content_body += buf.substr(idx, idx + chunkSize);
+		content_body += buf.substr(idx, chunkSize);
+        std::cout << "body: " << content_body << std::endl;
         std::cout << "=========ok1============" << std::endl;
+		idx += chunkSize;
         checkHeaderEnd();
 		content_length += chunkSize;
-		idx += chunkSize;
+        std::cout << "current: " << buf[idx] << std::endl;
         tmp = getToken_to_eol();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
             return;
         }
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
+        std::cout << "size:" << chunkSize << std::endl;
 	}
 	// discard trailer fields
 	getToken_to_eof();
