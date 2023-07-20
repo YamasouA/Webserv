@@ -214,22 +214,34 @@ std::string httpReq::getToken_to_eol() {
 	return line;
 }
 
-std::string httpReq::getChunk() {
+void httpReq::parseChunk() {
 	int chunkSize;
 
-	std::stringstream sstream(getToken_to_eol());
-	sstream >> chunkSize;
+    std::cout << "===parse chunk===" << buf << std::endl;
+    std::string tmp = getToken_to_eol();
+    if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
+        std::cerr << "400 Bad request" << std::endl;
+        return;
+    }
+	std::stringstream(tmp) >> std::hex >> chunkSize;
 	while (chunkSize > 0) {
+        std::cout << "=========ok============" << std::endl;
 		content_body += buf.substr(idx, idx + chunkSize);
-		expect('\12');
+        std::cout << "=========ok1============" << std::endl;
+        checkHeaderEnd();
 		content_length += chunkSize;
 		idx += chunkSize;
-		std::stringstream sstream(getToken_to_eol());
-		sstream >> chunkSize;
+        tmp = getToken_to_eol();
+        if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
+            std::cerr << "400 Bad request" << std::endl;
+            return;
+        }
+	    std::stringstream(tmp) >> std::hex >> chunkSize;
 	}
 	// discard trailer fields
 	getToken_to_eof();
 	header_fields["Transfer-Encoding"].erase();
+    return;
 }
 
 std::string httpReq::getToken_to_eof() {
@@ -466,10 +478,11 @@ void httpReq::parseRequest()
         setHeaderField(toLower(field_name), field_value);
 //        header_info.push_back(header_field);
     }
-	if (header_fields["Transfer-Encoding"] == "chunked")
-		content_body = getChunk();
-	else
+	if (header_fields["transfer-encoding"] == "chunked") {
+		parseChunk();
+    } else {
 		content_body = getToken_to_eof();
+    }
     fix_up();
 }
 
