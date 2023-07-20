@@ -208,14 +208,20 @@ std::string httpReq::getToken_to_eol() {
 }
 
 std::string httpReq::getChunk() {
-	std::string chunkNum;
-	chunkNum = getToken_to_eol();
+	int chunkSize;
+
+	std::stringstream sstream(getToken_to_eol());
+	sstream >> chunkSize;
 	while (chunkSize > 0) {
-		body += read();
+		content_body += buf.substr(idx, idx + chunkSize);
+		expect('\12');
 		content_length += chunkSize;
-		chunkSize = getToken_to_eol();
+		idx += chunkSize;
+		std::stringstream sstream(getToken_to_eol());
+		sstream >> chunkSize;
 	}
-	discard_trailer();
+	// discard trailer fields
+	getToken_to_eof();
 	header_fields["Transfer-Encoding"].erase();
 }
 

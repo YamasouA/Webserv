@@ -76,6 +76,7 @@ class httpReq {
 		void fix_up();
 		void absurl_parse();
 		void parse_authority_and_path();
+		std::string getChunk();
 //        std::string method;
 //        std::string uri;
 //        std::string version;
