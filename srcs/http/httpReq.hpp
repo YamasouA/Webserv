@@ -36,6 +36,7 @@ class httpReq {
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
+        int getRedirectCnt() const;
 		void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
