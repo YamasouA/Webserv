@@ -1235,11 +1235,19 @@ bool HttpRes::is_cgi() {
 //    std::cout << "loc cgi: " << location.get_cgi_ext() << std::endl;
 //	if (location.get_cgi_path() != "") {
     std::vector<std::string> vec = location.get_cgi_ext();
+	if (vec.size() == 0)
+		return false;
     std::string path = httpreq.getUri();
+	std::vector<std::string>::iterator it = vec.begin();
+	for (; it != vec.end(); it++) {
+		if (path.find(*it) != std::string::npos)
+			return true;
+	}
+	/*
     if (path.find(vec[0]) != std::string::npos) {
 //	if (vec[0] != "") {
 		return true;
-	}
+	}*/
     std::cout << "=== no cgi ===" << std::endl;
 	return false;
 }
