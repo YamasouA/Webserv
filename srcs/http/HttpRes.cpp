@@ -884,6 +884,7 @@ std::string HttpRes::create_err_page() {
 // handle return derective ??? or handle only error_page directive ?
 int HttpRes::send_error_page() {
     std::string path = target.get_error_page(status_code);
+    std::cout << "error_page_path: " << path << std::endl;
     if (path[0] == '/') {
         std::string method = httpreq.getMethod();
         if (method != "HEAD") { //we non-supported HEAD
@@ -939,6 +940,7 @@ int HttpRes::redirect_handler() {
 //    if (have_error_pages == 1) {// have err_page directive
          //err_pages = from conf
 //         for (size_t i = 0; i < err_pages_num; ++i) {
+    std::cout << "=========check error_page============: " << target.get_error_page(status_code) << std::endl;
     if (target.get_error_page(status_code) != "") {
         return send_error_page();
     }
@@ -978,6 +980,7 @@ int HttpRes::redirect_handler() {
 //  clear last_modified
     last_modified_time = -1;
 //  clear etag
+    std::cout << "====ok====" << std::endl;
     sendHeader();
 //    if err || only_header
 //        return
@@ -1036,6 +1039,7 @@ int HttpRes::return_redirect() {
 		std::cout << "path(bef): " << path << std::endl;
 		if (!path.compare(0, 7, "http://") || !path.compare(0, 8, "https://")) {
 			status_code = MOVED_TEMPORARILY;
+//            return status_code;
 			//path = elms[0];
 		} else {
 			std::cout << "scheme Error" << std::endl;
@@ -1058,7 +1062,8 @@ int HttpRes::return_redirect() {
 	redirect_path = path;
     // needs path with support status_code
 	// compile_complex_valueは$の展開をしてそう
-	return OK;
+    return status_code;
+//	return OK;
 }
 
 static std::string createMtime(time_t modified)
@@ -1300,7 +1305,7 @@ void HttpRes::runHandlers() {
 //  	  static int i = 0;
 		handler_status = return_redirect();
 		if (handler_status != DECLINED) {
-			finalize_res(handler_status);
+			return finalize_res(handler_status);
 		}
     	handler_status = static_handler();
     	if (handler_status != DECLINED) {
@@ -1314,6 +1319,6 @@ void HttpRes::runHandlers() {
     	}
 //  	  std::cout << "run handler i: " << i++ << std::endl;
     	//std::cout << "handler status after static handler: " << handler_status << std::endl;
-//		dav_delete_handler();
+		dav_delete_handler();
 	}
 }
