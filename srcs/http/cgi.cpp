@@ -418,7 +418,7 @@ std::string Cgi::getToken(char delimiter, size_t& idx)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax error in getToken");
+		throw SyntaxException("syntax Error in getToken");
 	}
 	expect(delimiter, idx);
     if (token.find(' ') != std::string::npos) {

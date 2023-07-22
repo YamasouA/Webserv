@@ -63,7 +63,8 @@ const std::string readConfFile(const std::string& file_name)
 {
 	std::ifstream ifs(file_name.c_str());
 	if (!ifs) {
-		std::cout << "ko" << std::endl;
+		std::cerr << "Error: fistream in readConfFile" << std::endl;
+        std::abort();
 	}
 	std::ostringstream oss;
 	oss << ifs.rdbuf();
@@ -143,7 +144,7 @@ std::string configParser::getToken(char delimiter)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax error in getToken");
+		throw SyntaxException("syntax Error in getToken");
 	}
 //	std::cout << "token end" << buf[idx] << std::endl;
 //	idx++;
@@ -177,7 +178,7 @@ Location configParser::parseLocation() {
 	// 末尾に空白が入るかも(入らない可能性もある)
 	trim(uri);
 	if (uri == "") {
-		throw SyntaxException("uri syntax error in parseLocation");
+		throw SyntaxException("uri syntax Error in parseLocation");
 	}
 	location.set_uri(uri);
 	skip();
@@ -236,7 +237,7 @@ Location configParser::parseLocation() {
             // comment out
             continue;
         } else {
-			throw SyntaxException("directive syntax error in parseLocation");
+			throw SyntaxException("directive syntax Error in parseLocation");
 //			std::cerr << "\033[1;31msyntax error in location\033[0m: " << directive << std::endl;
 			// 適切な例外を作成して投げる
 			return location;
@@ -322,6 +323,7 @@ virtualServer configParser::parseServe() {
 		} else {
 //			continue;
 			std::cerr << "\033[1;31mdirective Error\033[0m" << directive << std::endl;
+            abort();
 		}
 	}
 //	std::cout << buf[idx] << std::endl;
@@ -350,7 +352,7 @@ void configParser::parseConf()
 
 	directive = getToken('{');
 	if (directive != "http") {
-		std::cout << "Should http" << std::endl;
+		std::cout << "Should http Error" << std::endl;
 		std::exit(1);
 	}
 	while (idx < buf.size()) {
@@ -360,7 +362,7 @@ void configParser::parseConf()
 		}
 		directive = getToken('{');
 		if (directive != "server") {
-			std::cerr << "Error1" << std::endl;
+			std::cerr << "parseConf Error" << std::endl;
 			std::exit(1);
 		}
 		skip(); // 空白などの読み飛ばし

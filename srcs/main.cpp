@@ -68,7 +68,7 @@ void assign_server(configParser& conf, Client& client) {
         std::map<std::string, std::string> tmp = client.get_httpReq().getHeaderFields();
         std::string host_name;
 		for (std::map<std::string, std::string>::iterator req_it = tmp.begin(); req_it != tmp.end(); ++req_it) {
-            std::cout << "field name: " << (*req_it).first << std::endl;
+//            std::cout << "field name: " << (*req_it).first << std::endl;
             if ((*req_it).first == "host") {
                 host_name = (*req_it).second;
                 break;
@@ -77,7 +77,7 @@ void assign_server(configParser& conf, Client& client) {
 //		if (client.get_httpReq().get_hostname() == it->get_server_name()
         std::cout << "server name: " << it->get_server_name() << std::endl;
         if (host_name == it->get_server_name()) {
-            std::cout << "okok" << std::endl;
+//            std::cout << "okok" << std::endl;
 //			&& client.get_fd() == it->get_listen()) {
 			client.set_vServer(*it);
 
@@ -90,11 +90,11 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
 
 	memset(buf, 0, sizeof(buf));
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-	std::cout << fd << std::endl;
+//	std::cout << fd << std::endl;
 	if (recv(fd, buf, sizeof(buf), 0) < 0) {
 //        return NULL;
     }
-	std::cout << "buf\n" << buf << std::endl;
+//	std::cout << "buf\n" << buf << std::endl;
 	/*
 	if (buf ==) {
 		std::cout << "ERROR" << std::endl;
@@ -109,7 +109,7 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
     httpreq.setClientIP(client.get_client_ip());
     httpreq.setPort(client.get_port());
     httpreq.parseRequest();
-	std::cout << "Here" << std::endl;
+//	std::cout << "Here" << std::endl;
 	client.set_fd(fd);
     client.set_httpReq(httpreq);
 //	client.set_httpReq(httpparser.get);
@@ -151,8 +151,8 @@ int main(int argc, char *argv[]) {
 
 	while (1) {
 		int events_num = kqueue.get_events_num();
-		std::cout << "event_num: " << events_num << std::endl;
-        std::cout << "errno: " << errno << std::endl;
+//		std::cout << "event_num: " << events_num << std::endl;
+//        std::cout << "errno: " << errno << std::endl;
 		if (events_num == -1) {
 			perror("kevent");
 			std::exit(1);
@@ -166,14 +166,14 @@ int main(int argc, char *argv[]) {
 			struct kevent* reciver_event = kqueue.get_reciver_event();
 			int event_fd = reciver_event[i].ident;
 			fcntl(event_fd, F_SETFL, O_NONBLOCK);
-			std::cout << "===== loop top =====" << std::endl;
+//			std::cout << "===== main for loop top =====" << std::endl;
 			std::cout << "event_fd(): " << event_fd << std::endl;
 			//std::cout << "size: " << fd_config_map.count(event_fd) << std::endl;
 			if (reciver_event[i].flags & EV_EOF) {
 				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
 				close(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
-				std::cout << "first register" << std::endl;
+//				std::cout << "first register" << std::endl;
 				Client client;
                 struct sockaddr_in client_addr;
                 socklen_t sock_len = sizeof(client_addr);
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
 				acceptfd = accept(event_fd, (struct sockaddr *)&client_addr, &sock_len);
 //				acceptfd = accept(event_fd, NULL, NULL);
 				if (acceptfd == -1) {
-					std::cerr << "Accept socket error" << std::endl;
+					std::cerr << "Accept socket Error" << std::endl;
 					continue;
 				}
 //                printf("accepted connection from %s, port=%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 //                printf("IP printf %x\n", client_addr.sin_addr.s_addr);
 //                std::cout << "ap[0]: " << ap[0] << std::endl;
                 std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
-                std::cout << "IP: " << client_ip << std::endl;
+//                std::cout << "IP: " << client_ip << std::endl;
                 client.set_client_ip(client_ip); // or Have the one after adapting inet_ntoa
                 struct sockaddr_in sin;
                 socklen_t addrlen = sizeof(sin);
@@ -206,6 +206,7 @@ int main(int argc, char *argv[]) {
 				//sleep(5);
 				kqueue.set_event(acceptfd, EVFILT_READ);
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
+                std::cout << "==================READ_EVENT==================" << std::endl;
 				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
@@ -220,14 +221,15 @@ int main(int argc, char *argv[]) {
                 kqueue.disable_event(acceptfd, EVFILT_READ);
 				kqueue.set_event(acceptfd, EVFILT_WRITE);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
-				std::cout << "WRITE!!!!" << std::endl;
+				std::cout << "==================WRITE_EVENT==================" << std::endl;
 				acceptfd = event_fd;
                 HttpRes res = fd_client_map[acceptfd].get_httpRes();
                 write(acceptfd, res.buf.c_str(), res.header_size);
                 write(acceptfd, res.out_buf.c_str(), res.body_size);
-				std::cout << "wait" << std::endl;
+//				std::cout << "wait" << std::endl;
                 kqueue.disable_event(acceptfd, EVFILT_WRITE);
 				fd_client_map.erase(acceptfd);
+				std::cout << "==================WRITE_EVENT END==================" << std::endl;
 			}
 		}
 	}

@@ -21,7 +21,7 @@ Socket& Socket::operator =(const Socket& source) {
 void Socket::set_listenfd() {
 	this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->listenfd == -1) {
-		std::cout << "socket() failed" << std::endl;
+		std::cout << "socket() failed Error" << std::endl;
 		exit(1);
 	}
 }
@@ -42,19 +42,19 @@ int Socket::set_socket() {
 	Socket::set_listenfd();
 	int optval = 1;
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		std::cout << "setsockopt() failed." << std::endl;
+		std::cout << "setsockopt() failed Error" << std::endl;
 		close(listenfd);
 		return -1;
 	}
 
 	Socket::set_serv_addr();
 	if (bind(this->listenfd, (struct sockaddr*)&this->serv_addr, sizeof(this->serv_addr)) == -1) {
-		std::cout << "bind() faild.(" << errno << ")" << std::endl;
+		std::cout << "bind() faild.(" << errno << ") Error" << std::endl;
 		close(this->listenfd);
 		return -1;
 	}
 	if (listen(this->listenfd, SOMAXCONN) ==  -1) {
-		std::cout << "listen() failed" << std::endl;
+		std::cout << "listen() failed Error" << std::endl;
 		close(this->listenfd);
 		return -1;
 	}

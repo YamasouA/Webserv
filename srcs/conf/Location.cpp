@@ -49,10 +49,10 @@ void Location::set_uri(std::string uri)
 void Location::set_methods(std::vector<std::string> methods)
 {
 	this->methods = methods;
-	for (std::vector<std::string>::iterator it = this->methods.begin();
-		it != this->methods.end(); it++) {
-		std::cout << *it << std::endl;
-	}
+//	for (std::vector<std::string>::iterator it = this->methods.begin();
+//		it != this->methods.end(); it++) {
+//		std::cout << *it << std::endl;
+//	}
 }
 
 void Location::set_root(std::string root)
@@ -109,7 +109,7 @@ void Location::set_cgi_ext(std::vector<std::string> tokens) {
 
 void Location::set_error_pages(std::vector<std::string> tokens)
 {
-	std::cout << "tokens: " << tokens[0] << " " << tokens[1] << std::endl;
+//	std::cout << "tokens: " << tokens[0] << " " << tokens[1] << std::endl;
 	// status_codeとpathは必ず存在する
 	if (tokens.size() < 2) {
 		return;
@@ -125,7 +125,7 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;
-		std::cout << "status: " << status_code << std::endl;
+//		std::cout << "status: " << status_code << std::endl;
 		if (ss.fail() || status_code > 999) {
 			continue;
 		}
@@ -222,5 +222,6 @@ std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			for (std::vector<Location>::const_iterator it = tmp2.begin(); it != tmp2.end(); ++it) {
 				stream << *it << " ";
 			}
+            stream << std::endl;
 			return stream;
 }
