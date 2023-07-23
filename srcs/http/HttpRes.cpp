@@ -472,19 +472,21 @@ void HttpRes::diving_through_dir(const std::string& path) {
     }
 }
 
-void HttpRes::dav_delete_path(bool is_dir) {
+int HttpRes::dav_delete_path(bool is_dir) {
     std::cout << "dav_delete_path" << std::endl;
     if (is_dir) {
         std::string dir_path = join_path();
         //std::cout << "dir_path: " << dir_path << std::endl;
         diving_through_dir(dir_path);
         if (status_code == INTERNAL_SERVER_ERROR) {
-            return;
+            return status_code;
         }
-        if (rmdir(dir_path.c_str()) < 0) {
+        if (rmdir(dir_path.c_str()) >= 0) {
 			//std::cout << "delete error" << std::endl;
-			status_code = INTERNAL_SERVER_ERROR;
-            return;
+            status_code = NO_CONTENT;
+            return status_code;
+//			status_code = INTERNAL_SERVER_ERROR;
+//            return status_code;
         }
 
 		// 本当ならディレクトリ配下を確認して問題なければディレクトリを消すべき
@@ -497,13 +499,15 @@ void HttpRes::dav_delete_path(bool is_dir) {
 		if (remove(file_name.c_str()) < 0) {
 			//std::cout << "delete error" << std::endl;
 			status_code = INTERNAL_SERVER_ERROR;
-			return;
+			return status_code;
 		}
-		status_code = OK;
+		status_code = NO_CONTENT;
 	}
+    return status_code;
 }
 
-void HttpRes::dav_delete_handler() {
+//void HttpRes::dav_delete_handler() {
+int HttpRes::dav_delete_handler() {
 	std::cout << "\n\n=====dav delete handler=====" << std::endl;
 	int content_length = httpreq.getContentLength();
 	if (content_length > 0) {
@@ -516,7 +520,7 @@ void HttpRes::dav_delete_handler() {
 	//std::cout << "a" << std::endl;
 	std::string method = httpreq.getMethod();
 	if (method != "DELETE") {
-		return;
+		return DECLINED;
 	}
 
 	std::vector<std::string> allow_methods = target.get_methods();
@@ -524,7 +528,7 @@ void HttpRes::dav_delete_handler() {
 	if (find(allow_methods.begin(), allow_methods.end(), method) == allow_methods.end()) {
 		std::cout << "not allow (conf)" << std::endl;
 		status_code = BAD_REQUEST;
-		return ;
+		return status_code;
 	}
 
 	std::string file_name = join_path();
@@ -532,7 +536,7 @@ void HttpRes::dav_delete_handler() {
     if (stat(file_name.c_str(), &sb) == -1) {
 		std::cout << "Error(stat)" << std::endl;
 		status_code = INTERNAL_SERVER_ERROR;
-		return;
+		return status_code;
 	}
 	if (S_ISDIR(sb.st_mode)) {
 		std::string uri = httpreq.getUri();
@@ -545,7 +549,7 @@ void HttpRes::dav_delete_handler() {
 		depth = dav_depth();
 		if (depth != -1) {
 			status_code = BAD_REQUEST;
-			return;
+			return status_code;
 		}
 		is_dir = true;
         //std::cout << "ok" << std::endl;
@@ -555,11 +559,11 @@ void HttpRes::dav_delete_handler() {
 		//std::cout << "depth: " << depth << std::endl;
 		if (depth != 0 && depth != -1) {
 			status_code = BAD_REQUEST;
-			return;
+			return status_code;
 		}
 		is_dir = false;
 	}
-	dav_delete_path(is_dir);
+	return dav_delete_path(is_dir);
 }
 
 void HttpRes::header_filter() {
@@ -968,7 +972,10 @@ int HttpRes::redirect_handler() {
     // or map<status_code, err_page_content> ?
     // if We create a new file, how do We handle mtime?
 //    std::string err_page_buf = error_pages[status_code];
-    std::string err_page_buf = create_err_page();
+    std::string err_page_buf = std::string();
+    if (status_code >= 300) {
+        err_page_buf = create_err_page();
+    }
     if (err_page_buf.length()) {
         content_length_n = err_page_buf.length();
         content_type = "text/html";
@@ -997,11 +1004,11 @@ void HttpRes::finalize_res(int handler_status)
     if (handler_status == DECLINED || handler_status == OK) {
         return;
     }
-    if ((200 <= status_code && status_code < 207)) {// || err_status > 0) {//except 201, 204 ? //or DONE, OK
+    if ((200 <= status_code && status_code < 207) && status_code != 204) {// || err_status > 0) {//except 201, 204 ? //or DONE, OK
         // handle connection
         return;
     }
-    if (status_code >= 300) {//and 201, 204 ?
+    if (status_code >= 300 || status_code == 204) {//and 201, 204 ?
         // handle around timeer
         //
         std::cout << "status code over 300 case" << std::endl;
@@ -1319,6 +1326,9 @@ void HttpRes::runHandlers() {
     	}
 //  	  std::cout << "run handler i: " << i++ << std::endl;
     	//std::cout << "handler status after static handler: " << handler_status << std::endl;
-		dav_delete_handler();
+		handler_status = dav_delete_handler();
+        if (handler_status != DECLINED) {
+            return finalize_res(handler_status);
+        }
 	}
 }
