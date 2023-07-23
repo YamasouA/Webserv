@@ -12,4 +12,4 @@ out
 **/*.conf
 .devcontainer/devcontainer.json
 *.pl
-*.py
+**/**/*.conf

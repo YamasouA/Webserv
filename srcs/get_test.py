@@ -40,7 +40,6 @@ def response_test(url, expected_status, expected_headers, body_path):
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
-	print(res.headers)
 	try:
 		with open(body_path, 'r', encoding='utf-8') as f:
 			data = f.read()
@@ -55,9 +54,11 @@ def response_test(url, expected_status, expected_headers, body_path):
 
 	print(url + " test done")
 
-def main():
+def GET_test():
 	try:
+		# response_test(uri, expected status_code, expected haders, return file's path)
 		response_test(create_path("/index.html"), 200, SIMPLE_HEADERS, "index.html")
+		response_test(create_path("/"), 200, SIMPLE_HEADERS, "index.html")
 		#response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 	except:
 		traceback.print_exc()
@@ -65,4 +66,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	GET_test()
