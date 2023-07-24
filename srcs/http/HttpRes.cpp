@@ -669,10 +669,10 @@ void HttpRes::header_filter() {
 	buf += "\r\n";
 	if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
 		buf += "Location: " + redirect_path;
+		buf += "\r\n";
 	}
-	buf += "\r\n";
 	// 残りのヘッダー  もしかしたら必要ないかも？ 現状Connection filedなどがダブってしまっているetc...
-	std::map<std::string, std::string> headers = httpreq.getHeaderFields();
+	//std::map<std::string, std::string> headers = httpreq.getHeaderFields();
 //	std::map<std::string, std::string>::iterator it= headers.begin();
 //	for (; it != headers.end(); it++) {
 //		buf += it->first;
@@ -844,7 +844,7 @@ int HttpRes::static_handler() {
 
 //    init_res_body();
 
-    std::ifstream ifs(file_name.c_str());
+    std::ifstream ifs(file_name.c_str(), std::ios::binary);
     if (!ifs) {
         std::cerr << "ifstream ko" << std::endl;
     }

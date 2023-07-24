@@ -14,6 +14,8 @@ def create_path(path):
 
 # レスポンスのヘッダーが正しいかを確認する
 def header_checker(expect_header, res_header, expect_body):
+	print(expect_header)
+	print(res_header)
 	if len(expect_header) != len(res_header):
 		return False
 
@@ -41,11 +43,12 @@ def response_test(url, expected_status, expected_headers, body_path):
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
 	try:
-		with open(body_path, 'r', encoding='utf-8') as f:
+		with open(body_path, 'r', encoding=res.encoding) as f:
 			data = f.read()
 	except FileNotFoundError:
 		data = ""
 
+	print(len(data))
 	assert header_checker(expected_headers, res.headers, data),\
 		"Header Error" + error_text(expected_headers, res.headers)
 
@@ -57,6 +60,7 @@ def response_test(url, expected_status, expected_headers, body_path):
 def GET_test():
 	try:
 		# response_test(uri, expected status_code, expected haders, return file's path)
+		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, "post.html")
 		response_test(create_path("/index.html"), 200, SIMPLE_HEADERS, "index.html")
 		response_test(create_path("/"), 200, SIMPLE_HEADERS, "index.html")
 		#response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
