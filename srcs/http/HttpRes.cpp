@@ -140,8 +140,8 @@ bool HttpRes::isAllowMethod(std::string method) {
 }
 
 std::string HttpRes::join_path() {
-    std::cout << "===== join_path =====" << std::endl;
-	std::cout << "location: " <<  location << std::endl;
+//    std::cout << "===== join_path =====" << std::endl;
+//	std::cout << "location: " <<  location << std::endl;
 	std::string path_root = target.get_root();
 	std::string config_path  = target.get_uri();
 	std::string file_path = httpreq.getUri().substr(config_path.length());
@@ -150,10 +150,9 @@ std::string HttpRes::join_path() {
 		/User/root/path/ /config/location/ /file_path.html
 		path_root         config_path     file_path
 	*/
-	std::cout << "root: " << path_root << std::endl;
-	std::cout << "config: " << config_path << std::endl;
-    std::cout << "ok" << std::endl;
-	std::cout << "file: " << file_path << std::endl;
+//	std::cout << "root: " << path_root << std::endl;
+//	std::cout << "config: " << config_path << std::endl;
+//	std::cout << "file: " << file_path << std::endl;
 	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
 	    if (config_path == "/") {
@@ -179,7 +178,7 @@ std::string HttpRes::join_path() {
 	}
 	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cout << "join_path: " << path_root + config_path + file_path << std::endl;
-    std::cout << "===== End join_path =====" << std::endl;
+//    std::cout << "===== End join_path =====" << std::endl;
 	return path_root + config_path + file_path;
 }
 
@@ -301,6 +300,7 @@ void HttpRes::set_content_type() {
 		ext = uri.substr(dot_pos + 1);
 		if (ext.length() == 0) {
 			std::cerr << "Error dot" << std::endl;
+            abort();
 		}
 	}
 	for (size_t i = 0; i < ext.length(); i++) {
@@ -327,7 +327,7 @@ void HttpRes::set_content_type() {
 void HttpRes::ev_queue_insert() {
 	//connection.set_event(fd, EVFILT_WRITE);
 	connection->set_event(fd, EVFILT_WRITE);
-    std::cout << "send event!!!!!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "==================send write event==================" << std::endl;
 }
 
 void HttpRes::post_event() {
@@ -335,7 +335,7 @@ void HttpRes::post_event() {
         is_posted = 1;
         ev_queue_insert();
     }
-    std::cout << "posted event" << std::endl;
+//    std::cout << "posted event" << std::endl;
 }
 
 std::map<int, std::string> create_status_msg(){
@@ -413,7 +413,7 @@ void HttpRes::diving_through_dir(const std::string& path) {
             // read directory end
             }
             if (closedir(dir_info.dir) == -1) {
-                std::cerr << "closedir error" << std::endl;
+                std::cerr << "closedir Error" << std::endl;
             }
             return;
               // done handle
@@ -436,10 +436,10 @@ void HttpRes::diving_through_dir(const std::string& path) {
         }
         if ((S_ISREG(dir_info.d_info.st_mode))) {
             if (remove(abs_path.c_str()) < 0) {
-                std::cerr << "remove error" << std::endl;
+                std::cerr << "remove Error" << std::endl;
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir error" << std::endl;
+                    std::cerr << "closedir Error" << std::endl;
                 }
                 return;
             }
@@ -447,24 +447,24 @@ void HttpRes::diving_through_dir(const std::string& path) {
             diving_through_dir(abs_path);
             if (status_code == INTERNAL_SERVER_ERROR) {
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir error" << std::endl;
+                    std::cerr << "closedir Error" << std::endl;
                 }
                 return;
             }
             if (rmdir(abs_path.c_str()) < 0) {
-                std::cerr << "rmdir error" << std::endl;
+                std::cerr << "rmdir Error" << std::endl;
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir error" << std::endl;
+                    std::cerr << "closedir Error" << std::endl;
                 }
                 return;
             }
         } else {
             if (remove(abs_path.c_str()) < 0) {
-                std::cerr << "remove error" << std::endl;
+                std::cerr << "remove Error" << std::endl;
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir error" << std::endl;
+                    std::cerr << "closedir Error" << std::endl;
                 }
                 return;
             }
@@ -473,7 +473,7 @@ void HttpRes::diving_through_dir(const std::string& path) {
 }
 
 void HttpRes::dav_delete_path(bool is_dir) {
-    std::cout << "dav_delete_path" << std::endl;
+//    std::cout << "dav_delete_path" << std::endl;
     if (is_dir) {
         std::string dir_path = join_path();
         //std::cout << "dir_path: " << dir_path << std::endl;
@@ -504,7 +504,7 @@ void HttpRes::dav_delete_path(bool is_dir) {
 }
 
 void HttpRes::dav_delete_handler() {
-	std::cout << "\n\n=====dav delete handler=====" << std::endl;
+	std::cout << "====================dav delete handler====================" << std::endl;
 	int content_length = httpreq.getContentLength();
 	if (content_length > 0) {
 		status_code = UNSUPPORTED_MEDIA_TYPE;
@@ -684,7 +684,8 @@ void HttpRes::header_filter() {
 	header_size = buf.size();
 
 	//
-	std::cout << "here" << buf << std::endl;
+    std::cout << "response Header: " << std::endl;
+	std::cout << buf << std::endl;
     post_event();
 	//write_filter();
 }
@@ -698,7 +699,7 @@ void HttpRes::sendHeader() {
 }
 
 int HttpRes::static_handler() {
-	std::cout << "===== static_handler =====" << std::endl;
+	std::cout << "================== static_handler ==================" << std::endl;
 	std::string uri = httpreq.getUri();
 	target = get_uri2location(uri);
     //std::cout << "macth loc: " << target << std::endl;
@@ -730,15 +731,15 @@ int HttpRes::static_handler() {
 	int _fd = -1;
 	std::string file_name = join_path();
 	//file_name = "index.html";
-    std::cout << "file_name: " << file_name << std::endl;
-	std::cout << "method: " << method << std::endl;
+//    std::cout << "file_name: " << file_name << std::endl;
+//	std::cout << "method: " << method << std::endl;
     struct stat sb;
     status_code = 200;
     if (method == "GET") {
         _fd = open(file_name.c_str(), O_RDONLY);
-		std::cout << "RES GET fd: " << _fd << std::endl;
+//		std::cout << "RES GET fd: " << _fd << std::endl;
         if (_fd == -1) {
-            std::cerr << "open error" << std::endl;
+            std::cerr << "open Error" << std::endl;
             if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
                 if (target.get_is_autoindex() && uri[uri.length() - 1] == '/') {
 //                } else if (!target.get_index().length() && target.get_is_autoindex()) {
@@ -763,6 +764,7 @@ int HttpRes::static_handler() {
         // stat がエラーだったとき
         if (stat(file_name.c_str(), &sb) == -1) {
             std::cout << "GET Error(stat)" << std::endl;
+            abort();
         }
         // ディレクトリだった時
         if (S_ISDIR(sb.st_mode)) {
@@ -790,7 +792,7 @@ int HttpRes::static_handler() {
 			// ファイルが存在しない
 			if (errno != ENOENT) {
 				close(_fd);
-                std::cerr << "stat error" << std::endl;
+                std::cerr << "stat Error" << std::endl;
                 return INTERNAL_SERVER_ERROR;
 				// throw error
 			}
@@ -810,7 +812,7 @@ int HttpRes::static_handler() {
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
         if (!S_ISREG(sb.st_mode) && status_code != 201) {
-			std::cerr << "stat error" << std::endl;
+			std::cerr << "stat Error" << std::endl;
 			close(_fd);
         	return INTERNAL_SERVER_ERROR;
 			/*
@@ -827,11 +829,11 @@ int HttpRes::static_handler() {
 			//file_name = "sinki.html";
 			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
 			if (_fd == -1) {
-                std::cerr << "POST open error" << std::endl;
+                std::cerr << "POST open Error" << std::endl;
                 return INTERNAL_SERVER_ERROR;
 			}
 			std::string body = httpreq.getContentBody().c_str();
-			std::cout << "POST body: \n" << body << std::endl;
+//			std::cout << "POST body: \n" << body << std::endl;
 			write(_fd, body.c_str(), body.size());
 		}
     }
@@ -839,7 +841,7 @@ int HttpRes::static_handler() {
     //discoard request body here ?
 	set_content_type();
     //set_etag(); //necessary?
-    std::cout << "just before sendHeader" << std::endl;
+//    std::cout << "just before sendHeader" << std::endl;
     sendHeader();
 
 //    init_res_body();
@@ -847,14 +849,16 @@ int HttpRes::static_handler() {
     std::ifstream ifs(file_name.c_str());
     if (!ifs) {
         std::cerr << "ifstream ko" << std::endl;
+        abort();
     }
     std::ostringstream oss;
     oss << ifs.rdbuf();
     out_buf = oss.str();
 	//buf += out_buf;
-    std::cout << "body: " << out_buf << std::endl;
+    std::cout << "response body: " << std::endl;
+    std::cout << out_buf << std::endl;
     body_size = content_length_n;
-	std::cout << "===== End static_handler =====" << std::endl;
+//	std::cout << "===== End static_handler =====" << std::endl;
     return OK;
 //    output_filter();
 }
@@ -884,7 +888,7 @@ std::string HttpRes::create_err_page() {
 // handle return derective ??? or handle only error_page directive ?
 int HttpRes::send_error_page() {
     std::string path = target.get_error_page(status_code);
-    std::cout << "error_page_path: " << path << std::endl;
+//    std::cout << "error_page_path: " << path << std::endl;
     if (path[0] == '/') {
         std::string method = httpreq.getMethod();
         if (method != "HEAD") { //we non-supported HEAD
@@ -922,7 +926,7 @@ int HttpRes::send_error_page() {
 }
 
 int HttpRes::redirect_handler() {
-    std::cout << "===== redirect_handler =====" << std::endl;
+    std::cout << "================== redirect_handler ==================" << std::endl;
     err_status = status_code;
     switch (status_code) {
         case BAD_REQUEST:
@@ -940,7 +944,7 @@ int HttpRes::redirect_handler() {
 //    if (have_error_pages == 1) {// have err_page directive
          //err_pages = from conf
 //         for (size_t i = 0; i < err_pages_num; ++i) {
-    std::cout << "=========check error_page============: " << target.get_error_page(status_code) << std::endl;
+//    std::cout << "=========check error_page============: " << target.get_error_page(status_code) << std::endl;
     if (target.get_error_page(status_code) != "") {
         return send_error_page();
     }
@@ -980,7 +984,7 @@ int HttpRes::redirect_handler() {
 //  clear last_modified
     last_modified_time = -1;
 //  clear etag
-    std::cout << "====ok====" << std::endl;
+//    std::cout << "====ok====" << std::endl;
     sendHeader();
 //    if err || only_header
 //        return
@@ -993,7 +997,7 @@ int HttpRes::redirect_handler() {
 
 void HttpRes::finalize_res(int handler_status)
 {
-	std::cout << "===== finalize_res =====" << std::endl;
+	std::cout << "================== finalize_res ==================" << std::endl;
     if (handler_status == DECLINED || handler_status == OK) {
         return;
     }
@@ -1004,18 +1008,18 @@ void HttpRes::finalize_res(int handler_status)
     if (status_code >= 300) {//and 201, 204 ?
         // handle around timeer
         //
-        std::cout << "status code over 300 case" << std::endl;
+//        std::cout << "status code over 300 case" << std::endl;
         redirect_handler(); //recurcive finalize_res is better?
         return;
     }
 }
 
 int HttpRes::return_redirect() {
-	std::cout << "===== redirect =====" << std::endl;
+	std::cout << "================== return redirect ==================" << std::endl;
 	std::string uri = httpreq.getUri();
 	Location loc = get_uri2location(uri);
 	std::string ret = loc.get_return();
-	std::cout << "return: " << ret << std::endl;
+//	std::cout << "return: " << ret << std::endl;
 	if (ret == "")
 		return DECLINED;
 	std::vector<std::string> elms;
@@ -1029,14 +1033,14 @@ int HttpRes::return_redirect() {
 	}
 	std::stringstream ss(elms[0]);
 	ss >> status_code;
-	std::cout << "status: " << status_code << std::endl;
+//	std::cout << "status: " << status_code << std::endl;
 	std::string path;
 	// 1引数目が数値じゃない場合(URIが入ってる)
 	if (ss.fail()) {
 		// URLのスキームが正常か？
 		//if (uri.startswith("http://") || uri.startswith("https://")) {
 		path = elms[0];
-		std::cout << "path(bef): " << path << std::endl;
+//		std::cout << "path(bef): " << path << std::endl;
 		if (!path.compare(0, 7, "http://") || !path.compare(0, 8, "https://")) {
 			status_code = MOVED_TEMPORARILY;
 //            return status_code;
@@ -1058,7 +1062,7 @@ int HttpRes::return_redirect() {
 		}
 		path = elms[1];
 	}
-	std::cout << "path(aft): " << path << std::endl;
+//	std::cout << "path(aft): " << path << std::endl;
 	redirect_path = path;
     // needs path with support status_code
 	// compile_complex_valueは$の展開をしてそう
@@ -1117,7 +1121,7 @@ std::string HttpRes::create_auto_index_html(std::map<std::string, dir_t> index_o
 
 
 std::string HttpRes::join_path_autoindex() {
-    std::cout << "===== join_path =====" << std::endl;
+//    std::cout << "===== join_path =====" << std::endl;
 	std::string path_root = target.get_root();
 	std::string config_path  = target.get_uri();
 	std::string file_path = httpreq.getUri().substr(config_path.length());
@@ -1140,19 +1144,19 @@ std::string HttpRes::join_path_autoindex() {
 			file_path = file_path.substr(1);
         }
 	}
-	std::cout << "join_path: " << path_root + config_path + file_path << std::endl;
-    std::cout << "===== End join_path =====" << std::endl;
+	std::cout << "auto index join_path: " << path_root + config_path + file_path << std::endl;
+//    std::cout << "===== End join_path =====" << std::endl;
 	return path_root + config_path + file_path;
 }
 
 
 int HttpRes::auto_index_handler() {
-    std::cout << "===== auto_index_handler =====" << std::endl;
-    std::cout << "keep-alive: " << httpreq.getKeepAlive() << std::endl;
+    std::cout << "================== auto_index_handler ==================" << std::endl;
+//    std::cout << "keep-alive: " << httpreq.getKeepAlive() << std::endl;
     std::string req_uri = httpreq.getUri();
     target = get_uri2location(req_uri);
     if (req_uri[req_uri.length() - 1] != '/' || !(target.get_is_autoindex())) {
-        std::cout << "ko" << std::endl;
+//        std::cout << "ko" << std::endl;
         return DECLINED;
     }
 	std::string method = httpreq.getMethod();
@@ -1170,11 +1174,11 @@ int HttpRes::auto_index_handler() {
 
 //    std::string dir_path = join_path();
     std::string dir_path = join_path_autoindex();
-    std::cout << "dir_path: " << dir_path << std::endl;
+//    std::cout << "dir_path: " << dir_path << std::endl;
     if (dir_path[dir_path.length() - 1] == '/') {
         dir_path = dir_path.substr(0, dir_path.length() - 1);
     }
-    std::cout << "dir_path: " << dir_path.c_str() << std::endl;
+//    std::cout << "dir_path: " << dir_path.c_str() << std::endl;
     dir_t dir_info;
     dir_info.dir = opendir(dir_path.c_str());
     if (dir_info.dir == NULL) {
@@ -1185,7 +1189,7 @@ int HttpRes::auto_index_handler() {
            std::cout << "FORBIDDEN" << std::endl;
            return FORBIDDEN;
        }
-       std::cout << "errno: " << errno << std::endl;
+//       std::cout << "errno: " << errno << std::endl;
        std::cout << "INTERNAL_SERVER_ERROR" << std::endl;
        return INTERNAL_SERVER_ERROR;
     }
@@ -1225,18 +1229,18 @@ int HttpRes::auto_index_handler() {
         index_of[file_name] = dir_info;
     }
     if (closedir(dir_info.dir) == -1) {
-        std::cerr << "closedir error" << std::endl;
+        std::cerr << "closedir Error" << std::endl;
     }
     out_buf = create_auto_index_html(index_of);
     body_size = out_buf.length();
-    std::cout << "auot_index_html: " << out_buf << std::endl;
+//    std::cout << "auot_index_html: " << out_buf << std::endl;
     return OK;
 
 }
 
 bool HttpRes::is_cgi() {
 	Location location = get_uri2location(httpreq.getUri()); //req uri?
-    std::cout << "Location: " << location << std::endl;
+//    std::cout << "Location: " << location << std::endl;
 //    std::cout << "loc cgi: " << location.get_cgi_ext() << std::endl;
 //	if (location.get_cgi_path() != "") {
     std::vector<std::string> vec = location.get_cgi_ext();
@@ -1253,7 +1257,7 @@ bool HttpRes::is_cgi() {
 //	if (vec[0] != "") {
 		return true;
 	}*/
-    std::cout << "=== no cgi ===" << std::endl;
+//    std::cout << "=== no cgi ===" << std::endl;
 	return false;
 }
 
@@ -1261,13 +1265,13 @@ bool HttpRes::is_cgi() {
 void HttpRes::runHandlers() {
 	int handler_status = 0;
 	if (is_cgi()) {
-        std::cout << "=== cgi ===" << std::endl;
+        std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
         handler_status = cgi.parse_cgi_response();
-		std::cout << "resType: " << cgi.getResType() << std::endl;
+//		std::cout << "resType: " << cgi.getResType() << std::endl;
         if (cgi.getResType() == DOCUMENT) {
             status_code = handler_status;
             cgi.getHeaderFields().erase("Status");
@@ -1285,7 +1289,7 @@ void HttpRes::runHandlers() {
             return finalize_res(status_code);
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
 			if (httpreq.isRedirectLimit()) {
-				std::cerr << "cnt" << std::endl;
+//				std::cerr << "cnt" << std::endl;
                 status_code = 500;
                 return finalize_res(status_code);
 			}
@@ -1309,12 +1313,12 @@ void HttpRes::runHandlers() {
 		}
     	handler_status = static_handler();
     	if (handler_status != DECLINED) {
-    	    std::cout << "in finalize" << std::endl;
+//    	    std::cout << "in finalize" << std::endl;
     	    return finalize_res(handler_status);
     	}
     	handler_status = auto_index_handler();
     	if (handler_status != DECLINED) {
-    	    std::cout << "in finalize" << std::endl;
+//    	    std::cout << "in finalize" << std::endl;
     	    return finalize_res(handler_status);
     	}
 //  	  std::cout << "run handler i: " << i++ << std::endl;

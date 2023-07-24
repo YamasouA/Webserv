@@ -47,37 +47,37 @@ Kqueue::~Kqueue() {
 
 void Kqueue::set_event(int fd, short ev_filter) {
 	if (ev_filter == EVFILT_READ) {
-		std::cout << "READ register" << std::endl;
+//		std::cout << "READ register" << std::endl;
 	}
 	if (ev_filter == EVFILT_WRITE) {
-		std::cout << "register fd: " << fd << std::endl;
-		std::cout << "WRITE register" << std::endl;
+//		std::cout << "register fd: " << fd << std::endl;
+//		std::cout << "WRITE register" << std::endl;
 	}
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	changes.push_back(register_event);
 	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
 		std::cout << errno << std::endl;
-		perror("kevent error(register)");
+		perror("kevent Error(register)");
     }
 	//std::cout << "REGISTER: changes.size(): " << changes.size() << std::endl;
 }
 
 void Kqueue::disable_event(int fd, short ev_filter) {
 	if (ev_filter == EVFILT_READ) {
-		std::cout << "READ delete" << std::endl;
+//		std::cout << "READ delete" << std::endl;
 	}
 	if (ev_filter == EVFILT_WRITE) {
-		std::cout << "WRITE delete" << std::endl;
+//		std::cout << "WRITE delete" << std::endl;
 	}
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_DELETE, 0, 0, NULL);
 	changes.push_back(register_event);
 	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
-		perror("kevent error(in disable)");
+		perror("kevent Error(in disable)");
     }
 	if (ev_filter == EVFILT_WRITE) {
-		std::cout << "close" << std::endl;
+		std::cout << "close in disable_event" << std::endl;
 		close(fd);
 	}
 	//std::cout << "REGISTER: changes.size(): " << changes.size() << std::endl;
