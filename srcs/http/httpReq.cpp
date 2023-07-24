@@ -167,7 +167,7 @@ bool httpReq::isSpace(char c) {
 void httpReq::expect(char c)
 {
     if (buf[idx] != c) {
-        std::cerr << "no expected " << c << std::endl;
+        std::cerr << "no expected Error" << c << std::endl;
     }
     ++idx;
 }
@@ -186,7 +186,7 @@ std::string httpReq::getToken(char delimiter)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax error in getToken");
+		throw SyntaxException("syntax Error in getToken");
 	}
 	expect(delimiter);
     if (token.find(' ') != std::string::npos) {
@@ -217,7 +217,7 @@ std::string httpReq::getToken_to_eol() {
 void httpReq::parseChunk() {
 	int chunkSize;
 
-    std::cout << "===parse chunk===" << buf << std::endl;
+    std::cout << "==================parse chunk==================" << buf << std::endl;
     std::string tmp = getToken_to_eol();
     if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
         std::cerr << "400 Bad request" << std::endl;
@@ -226,21 +226,21 @@ void httpReq::parseChunk() {
 	std::stringstream(tmp) >> std::hex >> chunkSize;
     std::cout << "size: " << chunkSize << std::endl;
 	while (chunkSize > 0) {
-        std::cout << "=========ok============" << std::endl;
+//        std::cout << "=========ok============" << std::endl;
 		content_body += buf.substr(idx, chunkSize);
-        std::cout << "body: " << content_body << std::endl;
-        std::cout << "=========ok1============" << std::endl;
+//        std::cout << "body: " << content_body << std::endl;
+//        std::cout << "=========ok1============" << std::endl;
 		idx += chunkSize;
         checkHeaderEnd();
 		content_length += chunkSize;
-        std::cout << "current: " << buf[idx] << std::endl;
+//        std::cout << "current: " << buf[idx] << std::endl;
         tmp = getToken_to_eol();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
             return;
         }
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
-        std::cout << "size:" << chunkSize << std::endl;
+//        std::cout << "size:" << chunkSize << std::endl;
 	}
 	// discard trailer fields
 	getToken_to_eof();
@@ -280,7 +280,7 @@ void httpReq::parse_scheme() {
         uri = uri.substr(5);
 //        scheme = HTTP;
 	} else {
-        std::cerr << "invalid scheme" << std::endl;
+        std::cerr << "invalid scheme Error" << std::endl;
 	}
 }
 
@@ -297,7 +297,7 @@ void httpReq::parse_host_port() {
         }
     }
     if (host.length() <= 0) {
-        std::cerr << "invalid host" << std::endl;
+        std::cerr << "invalid host Error" << std::endl;
     }
     if (uri[i] == ':') {
         path_pos = uri.find('/');
@@ -309,7 +309,7 @@ void httpReq::parse_host_port() {
             int port_num;
             ss >> port_num;
 			if (port_num < 0 || 65535 < port_num) {
-        	    std::cerr << "invalid port" << std::endl;
+        	    std::cerr << "invalid port Error" << std::endl;
         	}
         }
     }
@@ -340,26 +340,26 @@ void httpReq::absurl_parse() {
 
 void httpReq::fix_up() {
 	if (header_fields.count("host") != 1) {
-		std::cerr << "status " << std::endl;
+		std::cerr << "no host Error" << std::endl;
 	}
 
 	if (header_fields.count("connection") != 1) {
-		std::cerr << "status " << std::endl;
+		std::cerr << "no connection Error" << std::endl;
 	}
     if (header_fields["connection"] == "keep-alive") {
         keep_alive = 1;
     } else {
         keep_alive = 0;
     }
-	if (header_fields.count("content_length") != 1) {
-		std::cerr << "status " << std::endl;
+	if (header_fields.count("content-length") != 1) {
+		std::cerr << "no content-length " << std::endl;
 	}
-	std::string content_length_s = header_fields["content_length"];
+	std::string content_length_s = header_fields["content-length"];
     std::stringstream ss(content_length_s);
     ss >> content_length;
 
 	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
-		std::cerr << "status " << std::endl;
+		std::cerr << "501(Not Implement) " << std::endl;
 	}
 	if (uri.length() != 0 && uri[0] != '/') {
 		absurl_parse();
@@ -385,7 +385,7 @@ void httpReq::parseReqLine()
     version = buf.substr(idx, 8);
     idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
-        std::cerr << "version error" << std::endl;
+        std::cerr << "version Error" << std::endl;
     }
     if (buf[idx] == '\015') {
         ++idx;
@@ -467,7 +467,7 @@ void httpReq::checkFieldsValue() {
 void httpReq::parseRequest()
 {
    parseReqLine();
-   std::cout << "req line ok" << std::endl;
+//   std::cout << "req line ok" << std::endl;
     while (idx < buf.size()) {
         if (checkHeaderEnd()) {
             break;
