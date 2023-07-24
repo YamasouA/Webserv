@@ -740,10 +740,10 @@ int HttpRes::static_handler() {
         if (_fd == -1) {
             std::cerr << "open error" << std::endl;
             if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                if (target.get_is_autoindex()) {
+                if (target.get_is_autoindex() && uri[uri.length() - 1] == '/') {
 //                } else if (!target.get_index().length() && target.get_is_autoindex()) {
                     return DECLINED;
-                } else if (target.get_index().length() > 0) {
+                } else if (target.get_index().length() > 0 && uri[uri.length() - 1] == '/') {
                     std::cout << "FORBIDDEN" << std::endl;
                     status_code = FORBIDDEN;
                     return FORBIDDEN;
