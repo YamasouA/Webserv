@@ -121,9 +121,12 @@ class HttpRes {
         void sendHeader();
         Location get_uri2location(std::string uri) const;
 
-		void dav_delete_handler();
-		void dav_delete_path(bool is_dir);
+//		void dav_delete_handler();
+//		void dav_delete_path(bool is_dir);
+		int dav_delete_handler();
+		int dav_delete_path(bool is_dir);
 		int dav_depth();
+        int delete_error();
         std::string join_dir_path(const std::string& dir_path, const std::string& elem_name);
         void diving_through_dir(const std::string& path);
         void finalize_res(int handler_status);
