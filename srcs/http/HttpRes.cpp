@@ -472,6 +472,16 @@ void HttpRes::diving_through_dir(const std::string& path) {
     }
 }
 
+int HttpRes::delete_error() {
+    if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+        return NOT_FOUND;
+    } else if (errno == EACCES || errno == EPERM) {
+        return FORBIDDEN;
+    } else {
+        return INTERNAL_SERVER_ERROR;
+    }
+}
+
 int HttpRes::dav_delete_path(bool is_dir) {
     std::cout << "dav_delete_path" << std::endl;
     if (is_dir) {
@@ -491,19 +501,20 @@ int HttpRes::dav_delete_path(bool is_dir) {
 
 		// 本当ならディレクトリ配下を確認して問題なければディレクトリを消すべき
 		// めんどいからディレクトリの削除を行わせない？
-		status_code = BAD_REQUEST;
+//		status_code = -1;
 	} else {
 		std::string file_name = join_path();
 		//file_name = "hogehoge.txt";
 		//std::cout << "delete!!" << std::endl;
-		if (remove(file_name.c_str()) < 0) {
+		if (remove(file_name.c_str()) >= 0) {
 			//std::cout << "delete error" << std::endl;
-			status_code = INTERNAL_SERVER_ERROR;
+		    status_code = NO_CONTENT;
 			return status_code;
 		}
-		status_code = NO_CONTENT;
+//        status
 	}
-    return status_code;
+    return delete_error();
+//    return status_code;
 }
 
 //void HttpRes::dav_delete_handler() {
