@@ -62,6 +62,7 @@ class httpReq {
         int keep_alive;
 
 		void trim(std::string& str);
+        void skipEmptyLines();
 		void skipSpace();
 		void expect(char c);
 		std::string getToken(char delimiter);

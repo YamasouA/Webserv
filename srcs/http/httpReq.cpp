@@ -354,6 +354,9 @@ void httpReq::fix_up() {
 	if (header_fields.count("content-length") != 1) {
 		std::cerr << "no content-length " << std::endl;
 	}
+    if (header_fields.count("content-length") >= 1 && header_fields.count("transfer-encoding") >= 1) {
+        std::cerr << "400 (Bad Request)" << std::endl;
+    }
 	std::string content_length_s = header_fields["content-length"];
     std::stringstream ss(content_length_s);
     ss >> content_length;
@@ -464,9 +467,30 @@ void httpReq::checkFieldsValue() {
 //    }
 //}
 
+void httpReq::skipEmptyLines() {
+    while (1) {
+        if (buf[idx] != ' ' && buf[idx] != '\t') {
+            break;
+        }
+        skipSpace();
+		if (buf[idx] == '\015') {
+			if (buf[idx+1] == '\012') {
+				idx += 2;
+                continue;
+			}
+		} else if (buf[idx] == '\012') {
+			idx++;
+			continue;
+		} else {
+            std::cerr << "400 (Bad Request)" << std::endl;
+        }
+    }
+}
+
 void httpReq::parseRequest()
 {
-   parseReqLine();
+    skipEmptyLines();
+    parseReqLine();
 //   std::cout << "req line ok" << std::endl;
     while (idx < buf.size()) {
         if (checkHeaderEnd()) {

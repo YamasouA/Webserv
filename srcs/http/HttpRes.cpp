@@ -728,7 +728,8 @@ int HttpRes::static_handler() {
 	//std::cout << "allow_methods: " << std::endl;
 	if (find(allow_methods.begin(), allow_methods.end(), method) == allow_methods.end()) {
 		//std::cout << "not allow (conf)" << std::endl;
-		status_code = BAD_REQUEST;
+//		status_code = BAD_REQUEST;
+        status_code = NOT_ALLOWED;
 		return DECLINED;
 	}
 
@@ -1185,7 +1186,8 @@ int HttpRes::auto_index_handler() {
 
 	std::vector<std::string> allow_methods = target.get_methods();
 	if (find(allow_methods.begin(), allow_methods.end(), method) == allow_methods.end()) {
-		status_code = BAD_REQUEST; // or NOT_ALLOWED
+//		status_code = BAD_REQUEST; // or NOT_ALLOWED
+        status_code = NOT_ALLOWED;
 		return DECLINED;
 	}
     // discard req body
