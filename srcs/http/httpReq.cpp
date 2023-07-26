@@ -351,11 +351,15 @@ void httpReq::fix_up() {
     } else {
         keep_alive = 0;
     }
-	if (header_fields.count("content-length") != 1) {
+	if (header_fields.count("content-length") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
+        std::cerr << "411(Length Required)" << std::endl;
 	}
     if (header_fields.count("content-length") >= 1 && header_fields.count("transfer-encoding") >= 1) {
         std::cerr << "400 (Bad Request)" << std::endl;
+    }
+    if (header_fields.count("trailer-encoding") == 1 && header_fields["trailer-encoding"] != "chunked") {
+            std::cerr << "501(Not Implement)" << std::endl;
     }
 	std::string content_length_s = header_fields["content-length"];
     std::stringstream ss(content_length_s);
