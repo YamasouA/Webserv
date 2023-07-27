@@ -93,6 +93,9 @@ Location HttpRes::get_uri2location(std::string uri) const
             //std::cout << "ok1" << std::endl;
 			return loc->second;
 		}
+        if (path == "/") {
+            break;
+        }
 
 //		if (uri2location.count(path) == 1)
 //			return uri2location[path];
@@ -101,7 +104,9 @@ Location HttpRes::get_uri2location(std::string uri) const
 
 	//std::cout << "break" << std::endl;
 	// 何もマッチしなかった場合の挙動イズなに？
-	return loc->second;
+    Location no_match_loc;
+    return no_match_loc;
+//	return loc->second;
 }
 
 
