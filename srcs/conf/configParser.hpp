@@ -22,6 +22,9 @@ class configParser {
 		void expect(char c);
 		std::vector<virtualServer> get_serve_confs()const;
 		Location get_uri2location(std::string uri) const;
+		void fixUp();
+		void checkServer();
+		void checkLocation();
 	private:
 //		std::map<std::string> directive_map; //neccesary?
 		std::string buf;
@@ -55,6 +58,14 @@ class configParser {
 				std::string msg;
 		};
 		//
+		class ConfigValueException: public std::exception {
+			public:
+				explicit ConfigValueException(const std::string& what_arg);
+				~ConfigValueException() throw();
+				virtual const char* what() const throw(); // throw() = noexcept
+			private:
+				std::string msg;
+		};
 };
 
 //static std::vector<std::string> methodsSplit(std::string strs, char delimi);

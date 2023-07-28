@@ -344,11 +344,45 @@ void configParser::expect(char c)
 	++idx;
 }
 
+void configParser::checkLocation() {
+	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
+	for (; v_it != serve_confs.end(); v_it++) {
+		std::vector<Location> locations = v_it->get_locations();
+		if (locations.size() == 0) {
+			throw new ConfigValueException("virtualServer derective should have more than 1 Location derective");
+		}
+		std::vector<Location>::iterator l_it = locations.begin();
+		for (; l_it != locations.end(); l_it++) {
+			if (l_it->get_uri() == "") {
+				throw new ConfigValueException("Location derective should have path");
+			}
+		}
+	}
+}
+
+void configParser::checkServer() {
+	if (serve_confs.size() == 0) {
+		throw new ConfigValueException("http derective should have more than 1 virtualServer derective");
+	}
+	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
+	for (; v_it != serve_confs.end(); v_it++) {
+		if (v_it->get_listen() == 0) {
+			throw new ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+		}
+		if (v_it->get_server_name() == "") {
+			throw new ConfigValueException("virtualServer derective should have servername");
+		}
+	}
+}
+
+void configParser::fixUp() {
+	checkServer();
+	checkLocation();
+}
+
 void configParser::parseConf()
 {
 	std::string directive;
-	//std::string value;
-	//size_t i = 0;
 
 	directive = getToken('{');
 	if (directive != "http") {
@@ -366,17 +400,9 @@ void configParser::parseConf()
 			std::exit(1);
 		}
 		skip(); // 空白などの読み飛ばし
-//		expect('{'); // 必須文字
-		//virtualServer virtual_server = parseServe();
-		//serve_confs.push_back(virtual_server);
 		serve_confs.push_back(parseServe());
-		//std::cout << "size: " << serve_confs.size() << std::endl;
-		//std::cout << "server conf[" << i << "]" << std::endl;
-		//std::cout << serve_confs[i] << std::endl;
-		//std::cout << virtual_server << std::endl;
-		//parseServe(i);
-	//	i++;
 	}
+	fixUp();
 }
 
 configParser::SyntaxException::SyntaxException(const std::string& what_arg)
@@ -393,12 +419,24 @@ configParser::DupulicateException::DupulicateException(const std::string& what_a
 configParser::DupulicateException::~DupulicateException() throw()
 {}
 
+configParser::ConfigValueException::ConfigValueException(const std::string& what_arg)
+:msg(what_arg)
+{}
+
+configParser::ConfigValueException::~ConfigValueException() throw()
+{}
+
 const char* configParser::SyntaxException::what(void) const throw() //noexcept c++11~
 {
 	return msg.c_str();
 }
 
 const char* configParser::DupulicateException::what(void) const throw() //noexcept c++11~
+{
+	return msg.c_str();
+}
+
+const char* configParser::ConfigValueException::what(void) const throw() //noexcept c++11~
 {
 	return msg.c_str();
 }
