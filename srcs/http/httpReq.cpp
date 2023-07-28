@@ -7,7 +7,8 @@ httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
     redirect_cnt(0),
-    keep_alive(0)
+    keep_alive(0),
+    err_status(0)
 {}
 
 httpReq::httpReq(const httpReq& src)
@@ -21,7 +22,8 @@ httpReq::httpReq(const httpReq& src)
     cgi_envs(src.get_meta_variables()),
     content_body(src.getContentBody()),
 	parse_error(false),
-    keep_alive(src.getKeepAlive())
+    keep_alive(src.getKeepAlive()),
+    err_status(src.getErrStatus())
 {
     (void)src;
 }
@@ -41,6 +43,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->keep_alive = rhs.getKeepAlive();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
+    this->err_status = rhs.getErrStatus();
     return *this;
 }
 
@@ -79,6 +82,10 @@ void httpReq::setContentBody(const std::string& token)
 void httpReq::setHeaderField(const std::string& name, const std::string value)
 {
     this->header_fields.insert(std::make_pair(name, value));
+}
+
+void httpReq::setErrStatus(int err_status) {
+    this->err_status = err_status;
 }
 
 std::string httpReq::getClientIP() const {
@@ -130,6 +137,10 @@ int httpReq::getKeepAlive() const
 
 int httpReq::getRedirectCnt() const {
     return this->redirect_cnt;
+}
+
+int httpReq::getErrStatus() const {
+    return this->err_status;
 }
 
 bool httpReq::isRedirectLimit() {

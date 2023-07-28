@@ -25,6 +25,7 @@ class httpReq {
         void setContentBody(const std::string&);
 		void setHeaderField(const std::string& name, const std::string value);
         void set_meta_variables(Location loc);
+        void setErrStatus(int err_status);
 
         std::string getClientIP() const;
         int getPort() const;
@@ -37,6 +38,7 @@ class httpReq {
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
+        int getErrStatus() const;
 		void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
@@ -60,6 +62,8 @@ class httpReq {
         std::string content_body;
 		bool parse_error;
         int keep_alive;
+
+        int err_status;
 
 		void trim(std::string& str);
         void skipEmptyLines();
