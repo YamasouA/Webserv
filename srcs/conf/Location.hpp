@@ -15,7 +15,8 @@ class Location {
 		void set_root(std::string root);
 		void set_is_autoindex(bool autoindex);
 		void set_upload_path(std::string upload_path);
-		void set_index(std::string index);
+		void set_index(std::vector<std::string> index);
+//		void set_index(std::string index);
 		void set_max_body_size(size_t max_body_size);
 		void set_cgi_path(std::string cgi_path);
 		void set_return(std::string ret);
@@ -30,7 +31,8 @@ class Location {
 		std::string get_root() const;
 		bool get_is_autoindex() const;
 		std::string get_upload_path() const;
-		std::string get_index() const;
+        std::vector<std::string> get_index() const;
+//		std::string get_index() const;
 		size_t get_max_body_size() const;
 		std::string get_cgi_path() const;
 		std::string get_return() const;
@@ -45,7 +47,8 @@ class Location {
 	private:
 		std::string uri;
 		std::string root;
-		std::string index;
+        std::vector<std::string> index;
+//		std::string index;
 		std::string ret;
 		std::vector<std::string> methods;
 		std::string upload_path;
