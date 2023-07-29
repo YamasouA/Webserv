@@ -282,7 +282,6 @@ virtualServer configParser::parseServe() {
 void configParser::expect(char c)
 {
 	if (buf[idx] != c) {
-		std::cout << buf[idx] << ", " << c << std::endl;
 		throw new SyntaxException(std::string("expected ") + c + std::string(" but ") + buf[idx]);
 	}
 	++idx;
