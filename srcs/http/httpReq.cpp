@@ -11,7 +11,9 @@ httpReq::httpReq(const std::string& request_msg)
 {}
 
 httpReq::httpReq(const httpReq& src)
-:client_ip(src.getClientIP()),
+:buf(src.buf),
+	idx(src.idx),
+	client_ip(src.getClientIP()),
     port(src.getPort()),
     redirect_cnt(src.getRedirectCnt()),
     method(src.getMethod()),
@@ -32,6 +34,8 @@ httpReq& httpReq::operator=(const httpReq& rhs)
         return *this;
     }
     this->client_ip = rhs.getClientIP();
+    this->buf = rhs.buf;
+    this->idx = rhs.idx;
     this->port = rhs.getPort();
     this->method = rhs.getMethod();
     this->uri = rhs.getUri();
@@ -46,6 +50,16 @@ httpReq& httpReq::operator=(const httpReq& rhs)
 
 httpReq::~httpReq()
 {
+}
+
+std::string httpReq::getBuf() const{
+	return this->buf;
+}
+
+void httpReq::appendReq(char *str) {
+	std::cout << buf << std::endl;
+	this->buf += str;
+	std::cout << buf.size() << std::endl;
 }
 
 void httpReq::setClientIP(std::string client_ip) {
@@ -493,6 +507,7 @@ void httpReq::skipEmptyLines() {
 
 void httpReq::parseRequest()
 {
+	std::cout << buf << std::endl;
     skipEmptyLines();
     parseReqLine();
 //   std::cout << "req line ok" << std::endl;
@@ -571,6 +586,7 @@ std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {
     const std::map<std::string, std::string> tmp = obj.getHeaderFields();
     stream << "method: " << obj.getMethod() << std::endl
     << "uri: " << obj.getUri() << std::endl
+//    << "buf: " << obj.getBuf() << std::endl
     << "version" << obj.getVersion() << std::endl << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = tmp.begin(); it != tmp.end(); ++it) {
         stream << "header field: " << (*it).first << std::endl

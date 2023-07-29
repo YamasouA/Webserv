@@ -90,25 +90,35 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
 
 	memset(buf, 0, sizeof(buf));
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-//	std::cout << fd << std::endl;
-	if (recv(fd, buf, sizeof(buf), 0) < 0) {
-//        return NULL;
-    }
-//	std::cout << "buf\n" << buf << std::endl;
-	/*
-	if (buf ==) {
-		std::cout << "ERROR" << std::endl;
+	size_t recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 
+	if (recv_cnt < 0) {
+		return;
 	}
-	*/
+	buf[recv_cnt] = '\0';
+	httpReq httpreq = client.get_httpReq();
+	httpreq.appendReq(buf);
+	std::cout << "buf: " <<httpreq.getBuf() << std::endl;
+	client.set_httpReq(httpreq);
+	std::cout << "read: " << recv_cnt << std::endl;
+	if (recv_cnt == sizeof(buf) - 1) {
+		std::cout << "hoge" << std::endl;
+		// kqのイベントはREADのまま
+		return;
+    }
+	std::cout << "hoge2" << std::endl;
 	//client.get_httpReq(buf)->parserRequest();
 
-    std::cout << "req: " << buf << std::endl;
     //httpParser httpparser(buf);
-    httpReq httpreq(buf);
+    //httpReq httpreq(buf);
     httpreq.setClientIP(client.get_client_ip());
     httpreq.setPort(client.get_port());
-    httpreq.parseRequest();
+	std::cout << "hoge2" << std::endl;
+	try {
+		httpreq.parseRequest();
+	} catch (const std::exception &e) {
+		std::cout << e.what() << std::endl;
+	}
 //	std::cout << "Here" << std::endl;
 	client.set_fd(fd);
     client.set_httpReq(httpreq);
@@ -117,6 +127,8 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
     HttpRes respons(client, kq);
     respons.runHandlers();
     client.set_httpRes(respons);
+    kq.disable_event(fd, EVFILT_READ);
+	kq.set_event(fd, EVFILT_WRITE);
 //    return respons;
 //    respons.createResponse();
 
@@ -217,9 +229,10 @@ int main(int argc, char *argv[]) {
 				//std::cout << "sleep3:" << std::endl;
 				//sleep(5);
 				//
+				std::cout << acceptfd << std::endl;
 				read_request(acceptfd, fd_client_map[acceptfd], conf, kqueue);
-                kqueue.disable_event(acceptfd, EVFILT_READ);
-				kqueue.set_event(acceptfd, EVFILT_WRITE);
+                //kqueue.disable_event(acceptfd, EVFILT_READ);
+				//kqueue.set_event(acceptfd, EVFILT_WRITE);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
 				acceptfd = event_fd;

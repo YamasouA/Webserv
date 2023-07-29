@@ -32,6 +32,7 @@ class httpReq {
         std::string getUri() const;
         std::string getVersion() const;
         std::string getContentBody() const;
+        std::string getBuf() const;
         int getContentLength() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
@@ -43,6 +44,7 @@ class httpReq {
 		int content_length;
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
+		void appendReq(char *str);
     private:
         std::string buf;
         size_t idx;
