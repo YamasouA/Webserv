@@ -187,6 +187,14 @@ std::string HttpRes::join_path() {
 	return path_root + config_path + file_path;
 }
 
+//void HttpRes::set_status_code(int status_code) {
+//    this->status_code = status_code;
+//}
+//
+//int HttpRes::get_status_code() const {
+//    return status_code;
+//}
+
 void HttpRes::set_body(std::string strs)
 {
     this->body = strs;
@@ -1018,6 +1026,12 @@ int HttpRes::redirect_handler() {
     body_size = content_length_n;
     return OK;
 }
+
+void HttpRes::handleReqErr(int req_err_status) {
+    status_code = req_err_status;
+    finalize_res(req_err_status);
+}
+
 
 void HttpRes::finalize_res(int handler_status)
 {

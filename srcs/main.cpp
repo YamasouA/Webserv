@@ -115,7 +115,11 @@ void read_request(int fd, Client& client, configParser& conf, Kqueue kq) {
 //	client.set_httpReq(httpparser.get);
     assign_server(conf, client);
     HttpRes respons(client, kq);
-    respons.runHandlers();
+    if (httpreq.getErrStatus() > 0) {
+        respons.handleReqErr(httpreq.getErrStatus());
+    } else {
+        respons.runHandlers();
+    }
     client.set_httpRes(respons);
 //    return respons;
 //    respons.createResponse();

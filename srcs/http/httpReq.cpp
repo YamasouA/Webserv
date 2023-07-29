@@ -175,12 +175,15 @@ bool httpReq::isSpace(char c) {
 	return false;
 }
 
-void httpReq::expect(char c)
+int httpReq::expect(char c)
 {
     if (buf[idx] != c) {
         std::cerr << "no expected Error" << c << std::endl;
+        setErrStatus(400);
+        return 1;
     }
     ++idx;
+    return 0;
 }
 
 std::string httpReq::getToken(char delimiter)
@@ -197,11 +200,17 @@ std::string httpReq::getToken(char delimiter)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax Error in getToken");
+//		throw SyntaxException("syntax Error in getToken");
+        setErrStatus(400);
+        return "";
 	}
-	expect(delimiter);
+	if (expect(delimiter)) {
+        return "";
+    }
     if (token.find(' ') != std::string::npos) {
-        std::cerr << "status 400" << std::endl;
+        setErrStatus(400);
+//        std::cerr << "status 400" << std::endl;
+        return "";
     }
 //	trim(token);
 	return token;
@@ -211,7 +220,7 @@ std::string httpReq::getToken_to_eol() {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
-			if (buf[idx+1] == '\012') {
+			if (buf[idx+1] == '\012') { // expect is better
 				idx += 2;
 				return line;
 			}
@@ -232,15 +241,14 @@ void httpReq::parseChunk() {
     std::string tmp = getToken_to_eol();
     if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
         std::cerr << "400 Bad request" << std::endl;
+        setErrStatus(400);
         return;
     }
 	std::stringstream(tmp) >> std::hex >> chunkSize;
     std::cout << "size: " << chunkSize << std::endl;
 	while (chunkSize > 0) {
-//        std::cout << "=========ok============" << std::endl;
 		content_body += buf.substr(idx, chunkSize);
 //        std::cout << "body: " << content_body << std::endl;
-//        std::cout << "=========ok1============" << std::endl;
 		idx += chunkSize;
         checkHeaderEnd();
 		content_length += chunkSize;
@@ -248,6 +256,7 @@ void httpReq::parseChunk() {
         tmp = getToken_to_eol();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
+            setErrStatus(400);
             return;
         }
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
@@ -292,6 +301,7 @@ void httpReq::parse_scheme() {
 //        scheme = HTTP;
 	} else {
         std::cerr << "invalid scheme Error" << std::endl;
+        setErrStatus(400);
 	}
 }
 
@@ -309,6 +319,8 @@ void httpReq::parse_host_port() {
     }
     if (host.length() <= 0) {
         std::cerr << "invalid host Error" << std::endl;
+        setErrStatus(400);
+        return;
     }
     if (uri[i] == ':') {
         path_pos = uri.find('/');
@@ -321,11 +333,15 @@ void httpReq::parse_host_port() {
             ss >> port_num;
 			if (port_num < 0 || 65535 < port_num) {
         	    std::cerr << "invalid port Error" << std::endl;
+                setErrStatus(400);
+                return;
         	}
         }
     }
     if (uri[i] != '/') {
         std::cerr << "path not found" << std::endl;
+//        setErrStatus(XXX);
+        return;
     }
     //path handle ...
 	uri = uri.substr(i);
@@ -344,18 +360,29 @@ void httpReq::parse_authority_and_path() {
 
 void httpReq::absurl_parse() {
 	parse_scheme();
-	expect('/');
-	expect('/');
+    if (getErrStatus() > 0) {
+        return;
+    }
+	if (expect('/')) {
+        return;
+    }
+	if (expect('/')) {
+        return;
+    }
 	parse_authority_and_path();
 }
 
 void httpReq::fix_up() {
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
+        setErrStatus(400);
+        return;
 	}
 
-	if (header_fields.count("connection") != 1) {
+	if (header_fields.count("connection") == 1 && header_fields["connection"] == "") {
 		std::cerr << "no connection Error" << std::endl;
+        setErrStatus(400);
+        return;
 	}
     if (header_fields["connection"] == "keep-alive") {
         keep_alive = 1;
@@ -365,19 +392,27 @@ void httpReq::fix_up() {
 	if (header_fields.count("content-length") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
+        setErrStatus(411);
+        return;
 	}
     if (header_fields.count("content-length") >= 1 && header_fields.count("transfer-encoding") >= 1) {
         std::cerr << "400 (Bad Request)" << std::endl;
+        setErrStatus(400);
+        return;
     }
-    if (header_fields.count("trailer-encoding") == 1 && header_fields["trailer-encoding"] != "chunked") {
-            std::cerr << "501(Not Implement)" << std::endl;
+    if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] != "chunked") {
+        std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
+        setErrStatus(501);
+        return;
     }
 	std::string content_length_s = header_fields["content-length"];
     std::stringstream ss(content_length_s);
     ss >> content_length;
 
 	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
-		std::cerr << "501(Not Implement) " << std::endl;
+		std::cerr << "501(Not Implement) method" << std::endl;
+        setErrStatus(501);
+        return;
 	}
 	if (uri.length() != 0 && uri[0] != '/') {
 		absurl_parse();
@@ -389,6 +424,8 @@ void httpReq::parseReqLine()
     method = getToken(' ');
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
+        setErrStatus(400);
+        return;
     }
 //    skipSpace();
     uri = getToken(' ');
@@ -398,20 +435,29 @@ void httpReq::parseReqLine()
 	}
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
+        setErrStatus(400);
+        return;
     }
 //    skipSpace();
     version = buf.substr(idx, 8);
     idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
         std::cerr << "version Error" << std::endl;
+        setErrStatus(400); //400?
+        return;
     }
     if (buf[idx] == '\015') {
         ++idx;
-        expect('\012');
+        if (expect('\012')) {
+            setErrStatus(400);
+            return;
+        }
     } else if (buf[idx] == '\012') {
         ++idx;
     } else {
         std::cerr << "invalid format" << std::endl;
+        setErrStatus(400);
+        return;
     }
 }
 
@@ -419,7 +465,10 @@ bool httpReq::checkHeaderEnd()
 {
     if (buf[idx] == '\015') {
         ++idx;
-        expect('\012');
+        if (expect('\012')) {
+//            setErrStatus(400);
+            return false;
+        }
         return true;
     } else if (buf[idx] == '\012') {
         ++idx;
@@ -489,7 +538,7 @@ void httpReq::skipEmptyLines() {
         }
         skipSpace();
 		if (buf[idx] == '\015') {
-			if (buf[idx+1] == '\012') {
+			if (buf[idx+1] == '\012') { // expect is better?
 				idx += 2;
                 continue;
 			}
@@ -498,6 +547,8 @@ void httpReq::skipEmptyLines() {
 			continue;
 		} else {
             std::cerr << "400 (Bad Request)" << std::endl;
+            setErrStatus(400);
+            return;
         }
     }
 }
@@ -505,7 +556,13 @@ void httpReq::skipEmptyLines() {
 void httpReq::parseRequest()
 {
     skipEmptyLines();
+    if (getErrStatus() > 0) {
+        return;
+    }
     parseReqLine();
+    if (getErrStatus() > 0) {
+        return;
+    }
 //   std::cout << "req line ok" << std::endl;
     while (idx < buf.size()) {
         if (checkHeaderEnd()) {
@@ -513,6 +570,9 @@ void httpReq::parseRequest()
         }
 //        httpReq header_field;
         std::string field_name = getToken(':');
+        if (getErrStatus() > 0) { // or field_name == ""
+            return;
+        }
 //        header_field.setName(getToken(':'));
         skipSpace(); //
 		std::string field_value = getToken_to_eol();
@@ -521,8 +581,11 @@ void httpReq::parseRequest()
         setHeaderField(toLower(field_name), field_value);
 //        header_info.push_back(header_field);
     }
-	if (header_fields["transfer-encoding"] == "chunked") {
+	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
+        if (getErrStatus() > 0) {
+            return;
+        }
     } else {
 		content_body = getToken_to_eof();
     }
