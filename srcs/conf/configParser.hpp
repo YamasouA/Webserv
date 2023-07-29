@@ -12,6 +12,7 @@
 class configParser {
 	public:
 		explicit configParser(const std::string& strs);
+		explicit configParser();
 		configParser(const configParser& src);
 		configParser& operator=(const configParser& rhs);
 		~configParser();
@@ -21,10 +22,10 @@ class configParser {
 		void trim(std::string& str);
 		void expect(char c);
 		std::vector<virtualServer> get_serve_confs()const;
-		Location get_uri2location(std::string uri) const;
 		void fixUp();
 		void checkServer();
 		void checkLocation();
+		void set_buf(std::string strs);
 	private:
 //		std::map<std::string> directive_map; //neccesary?
 		std::string buf;

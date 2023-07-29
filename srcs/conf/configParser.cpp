@@ -1,5 +1,9 @@
 #include "configParser.hpp"
 
+configParser::configParser()
+:idx(0)
+{}
+
 configParser::configParser(const std::string& strs)
 :buf(strs),
 	idx(0)
@@ -26,45 +30,15 @@ std::vector<virtualServer> configParser::get_serve_confs() const
 	return serve_confs;
 }
 
-
-Location configParser::get_uri2location(std::string uri) const
-{
-	std::map<std::string, Location>::const_iterator loc = uri2location.find(uri);
-	if (loc != uri2location.end()) {
-		return loc->second;
-	}
-	/*
-	if (uri2location.count(uri) == 1)
-		return uri2location[uri];
-	*/
-	std::string path = uri;
-	while (1) {
-		std::string::size_type i = path.find('/');
-		if (i == std::string::npos)
-			break;
-		path = path.substr(0, i);
-
-		std::map<std::string, Location>::const_iterator loc = uri2location.find(uri);
-		if (loc != uri2location.end()) {
-			return loc->second;
-		}
-		/*
-		if (uri2location.count(path) == 1)
-			return uri2location[path];
-		*/
-	}
-
-	// 何もマッチしなかった場合の挙動イズなに？
-	return loc->second;
+void configParser::set_buf(std::string strs) {
+	buf = strs;
 }
-
 
 const std::string readConfFile(const std::string& file_name)
 {
 	std::ifstream ifs(file_name.c_str());
 	if (!ifs) {
-		std::cerr << "Error: fistream in readConfFile" << std::endl;
-        std::abort();
+		throw std::exception();
 	}
 	std::ostringstream oss;
 	oss << ifs.rdbuf();
@@ -125,7 +99,7 @@ std::string configParser::getToken(char delimiter)
 		idx++;
 	}
 	if (idx == buf.length()) {
-		throw new SyntaxException("config no delimiter");
+		throw SyntaxException("config no delimiter");
 	}
 	expect(delimiter);
 	skip();
@@ -154,7 +128,7 @@ Location configParser::parseLocation() {
 	std::string uri = getToken('{');
 	trim(uri);
 	if (uri == "") {
-		throw new SyntaxException("uri syntax Error in parseLocation");
+		throw SyntaxException("uri syntax Error in parseLocation");
 	}
 	location.set_uri(uri);
 	skip();
@@ -204,7 +178,7 @@ Location configParser::parseLocation() {
             // comment out
             continue;
         } else {
-			throw new SyntaxException("Location: no such directive: " + directive);
+			throw SyntaxException("Location: no such directive: " + directive);
 			return location;
 		}
 	}
@@ -270,7 +244,7 @@ virtualServer configParser::parseServe() {
 		} else if (directive == "") {
 			continue;
 		} else {
-			throw new SyntaxException("Server: no such directive: " + directive);
+			throw SyntaxException("Server: no such directive: " + directive);
 		}
 	}
 	expect('}');
@@ -282,7 +256,7 @@ virtualServer configParser::parseServe() {
 void configParser::expect(char c)
 {
 	if (buf[idx] != c) {
-		throw new SyntaxException(std::string("expected ") + c + std::string(" but ") + buf[idx]);
+		throw SyntaxException(std::string("expected ") + c + std::string(" but ") + buf[idx]);
 	}
 	++idx;
 }
@@ -292,12 +266,12 @@ void configParser::checkLocation() {
 	for (; v_it != serve_confs.end(); v_it++) {
 		std::vector<Location> locations = v_it->get_locations();
 		if (locations.size() == 0) {
-			throw new ConfigValueException("virtualServer derective should have more than 1 Location derective");
+			throw ConfigValueException("virtualServer derective should have more than 1 Location derective");
 		}
 		std::vector<Location>::iterator l_it = locations.begin();
 		for (; l_it != locations.end(); l_it++) {
 			if (l_it->get_uri() == "") {
-				throw new ConfigValueException("Location derective should have path");
+				throw ConfigValueException("Location derective should have path");
 			}
 		}
 	}
@@ -305,15 +279,15 @@ void configParser::checkLocation() {
 
 void configParser::checkServer() {
 	if (serve_confs.size() == 0) {
-		throw new ConfigValueException("http derective should have more than 1 virtualServer derective");
+		throw ConfigValueException("http derective should have more than 1 virtualServer derective");
 	}
 	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
 	for (; v_it != serve_confs.end(); v_it++) {
 		if (v_it->get_listen() == 0) {
-			throw new ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+			throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
 		}
 		if (v_it->get_server_name() == "") {
-			throw new ConfigValueException("virtualServer derective should have servername");
+			throw ConfigValueException("virtualServer derective should have servername");
 		}
 	}
 }
@@ -329,7 +303,7 @@ void configParser::parseConf()
 
 	directive = getToken('{');
 	if (directive != "http") {
-		throw new SyntaxException("config file must begin with http derective");
+		throw SyntaxException("config file must begin with http derective");
 	}
 	while (idx < buf.size()) {
 		if (buf[idx] == '}') {
@@ -337,7 +311,7 @@ void configParser::parseConf()
 		}
 		directive = getToken('{');
 		if (directive != "server") {
-			throw new SyntaxException("need server derective");
+			throw SyntaxException("need server derective");
 		}
 		skip(); // 空白などの読み飛ばし
 		serve_confs.push_back(parseServe());
