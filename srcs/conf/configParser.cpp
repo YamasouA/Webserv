@@ -124,6 +124,8 @@ static std::vector<std::string> methodsSplit(const std::string &strs, char delim
 
 Location configParser::parseLocation() {
 	Location location;
+	bool is_set_method = false;
+
 	skip();
 	std::string uri = getToken('{');
 	trim(uri);
@@ -146,6 +148,7 @@ Location configParser::parseLocation() {
 		} else if (directive == "return") {
 			location.set_return(getToken(';'));
 		} else if (directive == "method") {
+			is_set_method = true;
 			const std::string methods = getToken(';');
 			location.set_methods(methodsSplit(methods, ' '));
 			// ' 'か', 'でsplitしてベクターに変換して返す
@@ -181,6 +184,10 @@ Location configParser::parseLocation() {
 			throw SyntaxException("Location: no such directive: " + directive);
 			return location;
 		}
+	}
+
+	if (!is_set_method) {
+		location.set_methods(methodsSplit("POST GET DELETE", ' '));
 	}
 	expect('}');
 	skip();
