@@ -11,3 +11,4 @@ out
 *.txt
 .devcontainer/devcontainer.json
 *.pl
+.DS_store

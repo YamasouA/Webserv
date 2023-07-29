@@ -98,18 +98,6 @@ void configParser::skip()
 	}
 }
 
-//void configParser::trim(std::string& str)
-//{
-//	size_t i = 0;
-////	std::cout << "trim str: " << str << std::endl;
-//	while (str[i] == ' ' || str[i] == '\t') {
-//		++i;
-//		std::cout << i << std::endl;
-//	}
-//	str.erase(0, i);
-////	std::cout << "trimed str: " << str << std::endl;
-//}
-
 void configParser::trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t \n");
@@ -137,10 +125,7 @@ std::string configParser::getToken(char delimiter)
 		idx++;
 	}
 	if (idx == buf.length()) {
-		std::cout << "delimiter: " << delimiter << std::endl;
-		std::cout << "token: " << token<< std::endl;
-		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax Error in getToken");
+		throw new SyntaxException("config no delimiter");
 	}
 	expect(delimiter);
 	skip();
@@ -169,7 +154,7 @@ Location configParser::parseLocation() {
 	std::string uri = getToken('{');
 	trim(uri);
 	if (uri == "") {
-		throw SyntaxException("uri syntax Error in parseLocation");
+		throw new SyntaxException("uri syntax Error in parseLocation");
 	}
 	location.set_uri(uri);
 	skip();
@@ -219,7 +204,7 @@ Location configParser::parseLocation() {
             // comment out
             continue;
         } else {
-			throw SyntaxException("syntax Error: no such directive: " + directive);
+			throw new SyntaxException("Location: no such directive: " + directive);
 			return location;
 		}
 	}
@@ -285,7 +270,7 @@ virtualServer configParser::parseServe() {
 		} else if (directive == "") {
 			continue;
 		} else {
-			throw SyntaxException("syntax Error: no such directive: " + directive);
+			throw new SyntaxException("Server: no such directive: " + directive);
 		}
 	}
 	expect('}');
@@ -297,8 +282,8 @@ virtualServer configParser::parseServe() {
 void configParser::expect(char c)
 {
 	if (buf[idx] != c) {
-		std::cerr << "expected expression" << std::endl;
-		std::exit(1);
+		std::cout << buf[idx] << ", " << c << std::endl;
+		throw new SyntaxException(std::string("expected ") + c + std::string(" but ") + buf[idx]);
 	}
 	++idx;
 }
@@ -348,7 +333,6 @@ void configParser::parseConf()
 		throw new SyntaxException("config file must begin with http derective");
 	}
 	while (idx < buf.size()) {
-	//std::cout << "=== parseConf ===" << std::endl;
 		if (buf[idx] == '}') {
 			break;
 		}
@@ -359,6 +343,7 @@ void configParser::parseConf()
 		skip(); // 空白などの読み飛ばし
 		serve_confs.push_back(parseServe());
 	}
+	expect('}');
 	fixUp();
 }
 
