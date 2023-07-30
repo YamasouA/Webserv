@@ -145,11 +145,15 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
-	//try {
-		//contents = readConfFile();
+	configParser conf;
+	try {
 		std::string txt= readConfFile(config_path);
-		configParser conf(txt);
+		conf.set_buf(txt);
 		conf.parseConf();
+	} catch (const std::exception &e) {
+		std::cout << e.what() << std::endl;
+		std::exit(1);
+	}
 		//std::cout << conf.get_serve_confs()[0] << std::endl;
 		Kqueue kqueue;
 	initialize_fd(conf, kqueue, fd_config_map);

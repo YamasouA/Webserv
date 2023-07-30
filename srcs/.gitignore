@@ -9,7 +9,6 @@ logs/*
 out
 *.sh
 *.txt
-**/*.conf
 .devcontainer/devcontainer.json
 *.pl
-**/**/*.conf
+.DS_store
