@@ -15,7 +15,6 @@ std::string getContentType(std::string type) {
 }
 
 HttpRes::HttpRes() {
-
 }
 
 HttpRes::HttpRes(const Client& source, Kqueue &kq)
@@ -41,6 +40,22 @@ HttpRes::~HttpRes() {
 	//close(fd);
 }
 
+
+void HttpRes::set_is_sended_header(bool b) {
+	this->is_sended_header = b;
+}
+
+void HttpRes::set_is_sended_body(bool b) {
+	this->is_sended_body = b;
+}
+
+bool HttpRes::get_is_sended_body() const {
+	return is_sended_body;
+}
+
+bool HttpRes::get_is_sended_header() const {
+	return is_sended_header;
+}
 
 Location HttpRes::get_uri2location(std::string uri) const
 {
@@ -871,8 +886,8 @@ int HttpRes::static_handler() {
     oss << ifs.rdbuf();
     out_buf = oss.str();
 	//buf += out_buf;
-    std::cout << "response body: " << std::endl;
-    std::cout << out_buf << std::endl;
+//    std::cout << "response body: " << std::endl;
+//    std::cout << out_buf << std::endl;
     body_size = content_length_n;
 //	std::cout << "===== End static_handler =====" << std::endl;
     return OK;
