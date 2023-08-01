@@ -445,7 +445,7 @@ void httpReq::fix_up() {
         setErrStatus(411);
         return;
 	}
-    if (header_fields.count("content-length") >= 1 && header_fields.count("transfer-encoding") >= 1) {
+    if (header_fields.count("content-length") == 1 && header_fields.count("transfer-encoding") == 1) {
         std::cerr << "400 (Bad Request)" << std::endl;
         setErrStatus(400);
         return;
