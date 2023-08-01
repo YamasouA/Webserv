@@ -160,9 +160,11 @@ Location configParser::parseLocation() {
 			// ワンチャンupload_pathは公式のものじゃないかも
 		} else if (directive == "max_body_size") {
 			std::stringstream sstream(getToken(';'));
-			size_t result;
+			int result;
+//			size_t result;
 			sstream >> result;
-			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
+			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
+//			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
 			}
 			location.set_max_body_size(result);

@@ -364,7 +364,7 @@ void httpReq::fix_up() {
 	std::string content_length_s = header_fields["content-length"];
     std::stringstream ss(content_length_s);
     ss >> content_length;
-
+    std::cout << "cl: " << content_length << std::endl;;
 	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) " << std::endl;
 	}

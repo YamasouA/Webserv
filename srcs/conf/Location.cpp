@@ -76,7 +76,8 @@ void Location::set_index(std::vector<std::string> index)
 	this->index = index;
 }
 
-void Location::set_max_body_size(size_t max_body_size)
+//void Location::set_max_body_size(size_t max_body_size)
+void Location::set_max_body_size(int max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
@@ -153,7 +154,8 @@ std::string Location::get_upload_path() const{
 std::vector<std::string> Location::get_index() const{
 	return index;
 }
-size_t Location::get_max_body_size() const {
+//size_t Location::get_max_body_size() const {
+int Location::get_max_body_size() const {
 	return max_body_size;
 }
 

@@ -847,6 +847,12 @@ int HttpRes::static_handler() {
 	    content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST") {
+        std::cout << "max_body_size: " << target.get_max_body_size() << std::endl;
+        std::cout << "content-length: " << httpreq.getContentLength() << std::endl;
+        if (target.get_max_body_size() != 0 && httpreq.getContentLength() > target.get_max_body_size()) {
+            status_code = REQUEST_ENTITY_TOO_LARGE;
+            return status_code;
+        }
         if (stat(file_name.c_str(), &sb) == -1) {
 			// ファイルが存在しない
 			if (errno != ENOENT) {
@@ -1330,6 +1336,10 @@ void HttpRes::runHandlers() {
 	if (is_cgi()) {
         std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?
+        if (location.get_max_body_size() != 0 && httpreq.getContentLength() > location.get_max_body_size()) {
+            status_code = REQUEST_ENTITY_TOO_LARGE;
+            return finalize_res(status_code);
+        }
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
