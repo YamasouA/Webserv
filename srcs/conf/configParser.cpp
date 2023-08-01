@@ -144,7 +144,7 @@ Location configParser::parseLocation() {
 		if (directive == "root") {
 			location.set_root(getToken(';'));
 		} else if (directive == "index") {
-			location.set_index(getToken(';'));
+			location.set_index(methodsSplit(getToken(';'), ' '));
 		} else if (directive == "return") {
 			location.set_return(getToken(';'));
 		} else if (directive == "method") {
