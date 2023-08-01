@@ -647,6 +647,14 @@ void HttpRes::header_filter() {
 
 	buf += status_line;
 	buf += "\r\n";
+    if (status_code == NOT_ALLOWED) {
+        std::vector<std::string> allow_methods = target.get_methods();
+        buf += "Allow: ";
+        for (std::vector<std::string>::iterator it = allow_methods.begin(); it != allow_methods.end(); ++it) {
+            buf += *it + ' ';
+        }
+        buf += "\r\n";
+    }
 	// ServerNameも設定できるぽいけど挙動よくわからん
 	buf += "Server: " + kServerName;
 
@@ -752,7 +760,7 @@ int HttpRes::static_handler() {
 		//std::cout << "not allow (conf)" << std::endl;
 //		status_code = BAD_REQUEST;
         status_code = NOT_ALLOWED;
-		return DECLINED;
+		return status_code;
 	}
 
 //	if (uri[uri.length() - 1] == '/' && !target.get_is_autoindex()) {
@@ -1214,7 +1222,8 @@ int HttpRes::auto_index_handler() {
 	if (find(allow_methods.begin(), allow_methods.end(), method) == allow_methods.end()) {
 //		status_code = BAD_REQUEST; // or NOT_ALLOWED
         status_code = NOT_ALLOWED;
-		return DECLINED;
+		return status_code;
+//		return DECLINED;
 	}
     // discard req body
 
