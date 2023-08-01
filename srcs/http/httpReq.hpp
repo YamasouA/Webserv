@@ -65,7 +65,7 @@ class httpReq {
 
         int err_status;
 
-		void trim(std::string& str);
+//		void trim(std::string& str);
         void skipEmptyLines();
 		void skipSpace();
 		int expect(char c);

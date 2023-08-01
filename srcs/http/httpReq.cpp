@@ -81,7 +81,20 @@ void httpReq::setContentBody(const std::string& token)
 
 void httpReq::setHeaderField(const std::string& name, const std::string value)
 {
-    this->header_fields.insert(std::make_pair(name, value));
+    if (name == "host" && header_fields.count("host") == 1) {
+        setErrStatus(400);
+        return;
+    } else if (header_fields.count(name) == 1) {
+        header_fields[name] += " ," + value;
+    } else {
+        this->header_fields.insert(std::make_pair(name, value));
+    }
+//    if (this->header_fields.insert(std::make_pair(name, value)).second == false && name == "host") {
+//        setErrStatus(400);
+//        return;
+//    }
+    //Treat duplicates as an error?
+    //At least 400 error for duplicate Host
 }
 
 void httpReq::setErrStatus(int err_status) {
@@ -158,7 +171,8 @@ void httpReq::skipSpace()
 	}
 }
 
-void httpReq::trim(std::string& str)
+//void httpReq::trim(std::string& str)
+static void trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t ");
 	if (left != std::string::npos) {
@@ -205,6 +219,7 @@ std::string httpReq::getToken(char delimiter)
         return "";
 	}
 	if (expect(delimiter)) {
+        setErrStatus(400);
         return "";
     }
     if (token.find(' ') != std::string::npos) {
@@ -235,7 +250,7 @@ std::string httpReq::getToken_to_eol() {
 }
 
 void httpReq::parseChunk() {
-	int chunkSize;
+	int chunkSize = 0;
 
     std::cout << "==================parse chunk==================" << buf << std::endl;
     std::string tmp = getToken_to_eol();
@@ -247,10 +262,19 @@ void httpReq::parseChunk() {
 	std::stringstream(tmp) >> std::hex >> chunkSize;
     std::cout << "size: " << chunkSize << std::endl;
 	while (chunkSize > 0) {
+        if (idx + chunkSize >= buf.length()) {
+            std::cerr << "400 Bad request" << std::endl;
+            setErrStatus(400);
+            return;
+        }
 		content_body += buf.substr(idx, chunkSize);
 //        std::cout << "body: " << content_body << std::endl;
 		idx += chunkSize;
-        checkHeaderEnd();
+        if (!checkHeaderEnd()) {
+            std::cerr << "400 Bad request" << std::endl;
+            setErrStatus(400);
+            return;
+        }
 		content_length += chunkSize;
 //        std::cout << "current: " << buf[idx] << std::endl;
         tmp = getToken_to_eol();
@@ -262,6 +286,13 @@ void httpReq::parseChunk() {
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
 //        std::cout << "size:" << chunkSize << std::endl;
 	}
+
+    // probably
+    if (chunkSize != 0) {
+        std::cerr << "400 Bad request" << std::endl;
+        setErrStatus(400);
+        return;
+    }
 	// discard trailer fields
 	getToken_to_eof();
 	header_fields["Transfer-Encoding"].erase();
@@ -293,10 +324,10 @@ void httpReq::checkUri() {
 }
 
 void httpReq::parse_scheme() {
-	if (uri.compare(0, 5, "https") == 0) {
+	if (toLower(uri.substr(0, 5)).compare(0, 5, "https") == 0) {
         uri = uri.substr(6);
 //        scheme = HTTPS;
-	} else if (uri.compare(0, 4, "http") == 0) {
+	} else if (toLower(uri.substr(0, 6)).compare(0, 4, "http") == 0) {
         uri = uri.substr(5);
 //        scheme = HTTP;
 	} else {
@@ -372,6 +403,22 @@ void httpReq::absurl_parse() {
 	parse_authority_and_path();
 }
 
+static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
+{
+	std::vector<std::string> values;
+	std::stringstream ss(strs);
+	std::string value;
+
+	while (std::getline(ss, value, delimi)) {
+		if (!value.empty()) {
+            trim(value);
+			values.push_back(value);
+		}
+	}
+	return values;
+}
+
+
 void httpReq::fix_up() {
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
@@ -384,12 +431,12 @@ void httpReq::fix_up() {
         setErrStatus(400);
         return;
 	}
-    if (header_fields["connection"] == "keep-alive") {
+    if (toLower(header_fields["connection"]) == "keep-alive") {
         keep_alive = 1;
     } else {
         keep_alive = 0;
     }
-	if (header_fields.count("content-length") != 1 && content_body != "") {
+	if (header_fields.count("content-length") != 1 && header_fields.count("transfer-encoding") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
         setErrStatus(411);
@@ -400,14 +447,43 @@ void httpReq::fix_up() {
         setErrStatus(400);
         return;
     }
+    if (header_fields.count("content-length") == 1) {
+        //基本的に単数フィールドであるがカンマで分離されたリストとして解析できリスト内の値が妥当かつ全て同じ時はok
+        if (header_fields["content-length"].find(',') != std::string::npos) {
+            std::vector<std::string> values = fieldValueSplit(header_fields["content-length"], ',');
+            std::vector<std::string>::iterator it = values.begin();
+            std::string prev = *(it++);
+            std::string next;
+            for (; it != values.end(); ++it) {
+                next = *it;
+                if (prev != next) {
+                    setErrStatus(400);
+                    return;
+                }
+                prev = next;
+            }
+            header_fields["content-length"] = prev;
+        }
+        if (header_fields["content-length"].find_first_not_of("0123456789") != std::string::npos) {
+            setErrStatus(400);
+            return;
+        }
+    }
+	std::string content_length_s = header_fields["content-length"];
+    std::stringstream ss(content_length_s);
+    ss >> content_length;
+    if (content_body != "" && header_fields.count("content-type") == 0) {
+        header_fields["content-type"] = "application/octet-stream";
+    }
+    if (header_fields.count("content-type") == 1) {
+        //check can support MIME type
+    }
     if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] != "chunked") {
         std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
         setErrStatus(501);
         return;
     }
-	std::string content_length_s = header_fields["content-length"];
-    std::stringstream ss(content_length_s);
-    ss >> content_length;
+
 
 	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
