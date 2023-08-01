@@ -8,6 +8,7 @@ httpReq::httpReq(const std::string& request_msg)
     idx(0),
     redirect_cnt(0),
     keep_alive(0),
+    content_length(0),
     err_status(0)
 {}
 
@@ -23,6 +24,7 @@ httpReq::httpReq(const httpReq& src)
     content_body(src.getContentBody()),
 	parse_error(false),
     keep_alive(src.getKeepAlive()),
+    content_length(src.getContentLength()),
     err_status(src.getErrStatus())
 {
     (void)src;
@@ -43,6 +45,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->keep_alive = rhs.getKeepAlive();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
+    this->content_length = rhs.getContentLength();
     this->err_status = rhs.getErrStatus();
     return *this;
 }
@@ -468,10 +471,10 @@ void httpReq::fix_up() {
             setErrStatus(400);
             return;
         }
+	    std::string content_length_s = header_fields["content-length"];
+        std::stringstream ss(content_length_s);
+        ss >> content_length;
     }
-	std::string content_length_s = header_fields["content-length"];
-    std::stringstream ss(content_length_s);
-    ss >> content_length;
     if (content_body != "" && header_fields.count("content-type") == 0) {
         header_fields["content-type"] = "application/octet-stream";
     }
