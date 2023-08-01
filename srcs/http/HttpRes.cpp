@@ -730,6 +730,10 @@ int HttpRes::static_handler() {
 	std::cout << "================== static_handler ==================" << std::endl;
 	std::string uri = httpreq.getUri();
 	target = get_uri2location(uri);
+    if (target.get_uri() == "") {
+        status_code = 404;
+        return status_code;
+    }
     //std::cout << "macth loc: " << target << std::endl;
 	std::string method = httpreq.getMethod();
 	if (method != "GET" && method != "HEAD" && method != "POST") {
