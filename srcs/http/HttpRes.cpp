@@ -187,12 +187,16 @@ std::string HttpRes::join_path() {
 	}
     if (index_flag) {
         std::vector<std::string> index_files = target.get_index();
-        for (std::vector<std::string>::iterator it = index_files.begin(); it != index_files.end(); ++it) {
-            std::string full_path = path_root + config_path + file_path + *it;
-            if (access(full_path.c_str(), R_OK) >= 0) {
-                std::cout << "full_path: " << full_path << std::endl;
-                return full_path;
+        if (index_files.size() != 0) {
+            for (std::vector<std::string>::iterator it = index_files.begin(); it != index_files.end(); ++it) {
+                std::string full_path = path_root + config_path + file_path + *it;
+                if (access(full_path.c_str(), R_OK) >= 0) {
+                    std::cout << "full_path: " << full_path << std::endl;
+                    return full_path;
+                }
             }
+        } else {
+            return path_root + config_path + file_path + "index.html";
         }
         std::cout << "no macth index: " << path_root + config_path + file_path + *(index_files.begin()) << std::endl;
         return path_root + config_path + file_path + *(index_files.begin());
