@@ -459,7 +459,7 @@ void httpReq::fix_up() {
         std::stringstream ss(content_length_s);
         ss >> content_length;
     }
-    if (content_body != "" && header_fields.count("content-type") == 0) {
+    if (content_body != "" && header_fields.count("content-type") != 1) {
         header_fields["content-type"] = "application/octet-stream";
     }
     if (header_fields.count("content-type") == 1) {
