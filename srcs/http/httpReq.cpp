@@ -406,20 +406,20 @@ void httpReq::absurl_parse() {
 	parse_authority_and_path();
 }
 
-static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
-{
-	std::vector<std::string> values;
-	std::stringstream ss(strs);
-	std::string value;
-
-	while (std::getline(ss, value, delimi)) {
-		if (!value.empty()) {
-            trim(value);
-			values.push_back(value);
-		}
-	}
-	return values;
-}
+//static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
+//{
+//	std::vector<std::string> values;
+//	std::stringstream ss(strs);
+//	std::string value;
+//
+//	while (std::getline(ss, value, delimi)) {
+//		if (!value.empty()) {
+//            trim(value);
+//			values.push_back(value);
+//		}
+//	}
+//	return values;
+//}
 
 
 void httpReq::fix_up() {
@@ -451,22 +451,6 @@ void httpReq::fix_up() {
         return;
     }
     if (header_fields.count("content-length") == 1) {
-        //基本的に単数フィールドであるがカンマで分離されたリストとして解析できリスト内の値が妥当かつ全て同じ時はok
-        if (header_fields["content-length"].find(',') != std::string::npos) {
-            std::vector<std::string> values = fieldValueSplit(header_fields["content-length"], ',');
-            std::vector<std::string>::iterator it = values.begin();
-            std::string prev = *(it++);
-            std::string next;
-            for (; it != values.end(); ++it) {
-                next = *it;
-                if (prev != next) {
-                    setErrStatus(400);
-                    return;
-                }
-                prev = next;
-            }
-            header_fields["content-length"] = prev;
-        }
         if (header_fields["content-length"].find_first_not_of("0123456789") != std::string::npos) {
             setErrStatus(400);
             return;
