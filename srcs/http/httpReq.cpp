@@ -406,20 +406,20 @@ void httpReq::absurl_parse() {
 	parse_authority_and_path();
 }
 
-//static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
-//{
-//	std::vector<std::string> values;
-//	std::stringstream ss(strs);
-//	std::string value;
-//
-//	while (std::getline(ss, value, delimi)) {
-//		if (!value.empty()) {
-//            trim(value);
-//			values.push_back(value);
-//		}
-//	}
-//	return values;
-//}
+static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
+{
+	std::vector<std::string> values;
+	std::stringstream ss(strs);
+	std::string value;
+
+	while (std::getline(ss, value, delimi)) {
+		if (!value.empty()) {
+            trim(value);
+			values.push_back(value);
+		}
+	}
+	return values;
+}
 
 
 void httpReq::fix_up() {
@@ -429,16 +429,25 @@ void httpReq::fix_up() {
         return;
 	}
 
-	if (header_fields.count("connection") == 1 && header_fields["connection"] == "") {
-		std::cerr << "no connection Error" << std::endl;
-        setErrStatus(400);
-        return;
+	if (header_fields.count("connection") == 1) {
+		if (header_fields["connection"] == "") {
+			std::cerr << "no connection Error" << std::endl;
+			setErrStatus(400);
+			return;
+		}
+		std::vector<std::string> connections = fieldValueSplit(toLower(header_fields["connetion"]), ',');
+		std::vector<std::string>::iterator c_it = connections.begin();
+		for (; c_it != connections.end(); c_it++) {
+			if (*c_it == "close") {
+				break;
+			}
+		}
+		if (*c_it != "close")
+			keep_alive = 1;
+		else
+			keep_alive = 0;
 	}
-    if (toLower(header_fields["connection"]) == "keep-alive") {
-        keep_alive = 1;
-    } else {
-        keep_alive = 0;
-    }
+
 	if (header_fields.count("content-length") != 1 && header_fields.count("transfer-encoding") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
@@ -465,10 +474,20 @@ void httpReq::fix_up() {
     if (header_fields.count("content-type") == 1) {
         //check can support MIME type
     }
-    if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] != "chunked") {
-        std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
-        setErrStatus(501);
-        return;
+    if (header_fields.count("transfer-encoding") == 1) {
+		std::vector<std::string> transfer_encodings = fieldValueSplit(toLower(header_fields["transfer-encoding"]), ',');
+		std::vector<std::string>::iterator t_it = transfer_encodings.begin();
+		for (; t_it != transfer_encodings.end(); t_it++) {
+			if (*t_it == "chunked")
+				break;
+		}
+		if (*t_it == "chunked")
+			header_fields["transfer-encoding"] = "chunked";
+		else {
+			std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
+        	setErrStatus(501);
+        	return;
+		}
     }
 
 
