@@ -10,6 +10,8 @@ std::string getContentType(std::string type) {
 		return "text/html";
 	else if (type == "json")
 		return "application/json";
+	else if (type == "png" || type == "jpeg" || type == "jpg")
+		return "image/" + type;
 
 	return "";
 }
