@@ -378,6 +378,7 @@ void httpReq::parse_host_port() {
         return;
     }
     //path handle ...
+    header_fields["host"] = host;
 	uri = uri.substr(i);
 	checkUri();
 
