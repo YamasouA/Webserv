@@ -397,13 +397,18 @@ void httpReq::absurl_parse() {
     if (getErrStatus() > 0) {
         return;
     }
-	if (expect('/')) {
-        return;
+//	if (expect('/')) {
+//        return;
+//    }
+//	if (expect('/')) {
+//        return;
+//    }
+    if (uri[0] && uri[0] == '/' && uri[1] == '/') {
+        uri.substr(2);
+	    parse_authority_and_path();
+    } else {
+        setErrStatus(400);
     }
-	if (expect('/')) {
-        return;
-    }
-	parse_authority_and_path();
 }
 
 //static std::vector<std::string> fieldValueSplit(const std::string &strs, char delimi)
