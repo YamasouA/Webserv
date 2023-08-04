@@ -480,20 +480,18 @@ void httpReq::fix_up() {
     if (header_fields.count("content-type") == 1) {
         //check can support MIME type
     }
+    //Wouldn't it be better to check before parse?
     if (header_fields.count("transfer-encoding") == 1) {
 		std::vector<std::string> transfer_encodings = fieldValueSplit(toLower(header_fields["transfer-encoding"]), ',');
 		std::vector<std::string>::iterator t_it = transfer_encodings.begin();
 		for (; t_it != transfer_encodings.end(); t_it++) {
-			if (*t_it == "chunked")
-				break;
+			if (*t_it != "chunked") {
+			    std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
+        	    setErrStatus(501);
+        	    return;
+            }
 		}
-		if (*t_it == "chunked")
-			header_fields["transfer-encoding"] = "chunked";
-		else {
-			std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
-        	setErrStatus(501);
-        	return;
-		}
+		header_fields["transfer-encoding"] = "chunked";
     }
 
 
