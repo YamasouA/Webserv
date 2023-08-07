@@ -9,6 +9,7 @@
 #include "Location.hpp"
 #include <map>
 
+
 class configParser {
 	public:
 		explicit configParser(const std::string& strs);
@@ -31,6 +32,15 @@ class configParser {
 		std::string buf;
 		std::vector<virtualServer> serve_confs;
 		size_t idx;
+
+        static const int kRootExist = 1;
+        static const int kAliasExist = 2;
+        static const int kMaxSizeExist = 4;
+        static const int kMethodExist = 8;
+        static const int kAutoIndexExist = 16;
+        static const int kUploadPathExist = 32;
+//        int whichOneExistInServ;
+//        int whichOneExistInLoc;
 
 		//void parseServe(size_t i);
 		virtualServer parseServe();

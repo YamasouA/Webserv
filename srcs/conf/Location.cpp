@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-Location::Location(): depth(-1) {
+Location::Location(): depth(-1), whichOneExist(0) {
 }
 Location::Location(const Location& src) {
 	this->uri = src.uri;
@@ -134,6 +134,10 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 		std::cout << error_pages.size() << std::endl;
 	}
 }
+
+void Location::setWhichOneExist(int whichOneExist) {
+    this->whichOneExist = whichOneExist;
+}
 std::string Location::get_uri() const{
 	return uri;
 }
@@ -190,6 +194,10 @@ std::map<int, std::string> Location::get_error_pages() const{
 
 std::vector<std::string> Location::get_cgi_ext() const {
 	return cgi_ext;
+}
+
+int Location::getWhichOneExist() const {
+    return whichOneExist;
 }
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {
