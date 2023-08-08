@@ -6,13 +6,7 @@ Cgi::Cgi(const httpReq& request, Location location)
 :httpreq(request),
     target(location),
     envs(request.get_meta_variables())
-{
-    std::map<std::string, std::string>::iterator it = envs.begin();
-    std::cout << "envs: " << std::endl;
-    for (; it != envs.end(); ++it) {
-        std::cout << it->first << "=" << it->second << std::endl;;
-    }
-}
+{}
 
 Cgi::Cgi(const Cgi& src)
 :header_fields(src.getHeaderFields())
@@ -45,29 +39,15 @@ int Cgi::getResType() const {
     return resType;
 }
 
-//std::string Cgi::join_path(std::string& script_name) {
 std::string Cgi::join_path() {
-    std::cerr << "===== join_path =====" << std::endl;
+    std::cerr << "===== join_path(cgi) =====" << std::endl;
 	std::string path_root = target.get_root();
 	std::string config_path  = target.get_uri();
     std::string script_name = envs["SCRIPT_NAME"];
-    std::cerr << "script_name: " << script_name << std::endl;
-//	std::string file_path = script_name;
-	/*
-						|            request uri       |
-		/User/root/path/ /config/location/ /file_path.html
-		path_root         config_path     file_path
-	*/
-	std::cerr << "root: " << path_root << std::endl;
-	std::cerr << "config: " << config_path << std::endl;
-    std::cerr << "ok" << std::endl;
-	std::cerr << "cgi file: " << script_name << std::endl;
 	std::string alias;
 	if ((alias = target.get_alias()) != "") {
 		config_path = alias;
 	}
-    //std::cout << "not auto index" << std::endl;
-    //std::cout << "file_path(in join_path): " << file_path << std::endl;
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
@@ -78,23 +58,11 @@ std::string Cgi::join_path() {
 			script_name = script_name.substr(1);
         }
 	}
-	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cerr << "join_path: " << path_root + config_path + script_name << std::endl;
     std::cerr << "===== End join_path =====" << std::endl;
 	return path_root + config_path + script_name;
 }
 
-
-//void Cgi::reset_env() {
-//}
-
-//bool Cgi::is_meta_var() {
-//	std::map<std::string, std::string> envs;
-//
-//	for (; it != httpreq.end(); it++) {
-//		if
-//	}
-//}
 
 bool Cgi::check_meta_var(std::string var1, std::string var2) {
 	// 必須の箇所にデータが入ってるか
@@ -219,20 +187,8 @@ void Cgi::fix_up() {
 
 
 void Cgi::set_env() {
-    // httpreq will have meta var info with map<std::string, std::string>
     std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
 	std::map<std::string, std::string>::iterator it = header_fields.begin();
-//	char **env_ptr;
-//	std::map<std::string, std::string> envs = httpreq.get_meta_variables();;
-
-    // Protocol-Specific Meta-Variables [MUST] 名前がHTTP_で始まるメタ変数は使用されるプロトコルがHTTPであればclient request header filedから読んだ値
-    //  を含む
-    //  HTTPヘッダフィールド名は全て大文字に変換し、'-'は'_'に変換し、頭に"HTTP"を付けてメタ変数とする。同じ名前のヘッダフィールドが複数受信された場合、
-    //  サーバーは同じ意味の一つの値に書き換えなければならない [MUST] サーバーは必要であればデータ表現(文字集合など)をCGIメタ変数で適切なように変更
-    //  しなければならない [MUST]
-    //  サーバーは受信した全てのヘッダフィールドのメタ変数を作成する必要はない。特に認証情報を伝搬するもの(Authorizationなど)や他のメタ変数が
-    //  スクリプトから利用可能なもの(Content-Type、Content-Length)は削除すべき [SHOULD]
-    //  サーバーはConnectionヘッダフィールドなどのクライアントとの通信に関係するだけのヘッダフィールドを削除してもよい [MAY]
 	for (; it != header_fields.end(); it++) {
 		std::string envs_var = "HTTP_";
 		std::string http_req_field;
@@ -243,11 +199,6 @@ void Cgi::set_env() {
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
 	}
-	std::map<std::string, std::string>::iterator it2 = envs.begin();
-	for (; it2 != envs.end(); it2++) {
-		std::cout << "envs: " << it2->first  << " = " << it2->second << std::endl;
-	}
-
 	fix_up();
 }
 
@@ -260,7 +211,6 @@ void Cgi::send_body_to_child() {
 void Cgi::run_handler() {
 	char **envs_ptr;
     std::map<std::string, std::string>::iterator its = envs.begin();
-    std::cerr << "run_handler envs: " << std::endl;
     for (; its != envs.end(); ++its) {
         std::cerr << its->first << "=" << its->second << std::endl;;
     }
@@ -275,28 +225,10 @@ void Cgi::run_handler() {
     }
     for (std::vector<std::string>::iterator vec_it = tmp_vec.begin(); vec_it != tmp_vec.end(); ++vec_it) {
         envs_ptr[i] = (char*)vec_it->c_str();
-        //std::cerr << "envs_ptr[i]: " << envs_ptr[i] << std::endl;
-        //std::cerr << "i: " << i << std::endl;
 		i++;
     }
-//        tmp_vec.push_back(it->first + "=" + it->second);
-//        std::cerr << "envs_ptr in vec: " << (char *)tmp_vec.back().c_str() << std::endl;
-//        std::cerr << "envs_prt in loop: " << envs_ptr[i] << std::endl;
-//        std::cerr << "env_exp: " << env_exp << std::endl;
-//        envs_ptr[i] = new char[env_exp.length() + 1];
-//		envs_ptr[i] = (char *)env_exp.c_str();
-//	}
 	envs_ptr[envs.size()] = 0;
-//    for (size_t j = 0; envs_ptr[j]; ++j) {
-//        std::cerr << "j:" << j << std::endl;
-//        std::cerr << "envs_ptr: " << envs_ptr[j] << std::endl;
-//    }
-    //std::cerr << "SCRIPT_NAME: " << envs["SCRIPT_NAME"] << std::endl;
-//    std::string tmp_script_name = envs["SCRIPT_NAME"];
-//    std::string path = join_path(tmp_script_name);
     std::string path = join_path();
-    //std::cerr << "SCRIPT_NAME after join: " << path.c_str() << std::endl;
-	std::cerr << "path: " << path << std::endl;
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }
@@ -305,30 +237,38 @@ void Cgi::run_handler() {
 void Cgi::fork_process() {
 	pid_t pid;
 	int fd[2];
+	int fd2[2];
 
 	pipe(fd);
-//	reset_env();
+	pipe(fd2);
 	set_env();
 
+	std::cout << "fork_process" << std::endl;
 	pid = fork();
 	// 子プロセス
 	if (pid == 0) {
 //		set_signal_handler(SIGINT, SIG_DFL);
 //		set_signal_handler(SIGQUIT, SIG_DFL);
-		dup2(fd[1], 1);
-
-
-//        return;
-
 		close(fd[1]);
-		close(fd[0]);
+		close(fd2[0]);
+		dup2(fd[0], 0);
+		dup2(fd2[1], 1);
+
 		run_handler();
 		exit(1);
 	}
-	send_body_to_child();
-	dup2(fd[0], 0);
-	close(fd[1]);
 	close(fd[0]);
+	close(fd2[1]);
+	dup2(fd[1], 1);
+	dup2(fd2[0], 0);
+	send_body_to_child();
+	close(fd[1]);
+    char tmp_buf;
+	std::cout << "read phase" << std::endl;
+    while (read(0, &tmp_buf, 1) > 0) {
+        buf += tmp_buf;
+    }
+	close(fd2[0]);
 //	return pid;
 }
 
@@ -485,11 +425,9 @@ void Cgi::expect(char c, size_t& idx)
     ++idx;
 }
 
-//have status in cgi class?
 int Cgi::parse_cgi_response() {
     int status = 200;
     size_t idx = 0;
-    //for (; idx < buf.length(); ++idx) {
 	while (idx < buf.length()) {
         if (checkHeaderEnd(idx)) {
             break;
@@ -512,20 +450,8 @@ void Cgi::run_cgi() {
 	int backup_stdout = dup(STDOUT_FILENO);
 
     std::map<std::string, std::string>::iterator it = envs.begin();
-    std::cout << "run cgi envs: " << std::endl;
-    for (; it != envs.end(); ++it) {
-        std::cout << it->first << "=" << it->second << std::endl;;
-    }
 
 	fork_process();
-    char tmp_buf;
-//    waitpid(-1, NULL, 0);
-
-    //for (size_t i = 0; read(0, &tmp_buf, 1) > 0; ++i) {
-    while (read(0, &tmp_buf, 1) > 0) {
-        buf += tmp_buf;
-    }
-    std::cout << "cgi output: " << std::endl << buf << std::endl << std::endl;
 
 	dup2(backup_stdin, STDIN_FILENO);
 	dup2(backup_stdout, STDOUT_FILENO);
