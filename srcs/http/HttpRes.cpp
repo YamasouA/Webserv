@@ -151,7 +151,7 @@ std::string HttpRes::join_path() {
 //	std::cout << "location: " <<  location << std::endl;
 	std::string path_root = target.get_root();
 	std::string config_path  = target.get_uri();
-	std::string file_path = httpreq.getUri().substr(config_path.length());
+	std::string file_path = httpreq.getUri();
 	/*
 						|            request uri       |
 		/User/root/path/ /config/location/ /file_path.html
@@ -165,15 +165,20 @@ std::string HttpRes::join_path() {
 //	if (config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
 	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && (target.get_index().size() != 0 || target.get_is_autoindex())) {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
+        file_path = file_path.substr(config_path.length());
 	    if (config_path == "/") {
 		    config_path = "";
         }
         index_flag = 1;
 //	    file_path = "/index.html"; // from index directive
 	}
+    if (!index_flag) {
+        file_path = file_path.substr(config_path.length());
+    }
 	std::string alias;
 	if ((alias = target.get_alias()) != "") {
-		config_path = alias;
+		config_path = "";
+        path_root = alias;
 	}
     //std::cout << "not auto index" << std::endl;
     //std::cout << "file_path(in join_path): " << file_path << std::endl;
