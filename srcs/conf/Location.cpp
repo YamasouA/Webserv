@@ -16,6 +16,7 @@ Location::Location(const Location& src) {
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
+    this->whichOneExist = src.whichOneExist;
 }
 
 Location& Location::operator=(const Location& src)
@@ -37,6 +38,7 @@ Location& Location::operator=(const Location& src)
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
+    this->whichOneExist = src.whichOneExist;
 	return *this;
 }
 
@@ -135,6 +137,10 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 	}
 }
 
+void Location::set_error_pages(std::map<int, std::string> error_pages) {
+    this->error_pages = error_pages;
+}
+
 void Location::setWhichOneExist(int whichOneExist) {
     this->whichOneExist = whichOneExist;
 }
@@ -198,6 +204,14 @@ std::vector<std::string> Location::get_cgi_ext() const {
 
 int Location::getWhichOneExist() const {
     return whichOneExist;
+}
+
+void Location::append_index(std::vector<std::string> elems) {
+    index.insert(index.end(), elems.begin(), elems.end());
+}
+
+void Location::append_cgi_ext(std::vector<std::string> elems) {
+    cgi_ext.insert(cgi_ext.end(), elems.begin(), elems.end());
 }
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {

@@ -153,10 +153,20 @@ Location configParser::parseLocation() {
 			location.set_root(getToken(';'));
 		} else if (directive == "index") {
             //can multiple
-			location.set_index(methodsSplit(getToken(';'), ' '));
+            if (whichOneExistInLoc & kIndexExist) {
+                location.append_index(methodsSplit(getToken(';'), ' '));
+            } else {
+                location.set_index(methodsSplit(getToken(';'), ' '));
+            }
+            whichOneExistInLoc |= kIndexExist;
 		} else if (directive == "return") {
             //can multiple, but first one is used
+            if (whichOneExistInLoc & kReturnExist) {
+                getToken(';');
+                continue;
+            }
 			location.set_return(getToken(';'));
+            whichOneExistInLoc |= kReturnExist;
 		} else if (directive == "method") {
             //must single
             if (whichOneExistInLoc & kMethodExist) {
@@ -209,11 +219,17 @@ Location configParser::parseLocation() {
 			location.set_location(parseLocation());
 		} else if (directive == "error_page") {
             //can multiple, but first one is used when same status code
+            whichOneExistInLoc |= kErrorPageExist;
 			const std::string pages = getToken(';');
 			location.set_error_pages(methodsSplit(pages, ' '));
 		} else if (directive == "cgi_ext") {
 			const std::string exts = getToken(';');
-			location.set_cgi_ext(methodsSplit(exts, ' '));
+            if (whichOneExistInLoc & kCgiExtExist) {
+                location.append_cgi_ext(methodsSplit(exts, ' '));
+            } else {
+                location.set_cgi_ext(methodsSplit(exts, ' '));
+            }
+            whichOneExistInLoc |= kCgiExtExist;
 		} else if (directive == "") {
             // comment out
             continue;
@@ -233,7 +249,7 @@ Location configParser::parseLocation() {
 	return location;
 }
 
-void configParser::setUriToMap(std::string prefix, std::string prefix_root, Location location) {
+void configParser::setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv) {
 	std::string locationRoot = location.get_root();;
 	std::string locationUri = location.get_uri();
 	//std::string path = prefix + locationRoot + locationUri;
@@ -243,10 +259,49 @@ void configParser::setUriToMap(std::string prefix, std::string prefix_root, Loca
 	std::string root = (locationRoot != "") ? locationRoot: prefix_root;
 	for (std::vector<Location>::iterator it = locations.begin();
 		it != locations.end(); it++) {
-		setUriToMap(path, root, *it);
+		setUriToMap(path, root, *it, v_serv);
 	}
 	//path = root + path;
 	location.set_root(root);
+	int whichOneExist = location.getWhichOneExist();
+    std::cout << "which: " << whichOneExist << std::endl;
+    if (!(whichOneExist & kRootExist)) {
+        std::cout << "set root " << std::endl;
+        location.set_root(v_serv.get_root());
+    }
+    if (!(whichOneExist & kMethodExist)) {
+        std::cout << "set method " << std::endl;
+        location.set_methods(v_serv.get_methods());
+    }
+    if (!(whichOneExist & kAutoIndexExist)) {
+        std::cout << "set autoindex " << std::endl;
+        location.set_is_autoindex(v_serv.get_is_autoindex());
+    }
+    if (!(whichOneExist & kUploadPathExist)) {
+        std::cout << "set upload path " << std::endl;
+        location.set_upload_path(v_serv.get_upload_path());
+    }
+    if (!(whichOneExist & kMaxSizeExist)) {
+        std::cout << "set max body " << std::endl;
+        location.set_max_body_size(v_serv.get_max_body_size());
+    }
+    if (!(whichOneExist & kAliasExist)) {
+        std::cout << "set alias " << std::endl;
+        location.set_alias(v_serv.get_alias());
+    }
+    if (!(whichOneExist & kIndexExist)) {
+        location.set_index(v_serv.get_index());
+    }
+    if (!(whichOneExist & kReturnExist)) {
+        location.set_return(v_serv.get_return());
+    }
+    if (!(whichOneExist & kErrorPageExist)) {
+        location.set_error_pages(v_serv.get_error_pages());
+    }
+    if (!(whichOneExist & kCgiExtExist)) {
+        location.set_cgi_ext(v_serv.get_cgi_ext());
+    }
+    std::cout << "in setUriToMap: " << location << std::endl;
 	uri2location[path] = location;
 }
 
@@ -256,11 +311,12 @@ void configParser::uriToMap(virtualServer& vServer) {
 
 	for (std::vector<Location>::iterator it = locations.begin();
 		it != locations.end(); it++) {
-		setUriToMap("", "", *it);
+		setUriToMap("", "", *it, vServer);
 	}
 	vServer.set_uri2location(uri2location);
 	std::cout << "vServer: " << vServer << std::endl;
 }
+
 
 virtualServer configParser::parseServe() {
 	std::string directive;
@@ -293,6 +349,72 @@ virtualServer configParser::parseServe() {
             }
             whichOneExistInServ |= kRootExist;
 			v_serv.set_root(getToken(';'));
+		} else if (directive == "index") {
+            //can multiple
+            if (whichOneExistInServ & kIndexExist) {
+                v_serv.append_index(methodsSplit(getToken(';'), ' '));
+            } else {
+                v_serv.set_index(methodsSplit(getToken(';'), ' '));
+            }
+            whichOneExistInServ |= kIndexExist;
+		} else if (directive == "return") {
+            //can multiple, but first one is used
+            if (whichOneExistInServ & kReturnExist) {
+                continue;
+            }
+			v_serv.set_return(getToken(';'));
+            whichOneExistInServ |= kReturnExist;
+		} else if (directive == "method") {
+            //must single
+            if (whichOneExistInServ & kMethodExist) {
+                throw SyntaxException("v_serv: duplicate directive: " + directive);
+            }
+            whichOneExistInServ |= kMethodExist;
+			const std::string methods = getToken(';');
+			v_serv.set_methods(methodsSplit(methods, ' '));
+		} else if (directive == "autoindex") {
+            if (whichOneExistInServ & kAutoIndexExist) { //bool -> int
+                throw SyntaxException("v_serv: duplicate directive: " + directive);
+            }
+            whichOneExistInServ |= kAutoIndexExist;
+			v_serv.set_is_autoindex(getToken(';')=="on");
+		} else if (directive == "upload_path") {
+            if (v_serv.get_upload_path() != "") {
+                throw SyntaxException("v_serv: duplicate directive: " + directive);
+            }
+            whichOneExistInServ |= kUploadPathExist;
+			v_serv.set_upload_path(getToken(';'));
+		} else if (directive == "max_body_size") {
+            if (whichOneExistInServ & kMaxSizeExist) {
+                throw SyntaxException("v_serv: duplicate directive: " + directive);
+            }
+            whichOneExistInServ |= kMaxSizeExist;
+			std::stringstream sstream(getToken(';'));
+			size_t result;
+			sstream >> result;
+			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
+				std::cerr << "overflow" << std::endl;
+			}
+			v_serv.set_max_body_size(result);
+		} else if (directive == "alias") {
+            if (v_serv.get_alias() != "" || v_serv.get_root() != "") {
+                throw SyntaxException("v_serv: duplicate directive: " + directive);
+            }
+            whichOneExistInServ |= kAliasExist;
+			v_serv.set_alias(getToken(';'));
+		} else if (directive == "error_page") {
+			const std::string pages = getToken(';');
+			v_serv.set_error_pages(methodsSplit(pages, ' '));
+		} else if (directive == "cgi_ext") {
+			const std::string exts = getToken(';');
+            if (whichOneExistInServ & kCgiExtExist) {
+                v_serv.append_cgi_ext(methodsSplit(exts, ' '));
+            } else {
+                v_serv.set_cgi_ext(methodsSplit(exts, ' '));
+            }
+            whichOneExistInServ |= kCgiExtExist;
+		} else if (directive == "") {
+            continue;
 		} else if (directive == "location") {
 			v_serv.set_location(parseLocation());
 		} else if (directive == "") {
@@ -301,7 +423,9 @@ virtualServer configParser::parseServe() {
 			throw SyntaxException("Server: no such directive: " + directive);
 		}
 	}
-    v_serv.setWhichOneExist(whichOneExistInServ);
+	if (!(whichOneExistInServ & kMethodExist)) {
+		v_serv.set_methods(methodsSplit("POST GET DELETE", ' '));
+	}
 	expect('}');
 	skip();
 	uriToMap(v_serv);

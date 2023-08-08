@@ -24,8 +24,10 @@ class Location {
 		void set_depth(int depth);
 		void set_alias(std::string alias);
 		void set_error_pages(std::vector<std::string> tokens);
+		void set_error_pages(std::map<int, std::string> error_pages);
 		void set_cgi_ext(std::vector<std::string> tokens);
-        void setWhichOneExist(int whicOneExist);
+        void setWhichOneExist(int whichOneExist);
+
 		std::vector<Location> get_locations() const;
 		std::string get_uri() const;
 		std::vector<std::string> get_methods() const;
@@ -43,7 +45,11 @@ class Location {
 		std::string get_alias() const;
 		std::vector<std::string> get_cgi_ext() const;
         int getWhichOneExist() const;
-		Location(const Location& src);
+
+        void append_index(std::vector<std::string> elems);
+        void append_cgi_ext(std::vector<std::string> elems);
+
+        Location(const Location& src);
 		Location();
 		Location& operator=(const Location& src);
 	private:

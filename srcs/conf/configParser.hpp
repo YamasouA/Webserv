@@ -39,12 +39,16 @@ class configParser {
         static const int kMethodExist = 8;
         static const int kAutoIndexExist = 16;
         static const int kUploadPathExist = 32;
+        static const int kIndexExist = 64;
+        static const int kReturnExist = 128;
+        static const int kErrorPageExist = 256;
+        static const int kCgiExtExist = 512;
 //        int whichOneExistInServ;
 //        int whichOneExistInLoc;
 
 		//void parseServe(size_t i);
 		virtualServer parseServe();
-		void setUriToMap(std::string prefix, std::string prefix_root, Location location);
+		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv);
 		void uriToMap(virtualServer& vServer);
 		Location parseLocation();
 		std::string getToken(char delimiter);
