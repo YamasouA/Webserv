@@ -337,11 +337,11 @@ virtualServer configParser::parseServe() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
 				std::cerr << "overflow" << std::endl;
-			}
+            }
 			v_serv.set_listen(result);
 		} else if (directive == "server_name") {
             //can multiple
-			v_serv.set_server_name(getToken(';'));
+			v_serv.set_server_name(methodsSplit(getToken(';'), ' '));
 		} else if (directive == "root") {
             //must single
             if (whichOneExistInServ & kRootExist) {
@@ -462,12 +462,26 @@ void configParser::checkServer() {
 	}
 	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
 	for (; v_it != serve_confs.end(); v_it++) {
-		if (v_it->get_listen() == 0) {
-			throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
-		}
-		if (v_it->get_server_name() == "") {
-			throw ConfigValueException("virtualServer derective should have servername");
-		}
+        std::vector<int> listen = v_it->get_listen();
+        if (listen.size() == 0) {
+            throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+        }
+        for (std::vector<int>::iterator l_it = listen.begin(); l_it != listen.end(); ++l_it) {
+            if (*l_it == 0) {
+//            if (v_it->get_listen() == 0) {
+                throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+            }
+        }
+        std::vector<std::string> server_names = v_it->get_server_names();
+        if (server_names.size() == 0) {
+            throw ConfigValueException("virtualServer derective should have servername");
+        }
+        for (std::vector<std::string>::iterator n_it = server_names.begin(); n_it != server_names.end(); ++n_it) {
+            if (*n_it == "") {
+//            if (v_it->get_server_name() == "") {
+                throw ConfigValueException("virtualServer derective should have servername");
+            }
+        }
 	}
 }
 

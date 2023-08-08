@@ -43,8 +43,6 @@ class configParser {
         static const int kReturnExist = 128;
         static const int kErrorPageExist = 256;
         static const int kCgiExtExist = 512;
-//        int whichOneExistInServ;
-//        int whichOneExistInLoc;
 
 		//void parseServe(size_t i);
 		virtualServer parseServe();
