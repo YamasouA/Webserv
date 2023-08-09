@@ -70,7 +70,8 @@ void Location::set_upload_path(std::string upload_path)
 	this->upload_path = upload_path;
 }
 
-void Location::set_index(std::string index)
+//void Location::set_index(std::string index)
+void Location::set_index(std::vector<std::string> index)
 {
 	this->index = index;
 }
@@ -148,7 +149,8 @@ bool Location::get_is_autoindex() const{
 std::string Location::get_upload_path() const{
 	return upload_path;
 }
-std::string Location::get_index() const{
+//std::string Location::get_index() const{
+std::vector<std::string> Location::get_index() const{
 	return index;
 }
 size_t Location::get_max_body_size() const {
@@ -192,6 +194,7 @@ std::vector<std::string> Location::get_cgi_ext() const {
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			const std::vector<std::string> tmp = obj.get_methods();
+            const std::vector<std::string> tmp4 = obj.get_index();
 			stream << "====== Location data =====" << std::endl
 			<< "uri: " << obj.get_uri() << std::endl
 			<< "methods: ";
@@ -202,8 +205,12 @@ std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			stream << "location root: " << obj.get_root() << std::endl
 			<< "is_autoindex: " << obj.get_is_autoindex() << std::endl
 			<< "upload_path: " << obj.get_upload_path() << std::endl
-			<< "index: " << obj.get_index() << std::endl
-			<< "max_body_size: " << obj.get_max_body_size() << std::endl
+			<< "index: ";// << obj.get_index() << std::endl
+			for (std::vector<std::string>::const_iterator it2 = tmp4.begin(); it2 != tmp4.end(); ++it2) {
+				stream << *it2 << " ";
+			}
+            stream << std::endl;
+			stream << "max_body_size: " << obj.get_max_body_size() << std::endl
 			<< "cgi_path: " << obj.get_cgi_path() << std::endl
 			<< "return: " << obj.get_cgi_path() << std::endl;
 			std::map<int, std::string>map = obj.get_error_pages();
