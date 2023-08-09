@@ -1363,7 +1363,10 @@ void HttpRes::runHandlers() {
 			header_filter();
 
 			return finalize_res(status_code);
-        }
+        } else {
+			status_code = handler_status;
+			return finalize_res(status_code);
+		}
 	} else {
 		handler_status = return_redirect();
 		if (handler_status != DECLINED) {

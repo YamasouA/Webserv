@@ -283,8 +283,7 @@ void Cgi::detectResType() {
 		else
 			resType = CLIENT_REDIRECT_WITH_DOC;
 	} else {
-		// 合致しない場合は502とかでOK?
-	    status = 502;
+	    resType = NO_MATCH_TYPE;
     }
 	std::cout << "resType: " << resType << std::endl;
 }
@@ -293,7 +292,9 @@ bool Cgi::checkHeaderEnd(size_t& idx)
 {
     if (buf[idx] == '\015') {
         ++idx;
-        expect('\012', idx);
+        if (!expect('\012', idx)) {
+			return false;
+		}
         return true;
     } else if (buf[idx] == '\012') {
         ++idx;
@@ -334,14 +335,13 @@ std::string Cgi::getToken(char delimiter, size_t& idx)
 		idx++;
 	}
 	if (idx == buf.length()) {
-		std::cout << "delimiter: " << delimiter << std::endl;
-		std::cout << "token: " << token<< std::endl;
-		std::cout << "ko getToken" << std::endl;
-		throw SyntaxException("syntax Error in getToken");
+		return "";
 	}
-	expect(delimiter, idx);
+	if (!expect(delimiter, idx)) {
+		return "";
+	}
     if (token.find(' ') != std::string::npos) {
-        std::cerr << "status 400" << std::endl;
+        return "";
     }
 	return token;
 }
@@ -388,14 +388,27 @@ void Cgi::fixUp(int& status) {
         }
     }
     detectResType();
+	if (resType == NO_MATCH_TYPE)
+		status = 502;
 }
 
-void Cgi::expect(char c, size_t& idx)
+// util関数
+std::string Cgi::toLower(std::string str) {
+	std::string s="";
+	for (size_t i = 0; i < str.length(); i++) {
+		s += std::tolower(str[i]);
+	}
+	return s;
+}
+
+bool Cgi::expect(char c, size_t& idx)
 {
     if (buf[idx] != c) {
         std::cerr << "no expected " << c << std::endl;
+		return false;
     }
     ++idx;
+	return true;
 }
 
 int Cgi::parse_cgi_response() {
@@ -406,6 +419,10 @@ int Cgi::parse_cgi_response() {
             break;
         }
         std::string field_name = getToken(':', idx);
+		if (field_name == "") {
+			status = 502;
+			return status;
+		}
 		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
         std::string field_value = getToken_to_eol(idx);
@@ -422,24 +439,10 @@ void Cgi::run_cgi() {
 	int backup_stdin = dup(STDIN_FILENO);
 	int backup_stdout = dup(STDOUT_FILENO);
 
-    std::map<std::string, std::string>::iterator it = envs.begin();
-
 	fork_process();
 
 	dup2(backup_stdin, STDIN_FILENO);
 	dup2(backup_stdout, STDOUT_FILENO);
 	close(backup_stdin);
 	close(backup_stdout);
-}
-
-Cgi::SyntaxException::SyntaxException(const std::string& what_arg)
-:msg(what_arg)
-{}
-
-Cgi::SyntaxException::~SyntaxException() throw()
-{}
-
-const char* Cgi::SyntaxException::what(void) const throw() //noexcept c++11~
-{
-	return msg.c_str();
 }
