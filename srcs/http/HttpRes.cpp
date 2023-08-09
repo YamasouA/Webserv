@@ -691,12 +691,9 @@ void HttpRes::header_filter() {
 
 	// Locationの処理いろいろやってそう
 
-	// chunkedは無視
-
 	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
 	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
 	for (; it != cgi_headers.end(); ++it) {
-//        std::cout << "cgi i: " << i << std::endl;
 		if (it->first == "Location")
 			continue;
         std::cout << it->first << ": " << it->second << std::endl;
@@ -1336,16 +1333,15 @@ void HttpRes::runHandlers() {
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
         handler_status = cgi.parse_cgi_response();
-//		std::cout << "resType: " << cgi.getResType() << std::endl;
         if (cgi.getResType() == DOCUMENT) {
             status_code = handler_status;
-            cgi.getHeaderFields().erase("Status");
+            cgi.getHeaderFields().erase("status");
             set_cgi(cgi);
-//            std::cout << cgi.buf << std::endl;
             sendHeader(); //tmp here
             out_buf = cgi.getCgiBody();
-            if (cgi.getHeaderFields().count("Content-Length")) {
-                std::stringstream ss(cgi.getHeaderFields()["Content-Length"]);
+            if (cgi.getHeaderFields().count("content-length")) {
+				// ここもutil関数
+                std::stringstream ss(cgi.getHeaderFields()["content-length"]);
                 ss >> body_size;
             } else {
                 body_size = out_buf.length();
@@ -1354,7 +1350,6 @@ void HttpRes::runHandlers() {
             return finalize_res(status_code);
         } else if (cgi.getResType() == LOCAL_REDIRECT) {
 			if (httpreq.isRedirectLimit()) {
-//				std::cerr << "cnt" << std::endl;
                 status_code = 500;
                 return finalize_res(status_code);
 			}
@@ -1368,26 +1363,20 @@ void HttpRes::runHandlers() {
 			header_filter();
 
 			return finalize_res(status_code);
-//        std::cout << cgi.buf << std::endl;
         }
 	} else {
-//  	  static int i = 0;
 		handler_status = return_redirect();
 		if (handler_status != DECLINED) {
 			return finalize_res(handler_status);
 		}
     	handler_status = static_handler();
     	if (handler_status != DECLINED) {
-//    	    std::cout << "in finalize" << std::endl;
     	    return finalize_res(handler_status);
     	}
     	handler_status = auto_index_handler();
     	if (handler_status != DECLINED) {
-//    	    std::cout << "in finalize" << std::endl;
     	    return finalize_res(handler_status);
     	}
-//  	  std::cout << "run handler i: " << i++ << std::endl;
-    	//std::cout << "handler status after static handler: " << handler_status << std::endl;
 		handler_status = dav_delete_handler();
         if (handler_status != DECLINED) {
             return finalize_res(handler_status);
