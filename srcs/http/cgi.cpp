@@ -63,24 +63,6 @@ std::string Cgi::join_path() {
 	return path_root + config_path + script_name;
 }
 
-
-bool Cgi::check_meta_var(std::string var1, std::string var2) {
-	// 必須の箇所にデータが入ってるか
-	// フォーマットがあるやつはそれを確認
-
-	if (var1 == "auth_type" || var1 ==  "content_length" || var1 ==  "content_type" ||
-		var1 == "gateway_interface" || var1 ==  "path_info" || var1 ==  "path_translated" ||
-		var1 == "query_string" ||  var1 == "remote_addr" ||  var1 == "remote_host" ||
-		var1 == "remote_ident" || var1 == "remote_user" || var1 ==  "request_method" ||
-		var1 ==  "script_name" || var1 == "server_name" || var1 == "server_port" ||
-		var1 == "server_protocol" || var1 == "server_software") {
-			if (var2 != "") {
-				return true;
-			}
-	}
-	return false;
-}
-
 //std::string Cgi::encode_uri() {
 //	std::ostringstream rets;
 //	for(size_t n = 0; n < url.size(); n++) {
@@ -243,7 +225,6 @@ void Cgi::fork_process() {
 	pipe(fd2);
 	set_env();
 
-	std::cout << "fork_process" << std::endl;
 	pid = fork();
 	// 子プロセス
 	if (pid == 0) {
@@ -264,28 +245,26 @@ void Cgi::fork_process() {
 	send_body_to_child();
 	close(fd[1]);
     char tmp_buf;
-	std::cout << "read phase" << std::endl;
     while (read(0, &tmp_buf, 1) > 0) {
         buf += tmp_buf;
     }
 	close(fd2[0]);
-//	return pid;
 }
 
 bool Cgi::isLocalRedirect() {
 	if (header_fields.size() != 1)
 		return false;
-	if (header_fields["Location"] == "" || cgi_body != "")
+	if (header_fields["location"] == "" || cgi_body != "")
 		return false;
-	if (header_fields["Location"][0] != '/')
+	if (header_fields["location"][0] != '/')
 		return false;
 	return true;
 }
 
 bool Cgi::isClientRedirect() {
-	if (header_fields["Location"] == "")
+	if (header_fields["location"] == "")
 		return false;
-	std::string abs_path = header_fields["Location"];
+	std::string abs_path = header_fields["location"];
 	if(abs_path.compare(0, 5, "https") != 0 &&
 	abs_path.compare(0, 4, "http") != 0) {
 		return false;
@@ -294,7 +273,7 @@ bool Cgi::isClientRedirect() {
 }
 
 void Cgi::detectResType() {
-	if (header_fields.count("Content-Type") == 1) {
+	if (header_fields.count("content-type") == 1) {
 		resType = DOCUMENT;
 	} else if (isLocalRedirect()) {
 		resType = LOCAL_REDIRECT;
@@ -309,7 +288,6 @@ void Cgi::detectResType() {
 	std::cout << "resType: " << resType << std::endl;
 }
 
-// ==== tmp func in cgi ====
 bool Cgi::checkHeaderEnd(size_t& idx)
 {
     if (buf[idx] == '\015') {
@@ -364,7 +342,6 @@ std::string Cgi::getToken(char delimiter, size_t& idx)
     if (token.find(' ') != std::string::npos) {
         std::cerr << "status 400" << std::endl;
     }
-//	trim(token);
 	return token;
 }
 
@@ -395,16 +372,14 @@ std::string Cgi::getToken_to_eof(size_t& idx) {
 	return body;
 }
 
-// ==== tmp func in cgi end ====
-
 void Cgi::fixUp(int& status) {
     if (header_fields.size() == 0) {
         status = 502;
         return;
     }
-    if (header_fields.count("Status") == 1) {
+    if (header_fields.count("status") == 1) {
         std::stringstream ss;
-        ss << header_fields["Status"];
+        ss << header_fields["status"];
         ss >> status;
 //        if (status < 100 || 600 <= status) {
 //            status = 502; //?
@@ -438,7 +413,7 @@ int Cgi::parse_cgi_response() {
         std::string field_value = getToken_to_eol(idx);
 		std::cout << "field_value: " << field_value<< std::endl;
         trim(field_value);
-        setHeaderField(field_name, field_value);
+        setHeaderField(toLower(field_name), field_value);
     }
     cgi_body = getToken_to_eof(idx);
     fixUp(status);
