@@ -1,6 +1,9 @@
 #include "httpReq.hpp"
 
 httpReq::httpReq()
+:idx(0),
+    redirect_cnt(0),
+    keep_alive(0)
 {}
 
 httpReq::httpReq(const std::string& request_msg)
