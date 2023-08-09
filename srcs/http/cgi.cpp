@@ -283,7 +283,8 @@ void Cgi::detectResType() {
 		else
 			resType = CLIENT_REDIRECT_WITH_DOC;
 	} else {
-	    // タイプに一致しない場合
+		// 合致しない場合は502とかでOK?
+	    status = 502;
     }
 	std::cout << "resType: " << resType << std::endl;
 }
@@ -378,18 +379,15 @@ void Cgi::fixUp(int& status) {
         return;
     }
     if (header_fields.count("status") == 1) {
+		// ここもutil関数使いたい
         std::stringstream ss;
         ss << header_fields["status"];
         ss >> status;
-//        if (status < 100 || 600 <= status) {
-//            status = 502; //?
-//        }
+        if (status < 100 || 600 <= status) {
+            status = 502;
+        }
     }
     detectResType();
-//    if (header_fields.count("Content-Type") != 1) {
-//        //
-//    }
-
 }
 
 void Cgi::expect(char c, size_t& idx)
