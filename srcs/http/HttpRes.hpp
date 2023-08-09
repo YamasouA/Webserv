@@ -71,6 +71,8 @@ class HttpRes {
 		std::string header;
 		std::string body;
 
+		size_t header_idx;
+		size_t body_idx;
 		int status_code;
 		std::string status_string;
 		std::string status_line;
@@ -101,6 +103,9 @@ class HttpRes {
         Kqueue* connection;
 		int fd;
         Cgi cgi;
+
+		bool is_sended_header;
+		bool is_sended_body;
 
 		Location target;
 		void write_file();
@@ -158,6 +163,10 @@ class HttpRes {
         std::string out_buf;
         size_t body_size;
 		std::string redirect_path;
+		void set_is_sended_header(bool b);
+		void set_is_sended_body(bool b);
+		bool get_is_sended_body() const;
+		bool get_is_sended_header() const;
 };
 
 #endif
