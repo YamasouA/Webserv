@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
 				//client->set_request(buf);
 				//acceptfd = reciver_event[i].data;
 				std::cout << acceptfd << std::endl;
-				read_request(acceptfd, fd_client_map[acceptfd], conf, kqueue);
+				read_request(acceptfd, fd_client_map[acceptfd], acceptfd_to_config[acceptfd], kqueue);
                 //kqueue.disable_event(acceptfd, EVFILT_READ);
 				//kqueue.set_event(acceptfd, EVFILT_WRITE);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
