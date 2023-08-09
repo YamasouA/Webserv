@@ -27,8 +27,8 @@ void send_response(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_ma
 		if (send_cnt < 0)
 			return;
 		res.set_is_sended_header(true);
+	    client.set_httpRes(res);
 	}
-	client.set_httpRes(res);
 	std::cout << "=== send body ===" << std::endl;
 	send_cnt = write(acceptfd, res.out_buf.c_str(), res.body_size);
 	if (send_cnt < 0)

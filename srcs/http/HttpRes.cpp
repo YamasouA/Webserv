@@ -19,8 +19,10 @@ HttpRes::HttpRes() {
 
 HttpRes::HttpRes(const Client& source, Kqueue &kq)
 :content_length_n(0),
-is_posted(0),
-    err_status(0)
+    is_posted(0),
+    err_status(0),
+    is_sended_header(false),
+    is_sended_body(false)
 {
 	//this->httpreq = source.get_parsedReq();
 	this->httpreq = source.get_httpReq();
@@ -34,6 +36,8 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->header_size = src.header_size;
     this->out_buf = src.out_buf;
     this->body_size = src.body_size;
+    this->is_sended_header = src.get_is_sended_header();
+    this->is_sended_body = src.get_is_sended_body();
 }
 
 HttpRes::~HttpRes() {
