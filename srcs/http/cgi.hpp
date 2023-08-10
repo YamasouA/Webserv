@@ -34,20 +34,19 @@ class Cgi {
         void run_handler();
         void send_body_to_child();
         void set_env();
-        void fix_up();
+        void envs_fixUp();
         std::string encode_uri();
         bool check_meta_var(std::string var1, std::string var2);
         std::string join_path();
-//        std::string join_path(std::string& script_name);
-//        int parse_cgi_response();
 
         httpReq httpreq;
         Location target;
 		std::string cgi_body;
         int resType;
+		int status;
         std::map<std::string, std::string> envs; // or sep all var
         std::map<std::string, std::string> header_fields;
-		void fixUp(int& status);
+		void fixUp();
 		std::string getToken_to_eof(size_t& idx);
 		std::string getToken_to_eol(size_t& idx);
 		std::string getToken(char delimiter, size_t& idx);

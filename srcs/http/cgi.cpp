@@ -5,6 +5,7 @@ Cgi::Cgi() {}
 Cgi::Cgi(const httpReq& request, Location location)
 :httpreq(request),
     target(location),
+	status(200),
     envs(request.get_meta_variables())
 {}
 
@@ -79,49 +80,45 @@ std::string Cgi::join_path() {
 //}
 
 
-void Cgi::fix_up() {
-    //if exist message-body, must set CONTENT_LENGTH value [MUST]
-	if (envs.count("CONTENT_LENGTH") == 0 && httpreq.getContentBody().length() > 0) {
-//		throw new Error();
+void Cgi::envs_fixUp() {
+	if (envs.count("CONTENT_LENGTH") == 0) {
+		envs["CONTENT_LENGTH"] = "0";
 	}
     if (envs.count("CONTENT_TYPE") == 0 && httpreq.getContentBody().length() > 0) {
-//        throw new Error();
+		envs["CONTENT_TYPE"] = "application/octet-stream";
     }
-    if (envs.count("GETAWAY_INTERFACE") == 0 && envs["gateway_interface"] == "CGI/1.1") {
-//        throw new Error();
+    if (envs.count("GETAWAY_INTERFACE") == 0) {
+		envs["GATEWAY_INTERFACE"] = "CGI/1.1";
     }
-    if (envs.count("PATH_INFO") == 0) {
-//        throw new Error();
+    if (envs.count("PATH_INFO") != envs.count("PATH_TRASLATED")) {
+		// PATH_INFOとPATH_TRANSLATEDはどちらも存在するかどちらも存在しない
+		status = 502;
     }
-    if (envs.count("PATH_TRASLATED") == 0) {
-//        throw new Error();
-    }
+	// QUERY_STRINGはURI-encodedされた値を確認
+
     if (envs.count("REMOTE_ADDR") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("REMOTE_HOST") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("REQUEST_METHOD") == 0) {
-//        throw new Error();
-    }
-    if (envs.count("REQUEST_NAME") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("SCRIPT_NAME") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("SERVER_NAME") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("SERVER_PORT") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("SERVER_PROTOCOL") == 0) {
-//        throw new Error();
+		status = 502;
     }
     if (envs.count("SERVER_SOFTWARE") == 0) {
-//        throw new Error();
+		status = 502;
     }
 
     //if exist message-body, must set CONTENT_TYPE value　セットされていない場合はスクリプトが受信したデータのmime型を決定しようと試みる可能性がある
@@ -150,23 +147,7 @@ void Cgi::fix_up() {
     //
     // SERVER_SOFTWARE [MUST] CGIリクエストを行い、ゲートウェイを実行するサーバーソフトウェアの名前とバージョン clientに報告されたサーバーの説明があれば
     //  それと同じであるべき [SHOULD]
-    //
-    //
-    //
-    // set sever info meta vars
 }
-
-// "AUTH_TYPE" | "CONTENT_LENGTH" |
-// "CONTENT_TYPE" | "GATEWAY_INTERFACE" |
-// "PATH_INFO" | "PATH_TRANSLATED" |
-// "QUERY_STRING" | "REMOTE_ADDR" |
-// "REMOTE_HOST" | "REMOTE_IDENT" |
-// "REMOTE_USER" | "REQUEST_METHOD" |
-// "SCRIPT_NAME" | "SERVER_NAME" |
-// "SERVER_PORT" | "SERVER_PROTOCOL" |
-// "SERVER_SOFTWARE" | scheme |
-//  protocol-var-name | extension-var-name"
-
 
 void Cgi::set_env() {
     std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
@@ -181,7 +162,7 @@ void Cgi::set_env() {
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
 	}
-	fix_up();
+	envs_fixUp();
 }
 
 void Cgi::send_body_to_child() {
@@ -224,7 +205,8 @@ void Cgi::fork_process() {
 	pipe(fd);
 	pipe(fd2);
 	set_env();
-
+	if (status != 200)
+		return;
 	pid = fork();
 	// 子プロセス
 	if (pid == 0) {
@@ -373,7 +355,7 @@ std::string Cgi::getToken_to_eof(size_t& idx) {
 	return body;
 }
 
-void Cgi::fixUp(int& status) {
+void Cgi::fixUp() {
     if (header_fields.size() == 0) {
         status = 502;
         return;
@@ -412,8 +394,10 @@ bool Cgi::expect(char c, size_t& idx)
 }
 
 int Cgi::parse_cgi_response() {
-    int status = 200;
     size_t idx = 0;
+	if (status != 200)
+		return status;
+	
 	while (idx < buf.length()) {
         if (checkHeaderEnd(idx)) {
             break;
@@ -431,7 +415,7 @@ int Cgi::parse_cgi_response() {
         setHeaderField(toLower(field_name), field_value);
     }
     cgi_body = getToken_to_eof(idx);
-    fixUp(status);
+    fixUp();
     return status;
 }
 
