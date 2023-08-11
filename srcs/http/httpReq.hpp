@@ -33,6 +33,7 @@ class httpReq {
         std::string getVersion() const;
         std::string getContentBody() const;
         int getContentLength() const;
+		std::string getQueryString() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
@@ -60,6 +61,7 @@ class httpReq {
         std::string content_body;
 		bool parse_error;
         int keep_alive;
+		std::string query_string;
 
 		void trim(std::string& str);
         void skipEmptyLines();

@@ -21,7 +21,8 @@ httpReq::httpReq(const httpReq& src)
     cgi_envs(src.get_meta_variables()),
     content_body(src.getContentBody()),
 	parse_error(false),
-    keep_alive(src.getKeepAlive())
+    keep_alive(src.getKeepAlive()),
+	query_string(src.getQueryString())
 {
     (void)src;
 }
@@ -41,6 +42,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->keep_alive = rhs.getKeepAlive();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
+    this->query_string = rhs.getQueryString();
     return *this;
 }
 
@@ -123,13 +125,13 @@ int httpReq::getKeepAlive() const
 {
     return this->keep_alive;
 }
-//std::vector<httpReq> httpReq::getHeaderInfo() const
-//{
-//    return this->header_info;
-//}
 
 int httpReq::getRedirectCnt() const {
     return this->redirect_cnt;
+}
+
+std::string httpReq::getQueryString() const {
+    return this->query_string;
 }
 
 bool httpReq::isRedirectLimit() {
@@ -192,7 +194,6 @@ std::string httpReq::getToken(char delimiter)
     if (token.find(' ') != std::string::npos) {
         std::cerr << "status 400" << std::endl;
     }
-//	trim(token);
 	return token;
 }
 
@@ -226,21 +227,16 @@ void httpReq::parseChunk() {
 	std::stringstream(tmp) >> std::hex >> chunkSize;
     std::cout << "size: " << chunkSize << std::endl;
 	while (chunkSize > 0) {
-//        std::cout << "=========ok============" << std::endl;
 		content_body += buf.substr(idx, chunkSize);
-//        std::cout << "body: " << content_body << std::endl;
-//        std::cout << "=========ok1============" << std::endl;
 		idx += chunkSize;
         checkHeaderEnd();
 		content_length += chunkSize;
-//        std::cout << "current: " << buf[idx] << std::endl;
         tmp = getToken_to_eol();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
             return;
         }
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
-//        std::cout << "size:" << chunkSize << std::endl;
 	}
 	// discard trailer fields
 	getToken_to_eof();
@@ -269,16 +265,17 @@ void httpReq::checkUri() {
         args = uri.substr(query_pos + 1, fragment_pos);
 //        fragment = uri.substr(fragment_pos + 1);
     }
+	if (query_pos != std::string::npos) {
+		query_string = uri.substr(query_pos + 1);
+	}
     uri = uri.substr(0, query_pos);
 }
 
 void httpReq::parse_scheme() {
 	if (uri.compare(0, 5, "https") == 0) {
         uri = uri.substr(6);
-//        scheme = HTTPS;
 	} else if (uri.compare(0, 4, "http") == 0) {
         uri = uri.substr(5);
-//        scheme = HTTP;
 	} else {
         std::cerr << "invalid scheme Error" << std::endl;
 	}
@@ -302,7 +299,6 @@ void httpReq::parse_host_port() {
     if (uri[i] == ':') {
         path_pos = uri.find('/');
         i = path_pos;
-        //if (port_pos != std::string::npos) {
         if (path_pos != std::string::npos) {
             port_str = uri.substr(i + 1, path_pos);
             std::stringstream ss(port_str);
@@ -461,16 +457,6 @@ void httpReq::checkFieldsValue() {
 	}
 }
 
-//void httpReq::checkURI() {
-//    std::string valid_symbol("-.~:@!$'()");
-//    for (std::string::const_iterator it = uri.cbegin(); it != uri.cend(); ++it) {
-//        if (!(std::isalnum(*it)) && valid_symbol.find(*it) == std::string::npos) {
-//            parse_error = true;
-//            return;
-//        }
-//    }
-//}
-
 void httpReq::skipEmptyLines() {
     while (1) {
         if (buf[idx] != ' ' && buf[idx] != '\t') {
@@ -495,20 +481,15 @@ void httpReq::parseRequest()
 {
     skipEmptyLines();
     parseReqLine();
-//   std::cout << "req line ok" << std::endl;
     while (idx < buf.size()) {
         if (checkHeaderEnd()) {
             break;
         }
-//        httpReq header_field;
         std::string field_name = getToken(':');
-//        header_field.setName(getToken(':'));
-        skipSpace(); //
+        skipSpace();
 		std::string field_value = getToken_to_eol();
 		trim(field_value);
-//        header_field.setValue(s);
         setHeaderField(toLower(field_name), field_value);
-//        header_info.push_back(header_field);
     }
 	if (header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
@@ -548,6 +529,9 @@ void httpReq::set_meta_variables(Location loc) {
 			cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
 		}
 	}
+	std::cout << "query_string: " << query_string << std::endl;
+	cgi_envs["QUERY_STRING"] = query_string;
+	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
 //    struct sockaddr_in client_addr = get_client_addr();
 //    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
     cgi_envs["REMOTE_ADDR"] = getClientIP();//恐らくacceptの第二引数でとれる値; inet系使えないと無理では？
@@ -555,6 +539,7 @@ void httpReq::set_meta_variables(Location loc) {
 //    cgi_envs["REMOTE_HOST"] = header_fields["host"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
 	cgi_envs["REQUEST_METHOD"] = getMethod();
     cgi_envs["SERVER_NAME"] = header_fields["host"];
+	// util関数
     std::stringstream ss;
     std::string port_str;
     ss << getPort();
@@ -562,7 +547,6 @@ void httpReq::set_meta_variables(Location loc) {
     cgi_envs["SERVER_PORT"] = port_str;//port番号; urlからparse時にportを保存する<= ではなくhtonsなどでsocketから取得する？ or config fileから?(一つのserverに複数portあった時が厳しい)
     cgi_envs["SERVER_PROTOCOL"] = "HTTP/1.1";
     cgi_envs["SERVER_SOFTWARE"] = "WebServe";
-    //cgi_envs["script_name"] = getUri(); //どうやってどこまでがscript_name(uri)でどこからがpath_infoなのかをみるか？
 }
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {
