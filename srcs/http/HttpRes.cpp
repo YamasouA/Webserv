@@ -847,12 +847,6 @@ int HttpRes::static_handler() {
 	    content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST") {
-        std::cout << "max_body_size: " << target.get_max_body_size() << std::endl;
-        std::cout << "content-length: " << httpreq.getContentLength() << std::endl;
-        if (target.get_max_body_size() != 0 && httpreq.getContentLength() > target.get_max_body_size()) {
-            status_code = REQUEST_ENTITY_TOO_LARGE;
-            return status_code;
-        }
         if (stat(file_name.c_str(), &sb) == -1) {
 			// ファイルが存在しない
 			if (errno != ENOENT) {
@@ -1330,9 +1324,23 @@ bool HttpRes::is_cgi() {
 	return false;
 }
 
+int HttpRes::checkClientBodySize() {
+    if (httpreq.getContentBody() != "") {
+	    Location loc = get_uri2location(httpreq.getUri());
+        int limit_size = loc.get_max_body_size();
+        if (limit_size > 0 && (limit_size < httpreq.getContentLength())) {
+            status_code = REQUEST_ENTITY_TOO_LARGE;
+            return status_code;
+        }
+    }
+    return OK;
+}
 
 void HttpRes::runHandlers() {
 	int handler_status = 0;
+    if (checkClientBodySize() != OK) {
+        return finalize_res(status_code);
+    }
 	if (is_cgi()) {
         std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?

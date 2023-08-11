@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-Location::Location(): depth(-1) {
+Location::Location(): depth(-1), max_body_size(-1) {
 }
 Location::Location(const Location& src) {
 	this->uri = src.uri;

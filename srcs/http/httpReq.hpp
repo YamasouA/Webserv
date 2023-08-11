@@ -40,7 +40,6 @@ class httpReq {
 		void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
-		int content_length;
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
     private:
@@ -60,6 +59,8 @@ class httpReq {
         std::string content_body;
 		bool parse_error;
         int keep_alive;
+
+        int content_length;
 
 		void trim(std::string& str);
         void skipEmptyLines();

@@ -7,7 +7,8 @@ httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
     redirect_cnt(0),
-    keep_alive(0)
+    keep_alive(0),
+    content_length(-1)
 {}
 
 httpReq::httpReq(const httpReq& src)
@@ -21,7 +22,8 @@ httpReq::httpReq(const httpReq& src)
     cgi_envs(src.get_meta_variables()),
     content_body(src.getContentBody()),
 	parse_error(false),
-    keep_alive(src.getKeepAlive())
+    keep_alive(src.getKeepAlive()),
+    content_length(src.getContentLength())
 {
     (void)src;
 }
@@ -39,6 +41,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->header_fields = rhs.getHeaderFields();
     this->content_body = rhs.getContentBody();
     this->keep_alive = rhs.getKeepAlive();
+    this->content_length = rhs.getContentLength();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
     return *this;
