@@ -90,7 +90,7 @@ void Cgi::envs_fixUp() {
     if (envs.count("GETAWAY_INTERFACE") == 0) {
 		envs["GATEWAY_INTERFACE"] = "CGI/1.1";
     }
-    if (envs.count("PATH_INFO") != envs.count("PATH_TRASLATED")) {
+    if (envs.count("PATH_INFO") != envs.count("PATH_TRANSLATED")) {
 		// PATH_INFOとPATH_TRANSLATEDはどちらも存在するかどちらも存在しない
 		status = 502;
     }
@@ -120,33 +120,7 @@ void Cgi::envs_fixUp() {
     if (envs.count("SERVER_SOFTWARE") == 0) {
 		status = 502;
     }
-
-    //if exist message-body, must set CONTENT_TYPE value　セットされていない場合はスクリプトが受信したデータのmime型を決定しようと試みる可能性がある
-    //  未知のままであれば、スクリプトは型を application/octet-stream とみなすかもしれないし、誤りとして拒絶するかもしれない
-    //  リクエストにCONTENT_TYPEが存在した場合はsetしなければならない [MUST]
-    //GATEWAY_INTERFACE is must set value [MUST] CGI/1.1
-
-	//envs["gateway_interface"] = "CGI/1.1"; // move before cgi
-
-    // PATH_INFO　文字大小保存 制限を課しても課さなくても良い
-    // PATH_TRANSLATED  QUERY_STRINGとかこの辺りはhttpreqで処理した方が良さそう？
-    // REMOTE_ADDR [MUST] acceptの第２引数で取得できそう？
-    // REMOTE_HOST(完全修飾ドメイン名) [SHOULD] 多分hostname
 	envs.erase("HTTP_HOST");
-    // REMOTE_IDENT [MAY]
-    // REMOTE_USER http認証をclientが求めている場合は[MUST]
-    // REQUEST_METHOD [MUST] 文字大小区別
-	//envs["REQUEST_METHOD"] = getMethod();
-    // SCRIPT_NAME [MUST] CGIスクリプトを識別することができる(URL符号化されていない)URL path
-    //  pahtがNULLの場合は値は省略可能だが変数はセットしなければならない PATH_INFO部はまったく含まれない
-    //
-    // SERVER_NAME [MUST] 文字大小を区別しないhostnameまたはネットワークアドレス
-    // SERVER_PORT [MUST] clientからリクエストを受信したTCP/IP port番号
-    // SERVER_PROTOCOL [MUST] CGIリクエストに使用されるアプリケーションプロトコルの名前とバーション。clientとの通信でserverが使用するプロトコルの
-    //  バージョンと違ってもよい[MAY]
-    //
-    // SERVER_SOFTWARE [MUST] CGIリクエストを行い、ゲートウェイを実行するサーバーソフトウェアの名前とバージョン clientに報告されたサーバーの説明があれば
-    //  それと同じであるべき [SHOULD]
 }
 
 void Cgi::set_env() {

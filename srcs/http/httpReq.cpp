@@ -545,10 +545,9 @@ void httpReq::set_meta_variables(Location loc) {
 			std::cout << "SET_SCRIPT_NAME" << std::endl;
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
+			cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
 		}
 	}
-//    cgi_envs["paht_translated"] = //完全飾ドメイン名(プロトコルの後ろから最初の'/'まで);
-    cgi_envs["PATH_TRANSLATED"] = header_fields["host"]; // FQDNをセットする
 //    struct sockaddr_in client_addr = get_client_addr();
 //    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
     cgi_envs["REMOTE_ADDR"] = getClientIP();//恐らくacceptの第二引数でとれる値; inet系使えないと無理では？
