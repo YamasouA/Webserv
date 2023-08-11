@@ -505,20 +505,17 @@ std::map<std::string, std::string> httpReq::get_meta_variables() const {
 
 void httpReq::set_meta_variables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
-    if (getContentLength()) {
-        cgi_envs["CONTENT_LENGTH"] = getContentLength(); //　メタ変数名後で大文字にする
+    if (header_fields.count("content-length") != 0) {
+        cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"]; //　メタ変数名後で大文字にする
     }
-    if (header_fields["content_type"].length() > 0) {
-        cgi_envs["CONTENT_TYPE"] = header_fields["content_type"];
+    if (header_fields.count("content-type") != 0) {
+        cgi_envs["CONTENT_TYPE"] = header_fields["content-type"];
     }
-    cgi_envs["GETAWAY_INTERFACE"] = "CGI/1.1";
+    cgi_envs["GATEWAY_INTERFACE"] = "CGI/1.1";
 	// Locationで取得したcgi拡張子とマッチするものがあるときにPATH_INFOを区切る
 	std::vector<std::string> ext = loc.get_cgi_ext();
 	for (std::vector<std::string>::iterator it = ext.begin(); it != ext.end(); it++) {
 		std::string::size_type idx = uri.find(*it);
-		std::cout << "uri: " << uri << std::endl;
-		std::cout << "ext: " << *it<< std::endl;
-		std::cout << "idx: " << idx << std::endl;
 		size_t len = (*it).size();
 		if (idx == std::string::npos)
 			continue;
@@ -529,7 +526,6 @@ void httpReq::set_meta_variables(Location loc) {
 			cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
 		}
 	}
-	std::cout << "query_string: " << query_string << std::endl;
 	cgi_envs["QUERY_STRING"] = query_string;
 	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
 //    struct sockaddr_in client_addr = get_client_addr();

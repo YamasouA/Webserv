@@ -121,6 +121,8 @@ void Cgi::envs_fixUp() {
 		status = 502;
     }
 	envs.erase("HTTP_HOST");
+	envs.erase("HTTP_CONTENT_LENGTH");
+	envs.erase("HTTP_CONTENT_TYPE");
 }
 
 void Cgi::set_env() {
