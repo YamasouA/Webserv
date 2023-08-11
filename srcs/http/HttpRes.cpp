@@ -166,7 +166,7 @@ std::string HttpRes::join_path() {
 	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && (target.get_index().size() != 0 || target.get_is_autoindex())) {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
         file_path = file_path.substr(config_path.length());
-	    if (config_path == "/") {
+	    if (config_path == "/" && file_path != "") {
 		    config_path = "";
         }
         index_flag = 1;
