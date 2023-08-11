@@ -64,21 +64,6 @@ std::string Cgi::join_path() {
 	return path_root + config_path + script_name;
 }
 
-//std::string Cgi::encode_uri() {
-//	std::ostringstream rets;
-//	for(size_t n = 0; n < url.size(); n++) {
-//	  unsigned char c = (unsigned char)url[n];
-//	  if (isalnum(c) || c == '_' || c == '.' || c == '/' )
-//	    rets << c;
-//	  else {
-//	    char buf[8];
-//	    sprintf(buf, "%02x", (int)c);
-//	    rets << '%' << buf[0] << buf[1];
-//	  }
-//	}
-//	return rets.str();
-//}
-
 
 void Cgi::envs_fixUp() {
 	if (envs.count("CONTENT_LENGTH") == 0) {

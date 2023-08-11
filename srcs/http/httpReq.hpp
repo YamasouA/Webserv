@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <iomanip>
 #include "../conf/Location.hpp"
 
 class httpReq {
@@ -81,6 +82,7 @@ class httpReq {
 		void absurl_parse();
 		void parse_authority_and_path();
 		void parseChunk();
+		std::string percent_encode();
 //        std::string method;
 //        std::string uri;
 //        std::string version;

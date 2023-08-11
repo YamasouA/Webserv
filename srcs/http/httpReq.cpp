@@ -503,6 +503,20 @@ std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;
 }
 
+std::string httpReq::percent_encode() {
+	std::ostringstream rets;
+	for(size_t n = 0; n < query_string.size(); n++) {
+	  unsigned char c = (unsigned char)query_string[n];
+	  // query_stringでの予約文字
+	  if (isalnum(c) || c == '+' || c == '&' || c == '=' )
+	    rets << c;
+	  else {
+		rets << '%' << std::setw(2) << std::setfill('0') << std::hex << std::uppercase << int(c);
+	  }
+	}
+	return rets.str();
+}
+
 void httpReq::set_meta_variables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
     if (header_fields.count("content-length") != 0) {
@@ -526,7 +540,7 @@ void httpReq::set_meta_variables(Location loc) {
 			cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
 		}
 	}
-	cgi_envs["QUERY_STRING"] = query_string;
+	cgi_envs["QUERY_STRING"] = percent_encode();
 	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
 //    struct sockaddr_in client_addr = get_client_addr();
 //    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
