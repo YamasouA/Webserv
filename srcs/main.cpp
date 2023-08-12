@@ -78,18 +78,21 @@ void initialize_fd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<
 	std::vector<virtualServer> server_confs = conf.get_serve_confs();
 	std::map<int, int> m;
 	for (std::vector<virtualServer>::iterator it = server_confs.begin(); it != server_confs.end(); it++) {
-		std::cout << "it->get_listen(): " << it->get_listen() << std::endl;
-		int listen = it->get_listen();
-		Socket *socket;
-		if (m.find(listen) == m.end()) {
-			std::cout << "listen: " << listen << std::endl;
-			socket = new Socket(listen);
-			socket->set_socket();
-			m[listen] = socket->get_listenfd();
-			kqueue.set_event(socket->get_listenfd(), EVFILT_READ);
-		}
-		fd_config_map[m[listen]].push_back(*it);
-		std::cout << "size: " << fd_config_map[m[listen]].size() << std::endl;
+		//std::cout << "it->get_listen(): " << it->get_listen() << std::endl;
+        std::vector<int> listen = it->get_listen();
+        for (std::vector<int>::iterator it_listen = listen.begin(); it_listen != listen.end(); ++it_listen) {
+
+            Socket *socket;
+            if (m.find(*it_listen) == m.end()) {
+                std::cout << "listen: " << *it_listen << std::endl;
+                socket = new Socket(*it_listen);
+                socket->set_socket();
+                m[*it_listen] = socket->get_listenfd();
+                kqueue.set_event(socket->get_listenfd(), EVFILT_READ);
+            }
+            fd_config_map[m[*it_listen]].push_back(*it);
+            std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
+        }
 	}
 }
 
@@ -100,14 +103,28 @@ void assign_server(std::vector<virtualServer> server_confs, Client& client) {
         std::map<std::string, std::string> tmp = client.get_httpReq().getHeaderFields();
         std::string host_name;
 		host_name = client.get_httpReq().getHeaderFields()["host"];
-        std::cout << "server name: " << it->get_server_name() << std::endl;
+//        std::cout << "server name: " << it->get_server_name() << std::endl;
 		std::cout << "host name: " << host_name << std::endl;
-        if (host_name == it->get_server_name()) {
-			std::cout << "match name" << std::endl;
-			client.set_vServer(*it);
-			return;
-		}
+        std::vector<std::string> vec = it->get_server_names();
+        for (std::vector<std::string>::iterator vit = vec.begin(); vit != vec.end(); ++vit) {
+            std::cout << "name: " << *vit << std::endl;
+            if (*vit == host_name) {
+                std::cout << "match name" << std::endl;
+                client.set_vServer(*it);
+                return;
+            }
+        }
+//        std::vector<std::string>::iterator ma;
+//        ma = std::find(it->get_server_name().begin(), it->get_server_name().end(), host_name);
+//        if (ma == it->get_server_name().end()) {
+//        if (host_name == it->get_server_name()) {
+//        } else {
+//			std::cout << "match name: " << *ma << std::endl;
+//			client.set_vServer(*it);
+//			return;
+//        }
 	}
+	std::cout << "no match" << std::endl;
 	client.set_vServer(server_confs[0]);
 }
 
