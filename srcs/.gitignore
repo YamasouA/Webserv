@@ -13,3 +13,4 @@ out
 .devcontainer/devcontainer.json
 *.pl
 **/**/*.conf
+**/.DS_store

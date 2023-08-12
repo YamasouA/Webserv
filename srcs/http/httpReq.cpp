@@ -448,7 +448,7 @@ void httpReq::fix_up() {
 				break;
 			}
 		}
-		if (*c_it != "close")
+		if (c_it == connections.end())
 			keep_alive = 1;
 		else
 			keep_alive = 0;
@@ -476,9 +476,6 @@ void httpReq::fix_up() {
     }
     if (content_body != "" && header_fields.count("content-type") != 1) {
         header_fields["content-type"] = "application/octet-stream";
-    }
-    if (header_fields.count("content-type") == 1) {
-        //check can support MIME type
     }
     if (header_fields.count("transfer-encoding") == 1) {
 		std::vector<std::string> transfer_encodings = fieldValueSplit(toLower(header_fields["transfer-encoding"]), ',');
