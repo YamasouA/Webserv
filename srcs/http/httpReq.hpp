@@ -26,6 +26,7 @@ class httpReq {
         void setContentBody(const std::string&);
 		void setHeaderField(const std::string& name, const std::string value);
         void set_meta_variables(Location loc);
+        void setErrStatus(int err_status);
 
         std::string getClientIP() const;
         int getPort() const;
@@ -33,18 +34,20 @@ class httpReq {
         std::string getUri() const;
         std::string getVersion() const;
         std::string getContentBody() const;
+        std::string getBuf() const;
         int getContentLength() const;
 		std::string getQueryString() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
+        int getErrStatus() const;
 		void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
-		int content_length;
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
+		void appendReq(char *str);
     private:
         std::string buf;
         size_t idx;
@@ -63,26 +66,43 @@ class httpReq {
 		bool parse_error;
         int keep_alive;
 		std::string query_string;
+        int content_length;
+
+
+        int content_length;
 
 		void trim(std::string& str);
+
+        int err_status;
+
         void skipEmptyLines();
 		void skipSpace();
-		void expect(char c);
+		int expect(char c);
+//		void expect(char c);
 		std::string getToken(char delimiter);
 		std::string getToken_to_eol();
 		void parseReqLine();
 		bool checkHeaderEnd();
 		std::string getToken_to_eof();
 		void checkUri();
+//		int parse_scheme();
 		void parse_scheme();
+//		int parse_host_port();
 		void parse_host_port();
 		void checkFieldsValue();
 		bool hasObsFold(std::string str);
+//		int fix_up();
 		void fix_up();
+//		int absurl_parse();
 		void absurl_parse();
+//		int parse_authority_and_path();
 		void parse_authority_and_path();
+//		int parseChunk();
 		void parseChunk();
 		std::string percent_encode();
+
+
+
 //        std::string method;
 //        std::string uri;
 //        std::string version;
