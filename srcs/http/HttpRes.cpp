@@ -16,6 +16,39 @@ std::string getContentType(std::string type) {
 	return "";
 }
 
+std::string getContentExtension(std::string content_type) {
+    std::cout << "ct: " << content_type << std::endl;
+    if (content_type == "text/html") {
+        return ".html";
+    } else if (content_type == "text/plain") {
+        return ".txt";
+    } else if (content_type == "text/csv") {
+        return ".csv";
+    } else if (content_type == "text/css") {
+        return ".css";
+    } else if (content_type == "text/js") {
+        return ".js";
+    } else if (content_type == "application/json") {
+        return ".json";
+    } else if (content_type == "application/pdf") {
+        return ".pdf";
+    } else if (content_type == "application/zip") {
+        return ".zip";
+    } else if (content_type == "image/png") {
+        return ".png";
+    } else if (content_type == "image/jpeg" || content_type == "image/jpg") {
+        return ".jpeg";
+    } else if (content_type == "image/webp") {
+        return ".webp";
+    } else if (content_type == "image/gif") {
+        return ".gif";
+    } else if (content_type == "audio/wav") {
+        return ".wav";
+    } else {
+        return "";
+    }
+}
+
 HttpRes::HttpRes() {
 }
 
@@ -61,6 +94,14 @@ bool HttpRes::get_is_sended_body() const {
 
 bool HttpRes::get_is_sended_header() const {
 	return is_sended_header;
+}
+
+void HttpRes::setLocationField(std::string loc) {
+    this->location_field = loc;
+}
+
+std::string HttpRes::getLocationField() const {
+    return location_field;
 }
 
 Location HttpRes::get_uri2location(std::string uri) const
@@ -746,6 +787,10 @@ void HttpRes::header_filter() {
     }
 	//buf += "Connection: close";
 	buf += "\r\n";
+    if (status_code == 201 && getLocationField() != "") {
+        buf += "Location: " + getLocationField();
+        buf += "\r\n";
+    }
 	if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
 		buf += "Location: " + redirect_path;
 		buf += "\r\n";
@@ -880,13 +925,21 @@ int HttpRes::static_handler() {
     } else if (method == "POST") {
         if (stat(file_name.c_str(), &sb) == -1) {
 			// ファイルが存在しない
-			if (errno != ENOENT) {
-				close(_fd);
-                std::cerr << "stat Error" << std::endl;
-                return INTERNAL_SERVER_ERROR;
+			if (errno == ENOENT) {
+		        status_code = CREATED;
+                setLocationField(file_name);
+//				close(_fd);
+//                std::cerr << "stat Error" << std::endl;
+//                return INTERNAL_SERVER_ERROR;
 				// throw error
-			}
-			status_code = 201;
+			} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
+                status_code = NOT_FOUND;
+                return status_code;
+            } else {
+//                std::cout << "POST errno: " << errno << std::endl;
+            }
+        } else {
+            status_code = 200;
         }
         // ディレクトリだった時
     //    if (!S_ISREG(sb.st_mode) && method == "POST") {
@@ -895,12 +948,40 @@ int HttpRes::static_handler() {
     //        return NOT_ALLOWED;
     //    }
         if (S_ISDIR(sb.st_mode)) {
+            time_t tm = std::time(NULL);
+            std::stringstream ss;
+            ss << tm;
+//            std::cout << ss.str() << std::endl;
+            std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+            if (file_name[file_name.length() - 1] != '/') {
+                file_name = file_name + '/' + ss.str() + ext;
+            } else {
+                file_name = file_name + ss.str() + ext;
+            }
+//            std::cout << "file_name: " << file_name << std::endl;
+			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
+            if (_fd == -1) {
+                std::cerr << "POST open Error" << std::endl;
+                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+                    std::cout << "NOT FOUND" << std::endl;
+                    status_code = NOT_FOUND;
+                    return NOT_FOUND;
+                } else if (EACCES){
+                    std::cout << "FORBIDDEN" << std::endl;
+                    status_code = FORBIDDEN;
+                    return FORBIDDEN;
+                }
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+            }
+            status_code = CREATED;
+            setLocationField(file_name);
             close(_fd);
-            return DECLINED;
+//            return DECLINED;
         }
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
-        if (!S_ISREG(sb.st_mode) && status_code != 201) {
+        if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
 			std::cerr << "stat Error" << std::endl;
 			close(_fd);
         	return INTERNAL_SERVER_ERROR;
@@ -917,10 +998,31 @@ int HttpRes::static_handler() {
 			// 通常ファイル
 			//file_name = "sinki.html";
 			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
-			if (_fd == -1) {
-                std::cerr << "POST open Error" << std::endl;
+            if (_fd == -1) {
+                std::cerr << "reg file open Error" << std::endl;
+                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+//                    } else if (!target.get_index().length() && target.get_is_autoindex()) {
+//                        return DECLINED;
+//                    } else if (target.get_index().size() > 0 && uri[uri.length() - 1] == '/') {
+//                        std::cout << "FORBIDDEN" << std::endl;
+//                        status_code = FORBIDDEN;
+//                        return FORBIDDEN;
+//                    }
+                    std::cout << "NOT FOUND" << std::endl;
+                    status_code = NOT_FOUND;
+                    return NOT_FOUND;
+                } else if (EACCES){
+                    std::cout << "FORBIDDEN" << std::endl;
+                    status_code = FORBIDDEN;
+                    return FORBIDDEN;
+                }
+                status_code = INTERNAL_SERVER_ERROR;
                 return INTERNAL_SERVER_ERROR;
-			}
+            }
+//			if (_fd == -1) {
+//                std::cerr << "POST open Error" << std::endl;
+//                return INTERNAL_SERVER_ERROR;
+//			}
 			std::string body = httpreq.getContentBody().c_str();
 //			std::cout << "POST body: \n" << body << std::endl;
 			write(_fd, body.c_str(), body.size());

@@ -92,6 +92,8 @@ class HttpRes {
         int err_status;
 //        size_t header_size;
 
+        std::string location_field;
+
 		// 対応可能なMedia-Typeを持つ
 		//static const std::map<std::string, std::string> types;// = {{"html", "text/html"},{"json", "application/json"}};
 		// request, vserverはclientのをそのまま使うからデータの持ち方どうしよう
@@ -167,6 +169,8 @@ class HttpRes {
 		void set_is_sended_body(bool b);
 		bool get_is_sended_body() const;
 		bool get_is_sended_header() const;
+        void setLocationField(std::string loc);
+        std::string getLocationField() const;
 };
 
 #endif
