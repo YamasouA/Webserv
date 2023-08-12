@@ -11,7 +11,7 @@ httpReq::httpReq(const std::string& request_msg)
     idx(0),
     redirect_cnt(0),
     keep_alive(0),
-    content_length(0),
+    content_length(-1),
     err_status(0)
 {}
 
@@ -50,6 +50,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->header_fields = rhs.getHeaderFields();
     this->content_body = rhs.getContentBody();
     this->keep_alive = rhs.getKeepAlive();
+    this->content_length = rhs.getContentLength();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
     this->content_length = rhs.getContentLength();
@@ -485,6 +486,12 @@ void httpReq::fix_up() {
         std::stringstream ss(content_length_s);
         ss >> content_length;
     }
+
+	std::string content_length_s = header_fields["content-length"];
+    std::stringstream ss(content_length_s);
+    ss >> content_length;
+    std::cout << "cl: " << content_length << std::endl;;
+
     if (content_body != "" && header_fields.count("content-type") != 1) {
         header_fields["content-type"] = "application/octet-stream";
     }
@@ -500,7 +507,6 @@ void httpReq::fix_up() {
 		}
 		header_fields["transfer-encoding"] = "chunked";
     }
-
 
 	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) method" << std::endl;

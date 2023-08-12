@@ -1361,9 +1361,23 @@ bool HttpRes::is_cgi() {
 	return false;
 }
 
+int HttpRes::checkClientBodySize() {
+    if (httpreq.getContentBody() != "") {
+	    Location loc = get_uri2location(httpreq.getUri());
+        int limit_size = loc.get_max_body_size();
+        if (limit_size > 0 && (limit_size < httpreq.getContentLength())) {
+            status_code = REQUEST_ENTITY_TOO_LARGE;
+            return status_code;
+        }
+    }
+    return OK;
+}
 
 void HttpRes::runHandlers() {
 	int handler_status = 0;
+    if (checkClientBodySize() != OK) {
+        return finalize_res(status_code);
+    }
 	if (is_cgi()) {
         std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?

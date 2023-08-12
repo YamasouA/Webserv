@@ -144,6 +144,7 @@ class HttpRes {
 		bool is_cgi();
         std::string join_path_autoindex();
 
+        int checkClientBodySize();
         //void createDate();
 	public:
         HttpRes();
