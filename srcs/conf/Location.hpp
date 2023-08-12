@@ -17,7 +17,8 @@ class Location {
 		void set_upload_path(std::string upload_path);
 		void set_index(std::vector<std::string> index);
 //		void set_index(std::string index);
-		void set_max_body_size(size_t max_body_size);
+		void set_max_body_size(int max_body_size);
+//		void set_max_body_size(size_t max_body_size);
 		void set_cgi_path(std::string cgi_path);
 		void set_return(std::string ret);
 		void set_location(Location location);
@@ -36,7 +37,8 @@ class Location {
 		std::string get_upload_path() const;
         std::vector<std::string> get_index() const;
 //		std::string get_index() const;
-		size_t get_max_body_size() const;
+		int get_max_body_size() const;
+//		size_t get_max_body_size() const;
 		std::string get_cgi_path() const;
 		std::string get_return() const;
 		std::string get_error_page(int status_code) const;
@@ -65,7 +67,8 @@ class Location {
 		int depth;
 		std::string alias;
 		bool autoindex;
-		size_t max_body_size;
+		int max_body_size;
+//		size_t max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::string> cgi_ext;
         int whichOneExist;

@@ -6,24 +6,27 @@ const std::string HttpRes::default_type = "text/html";
 //static const std::map<std::string, std::string> types = {{"html", "text/html"},{"json", "application/json"}};
 
 std::string getContentType(std::string type) {
-	if (type == "html")
-		return "text/html";
-	else if (type == "json")
-		return "application/json";
-	else if (type == "png" || type == "jpeg" || type == "jpg")
+	if (type == "html" || type == "plain" || type == "csv" || type == "css" || type == "javascript")
+		return "text/" + type;
+	else if (type == "json" || type == "pdf" || type == "zip")
+		return "application/" + type;
+	else if (type == "png" || type == "jpeg" || type == "jpg" || type == "webp" || type == "gif")
 		return "image/" + type;
+    else if (type == "wav")
+        return "audio/" + type;
 
 	return "";
 }
 
 HttpRes::HttpRes() {
-
 }
 
 HttpRes::HttpRes(const Client& source, Kqueue &kq)
 :content_length_n(0),
-is_posted(0),
-    err_status(0)
+    is_posted(0),
+    err_status(0),
+    is_sended_header(false),
+    is_sended_body(false)
 {
 	//this->httpreq = source.get_parsedReq();
 	this->httpreq = source.get_httpReq();
@@ -37,12 +40,30 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->header_size = src.header_size;
     this->out_buf = src.out_buf;
     this->body_size = src.body_size;
+    this->is_sended_header = src.get_is_sended_header();
+    this->is_sended_body = src.get_is_sended_body();
 }
 
 HttpRes::~HttpRes() {
 	//close(fd);
 }
 
+
+void HttpRes::set_is_sended_header(bool b) {
+	this->is_sended_header = b;
+}
+
+void HttpRes::set_is_sended_body(bool b) {
+	this->is_sended_body = b;
+}
+
+bool HttpRes::get_is_sended_body() const {
+	return is_sended_body;
+}
+
+bool HttpRes::get_is_sended_header() const {
+	return is_sended_header;
+}
 
 Location HttpRes::get_uri2location(std::string uri) const
 {
@@ -208,6 +229,14 @@ std::string HttpRes::join_path() {
 //    std::cout << "===== End join_path =====" << std::endl;
 	return path_root + config_path + file_path;
 }
+
+//void HttpRes::set_status_code(int status_code) {
+//    this->status_code = status_code;
+//}
+//
+//int HttpRes::get_status_code() const {
+//    return status_code;
+//}
 
 void HttpRes::set_body(std::string strs)
 {
@@ -915,8 +944,8 @@ int HttpRes::static_handler() {
     oss << ifs.rdbuf();
     out_buf = oss.str();
 	//buf += out_buf;
-    std::cout << "response body: " << std::endl;
-    std::cout << out_buf << std::endl;
+//    std::cout << "response body: " << std::endl;
+//    std::cout << out_buf << std::endl;
     body_size = content_length_n;
 //	std::cout << "===== End static_handler =====" << std::endl;
     return OK;
@@ -1057,6 +1086,12 @@ int HttpRes::redirect_handler() {
     body_size = content_length_n;
     return OK;
 }
+
+void HttpRes::handleReqErr(int req_err_status) {
+    status_code = req_err_status;
+    finalize_res(req_err_status);
+}
+
 
 void HttpRes::finalize_res(int handler_status)
 {
@@ -1326,9 +1361,23 @@ bool HttpRes::is_cgi() {
 	return false;
 }
 
+int HttpRes::checkClientBodySize() {
+    if (httpreq.getContentBody() != "") {
+	    Location loc = get_uri2location(httpreq.getUri());
+        int limit_size = loc.get_max_body_size();
+        if (limit_size > 0 && (limit_size < httpreq.getContentLength())) {
+            status_code = REQUEST_ENTITY_TOO_LARGE;
+            return status_code;
+        }
+    }
+    return OK;
+}
 
 void HttpRes::runHandlers() {
 	int handler_status = 0;
+    if (checkClientBodySize() != OK) {
+        return finalize_res(status_code);
+    }
 	if (is_cgi()) {
         std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?

@@ -6,6 +6,7 @@
 //}
 
 Client::Client()
+: httpreq()
 {}
 
 Client::Client(const Client& source)
@@ -37,14 +38,12 @@ Client::~Client()
 {}
 
 
-//void Client::set_parsedReq(httpParser parsed_req)
-void Client::set_httpReq(httpReq httpreq)
-{
-    this->httpreq = httpreq;
-}
-
 void Client::set_fd(int fd) {
 	this->fd = fd;
+}
+
+void Client::set_httpReq(httpReq httpreq){
+	this->httpreq = httpreq;
 }
 
 void Client::set_httpRes(HttpRes httpres){
