@@ -188,7 +188,6 @@ void httpReq::skipSpace()
 	}
 }
 
-//void httpReq::trim(std::string& str)
 static void trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t ");
@@ -231,7 +230,6 @@ std::string httpReq::getToken(char delimiter)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-//		throw SyntaxException("syntax Error in getToken");
         setErrStatus(400);
         return "";
 	}
@@ -241,7 +239,6 @@ std::string httpReq::getToken(char delimiter)
     }
     if (token.find(' ') != std::string::npos) {
         setErrStatus(400);
-//        std::cerr << "status 400" << std::endl;
         return "";
     }
 	return token;
@@ -387,7 +384,6 @@ void httpReq::parse_host_port() {
 //        setErrStatus(XXX);
         return;
     }
-    //path handle ...
     header_fields["host"] = host;
 	uri = uri.substr(i);
 	checkUri();
@@ -408,12 +404,6 @@ void httpReq::absurl_parse() {
     if (getErrStatus() > 0) {
         return;
     }
-//	if (expect('/')) {
-//        return;
-//    }
-//	if (expect('/')) {
-//        return;
-//    }
     if (uri[0] && uri[0] == '/' && uri[1] == '/') {
         uri.substr(2);
 	    parse_authority_and_path();
@@ -524,7 +514,6 @@ void httpReq::parseReqLine()
         setErrStatus(400);
         return;
     }
-//    skipSpace();
     uri = getToken(' ');
 	checkUri();
 	if (uri.length() != 0 && uri[0] != '/') {
@@ -535,7 +524,6 @@ void httpReq::parseReqLine()
         setErrStatus(400);
         return;
     }
-//    skipSpace();
     version = buf.substr(idx, 8);
     idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
@@ -659,7 +647,6 @@ void httpReq::parseRequest()
         if (getErrStatus() > 0) { // or field_name == ""
             return;
         }
-//        header_field.setName(getToken(':'));
         skipSpace(); //
 		std::string field_value = getToken_to_eol();
 		trim(field_value);
@@ -684,7 +671,6 @@ std::string httpReq::percent_encode() {
 	std::ostringstream rets;
 	for(size_t n = 0; n < query_string.size(); n++) {
 	  unsigned char c = (unsigned char)query_string[n];
-	  // query_stringでの予約文字
 	  if (isalnum(c) || c == '+' || c == '&' || c == '=' )
 	    rets << c;
 	  else {
@@ -697,7 +683,7 @@ std::string httpReq::percent_encode() {
 void httpReq::set_meta_variables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
     if (header_fields.count("content-length") != 0) {
-        cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"]; //　メタ変数名後で大文字にする
+        cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"];
     }
     if (header_fields.count("content-type") != 0) {
         cgi_envs["CONTENT_TYPE"] = header_fields["content-type"];
@@ -722,11 +708,8 @@ void httpReq::set_meta_variables(Location loc) {
 	}
 	cgi_envs["QUERY_STRING"] = percent_encode();
 	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
-//    struct sockaddr_in client_addr = get_client_addr();
-//    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
-    cgi_envs["REMOTE_ADDR"] = getClientIP();//恐らくacceptの第二引数でとれる値; inet系使えないと無理では？
-    cgi_envs["REMOTE_HOST"] = cgi_envs["REMOTE_ADDR"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
-//    cgi_envs["REMOTE_HOST"] = header_fields["host"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
+    cgi_envs["REMOTE_ADDR"] = getClientIP();
+    cgi_envs["REMOTE_HOST"] = cgi_envs["REMOTE_ADDR"];
 	cgi_envs["REQUEST_METHOD"] = getMethod();
     cgi_envs["SERVER_NAME"] = header_fields["host"];
 	// util関数
@@ -734,7 +717,7 @@ void httpReq::set_meta_variables(Location loc) {
     std::string port_str;
     ss << getPort();
     ss >> port_str;
-    cgi_envs["SERVER_PORT"] = port_str;//port番号; urlからparse時にportを保存する<= ではなくhtonsなどでsocketから取得する？ or config fileから?(一つのserverに複数portあった時が厳しい)
+    cgi_envs["SERVER_PORT"] = port_str;
     cgi_envs["SERVER_PROTOCOL"] = "HTTP/1.1";
     cgi_envs["SERVER_SOFTWARE"] = "WebServe";
 }

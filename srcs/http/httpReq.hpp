@@ -67,51 +67,29 @@ class httpReq {
         int keep_alive;
 		std::string query_string;
         int content_length;
-
-
-
-//		void trim(std::string& str);
-
         int err_status;
 
         void skipEmptyLines();
 		void skipSpace();
 		int expect(char c);
-//		void expect(char c);
 		std::string getToken(char delimiter);
 		std::string getToken_to_eol();
 		void parseReqLine();
 		bool checkHeaderEnd();
 		std::string getToken_to_eof();
 		void checkUri();
-//		int parse_scheme();
 		void parse_scheme();
-//		int parse_host_port();
 		void parse_host_port();
 		void checkFieldsValue();
 		bool hasObsFold(std::string str);
-//		int fix_up();
 		void fix_up();
-//		int absurl_parse();
 		void absurl_parse();
-//		int parse_authority_and_path();
 		void parse_authority_and_path();
-//		int parseChunk();
 		void parseChunk();
 		std::string percent_encode();
 
 
 
-//        std::string method;
-//        std::string uri;
-//        std::string version;
-//        std::string user_agent;
-//        std::string accept_language;
-//        std::string accept_encoding;
-//        std::string connection;
-//        std::string upgrade_insecure_req;
-//        std::string content_type;
-//        size_t content_length;
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);
