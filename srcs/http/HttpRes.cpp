@@ -6,22 +6,27 @@ const std::string HttpRes::default_type = "text/html";
 //static const std::map<std::string, std::string> types = {{"html", "text/html"},{"json", "application/json"}};
 
 std::string getContentType(std::string type) {
-	if (type == "html")
-		return "text/html";
-	else if (type == "json")
-		return "application/json";
+	if (type == "html" || type == "plain" || type == "csv" || type == "css" || type == "javascript")
+		return "text/" + type;
+	else if (type == "json" || type == "pdf" || type == "zip")
+		return "application/" + type;
+	else if (type == "png" || type == "jpeg" || type == "jpg" || type == "webp" || type == "gif")
+		return "image/" + type;
+    else if (type == "wav")
+        return "audio/" + type;
 
 	return "";
 }
 
 HttpRes::HttpRes() {
-
 }
 
 HttpRes::HttpRes(const Client& source, Kqueue &kq)
 :content_length_n(0),
-is_posted(0),
-    err_status(0)
+    is_posted(0),
+    err_status(0),
+    is_sended_header(false),
+    is_sended_body(false)
 {
 	//this->httpreq = source.get_parsedReq();
 	this->httpreq = source.get_httpReq();
@@ -35,12 +40,30 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->header_size = src.header_size;
     this->out_buf = src.out_buf;
     this->body_size = src.body_size;
+    this->is_sended_header = src.get_is_sended_header();
+    this->is_sended_body = src.get_is_sended_body();
 }
 
 HttpRes::~HttpRes() {
 	//close(fd);
 }
 
+
+void HttpRes::set_is_sended_header(bool b) {
+	this->is_sended_header = b;
+}
+
+void HttpRes::set_is_sended_body(bool b) {
+	this->is_sended_body = b;
+}
+
+bool HttpRes::get_is_sended_body() const {
+	return is_sended_body;
+}
+
+bool HttpRes::get_is_sended_header() const {
+	return is_sended_header;
+}
 
 Location HttpRes::get_uri2location(std::string uri) const
 {
@@ -158,12 +181,16 @@ std::string HttpRes::join_path() {
 //	std::cout << "root: " << path_root << std::endl;
 //	std::cout << "config: " << config_path << std::endl;
 //	std::cout << "file: " << file_path << std::endl;
-	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
+//	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
+    int index_flag = 0;
+//	if (config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
+	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && (target.get_index().size() != 0 || target.get_is_autoindex())) {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
 	    if (config_path == "/") {
 		    config_path = "";
         }
-	    file_path = "/index.html"; // from index directive
+        index_flag = 1;
+//	    file_path = "/index.html"; // from index directive
 	}
 	std::string alias;
 	if ((alias = target.get_alias()) != "") {
@@ -181,6 +208,22 @@ std::string HttpRes::join_path() {
 //			file_path = file_path.substr(1);
 //        }
 	}
+    if (index_flag) {
+        std::vector<std::string> index_files = target.get_index();
+        if (index_files.size() != 0) {
+            for (std::vector<std::string>::iterator it = index_files.begin(); it != index_files.end(); ++it) {
+                std::string full_path = path_root + config_path + file_path + *it;
+                if (access(full_path.c_str(), R_OK) >= 0) {
+                    std::cout << "full_path: " << full_path << std::endl;
+                    return full_path;
+                }
+            }
+        } else {
+            return path_root + config_path + file_path + "index.html";
+        }
+        std::cout << "no macth index: " << path_root + config_path + file_path + *(index_files.begin()) << std::endl;
+        return path_root + config_path + file_path + *(index_files.begin());
+    }
 	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cout << "join_path: " << path_root + config_path + file_path << std::endl;
 //    std::cout << "===== End join_path =====" << std::endl;
@@ -639,6 +682,14 @@ void HttpRes::header_filter() {
 
 	buf += status_line;
 	buf += "\r\n";
+    if (status_code == NOT_ALLOWED) {
+        std::vector<std::string> allow_methods = target.get_methods();
+        buf += "Allow: ";
+        for (std::vector<std::string>::iterator it = allow_methods.begin(); it != allow_methods.end(); ++it) {
+            buf += *it + ' ';
+        }
+        buf += "\r\n";
+    }
 	// ServerNameも設定できるぽいけど挙動よくわからん
 	buf += "Server: " + kServerName;
 
@@ -729,7 +780,12 @@ void HttpRes::sendHeader() {
 int HttpRes::static_handler() {
 	std::cout << "================== static_handler ==================" << std::endl;
 	std::string uri = httpreq.getUri();
+    std::cout << "uri: " << uri << std::endl;
 	target = get_uri2location(uri);
+    if (target.get_uri() == "") {
+        status_code = 404;
+        return status_code;
+    }
     //std::cout << "macth loc: " << target << std::endl;
 	std::string method = httpreq.getMethod();
 	if (method != "GET" && method != "HEAD" && method != "POST") {
@@ -743,11 +799,11 @@ int HttpRes::static_handler() {
 		//std::cout << "not allow (conf)" << std::endl;
 //		status_code = BAD_REQUEST;
         status_code = NOT_ALLOWED;
-		return DECLINED;
+		return status_code;
 	}
 
 //	if (uri[uri.length() - 1] == '/' && !target.get_is_autoindex()) {
-	if (uri[uri.length() - 1] == '/' && !target.get_index().length() && !target.get_is_autoindex()) {
+	if (uri[uri.length() - 1] == '/' && !target.get_index().size() && !target.get_is_autoindex()) {
         //move next handler
 		// なんて返す？ (declined)
 		return DECLINED;
@@ -773,7 +829,7 @@ int HttpRes::static_handler() {
                 if (target.get_is_autoindex() && uri[uri.length() - 1] == '/') {
 //                } else if (!target.get_index().length() && target.get_is_autoindex()) {
                     return DECLINED;
-                } else if (target.get_index().length() > 0 && uri[uri.length() - 1] == '/') {
+                } else if (target.get_index().size() > 0 && uri[uri.length() - 1] == '/') {
                     std::cout << "FORBIDDEN" << std::endl;
                     status_code = FORBIDDEN;
                     return FORBIDDEN;
@@ -796,17 +852,22 @@ int HttpRes::static_handler() {
             abort();
         }
         // ディレクトリだった時
-        if (S_ISDIR(sb.st_mode)) {
-			close(_fd);
-            return DECLINED;
-        }
     //    if (!S_ISREG(sb.st_mode) && method == "POST") {
     //        //status 405
     //        std::cerr << "NOT ALLOW METHOD" << std::endl;
     //        return NOT_ALLOWED;
     //    }
         // 通常ファイルではない
-        if (!S_ISREG(sb.st_mode)) {
+        if (S_ISDIR(sb.st_mode)) {
+            uri.push_back('/');
+            httpreq.setUri(uri);
+            if (target.get_index().size() > 0 || target.get_is_autoindex()) {
+                return static_handler();
+            } else {
+			    close(_fd);
+                return DECLINED;
+            }
+        } else if (!S_ISREG(sb.st_mode)) {
 			close(_fd);
             // なんのエラー?
             std::cerr << "NOT FOUND(404)" << std::endl;
@@ -828,16 +889,15 @@ int HttpRes::static_handler() {
 			status_code = 201;
         }
         // ディレクトリだった時
-        if (S_ISDIR(sb.st_mode)) {
-			close(_fd);
-            return DECLINED;
-        }
     //    if (!S_ISREG(sb.st_mode) && method == "POST") {
     //        //status 405
     //        std::cerr << "NOT ALLOW METHOD" << std::endl;
     //        return NOT_ALLOWED;
     //    }
-        // 通常ファイルではない
+        if (S_ISDIR(sb.st_mode)) {
+            close(_fd);
+            return DECLINED;
+        }
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
         if (!S_ISREG(sb.st_mode) && status_code != 201) {
@@ -884,8 +944,8 @@ int HttpRes::static_handler() {
     oss << ifs.rdbuf();
     out_buf = oss.str();
 	//buf += out_buf;
-    std::cout << "response body: " << std::endl;
-    std::cout << out_buf << std::endl;
+//    std::cout << "response body: " << std::endl;
+//    std::cout << out_buf << std::endl;
     body_size = content_length_n;
 //	std::cout << "===== End static_handler =====" << std::endl;
     return OK;
@@ -1207,7 +1267,8 @@ int HttpRes::auto_index_handler() {
 	if (find(allow_methods.begin(), allow_methods.end(), method) == allow_methods.end()) {
 //		status_code = BAD_REQUEST; // or NOT_ALLOWED
         status_code = NOT_ALLOWED;
-		return DECLINED;
+		return status_code;
+//		return DECLINED;
 	}
     // discard req body
 
