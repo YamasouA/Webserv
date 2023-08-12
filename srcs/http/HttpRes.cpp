@@ -6,12 +6,16 @@ const std::string HttpRes::default_type = "text/html";
 //static const std::map<std::string, std::string> types = {{"html", "text/html"},{"json", "application/json"}};
 
 std::string getContentType(std::string type) {
-	if (type == "html" || type == "plain" || type == "csv" || type == "css" || type == "javascript")
+	if (type == "html" || type == "csv" || type == "css" || type == "js")
 		return "text/" + type;
+    else if (type == "txt")
+        return "text/plain"
 	else if (type == "json" || type == "pdf" || type == "zip")
 		return "application/" + type;
-	else if (type == "png" || type == "jpeg" || type == "jpg" || type == "webp" || type == "gif")
+	else if (type == "png" || type == "webp" || type == "gif")
 		return "image/" + type;
+    else if (type == "jpeg" || type == "jpg")
+        return "image/jpeg";
     else if (type == "wav")
         return "audio/" + type;
 
