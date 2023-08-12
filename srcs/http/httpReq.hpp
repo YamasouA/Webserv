@@ -69,9 +69,8 @@ class httpReq {
         int content_length;
 
 
-        int content_length;
 
-		void trim(std::string& str);
+//		void trim(std::string& str);
 
         int err_status;
 

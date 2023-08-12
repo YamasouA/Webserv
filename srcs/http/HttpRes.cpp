@@ -9,7 +9,7 @@ std::string getContentType(std::string type) {
 	if (type == "html" || type == "csv" || type == "css" || type == "js")
 		return "text/" + type;
     else if (type == "txt")
-        return "text/plain"
+        return "text/plain";
 	else if (type == "json" || type == "pdf" || type == "zip")
 		return "application/" + type;
 	else if (type == "png" || type == "webp" || type == "gif")

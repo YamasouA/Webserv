@@ -29,7 +29,7 @@ httpReq::httpReq(const httpReq& src)
     content_body(src.getContentBody()),
 	parse_error(false),
     keep_alive(src.getKeepAlive()),
-	query_string(src.getQueryString())
+	query_string(src.getQueryString()),
     content_length(src.getContentLength()),
     err_status(src.getErrStatus())
 {
