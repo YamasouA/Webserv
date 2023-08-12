@@ -1344,10 +1344,6 @@ void HttpRes::runHandlers() {
 	if (is_cgi()) {
         std::cout << "================== cgi ==================" << std::endl;
 	    Location location = get_uri2location(httpreq.getUri()); //req uri?
-        if (location.get_max_body_size() != 0 && httpreq.getContentLength() > location.get_max_body_size()) {
-            status_code = REQUEST_ENTITY_TOO_LARGE;
-            return finalize_res(status_code);
-        }
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
