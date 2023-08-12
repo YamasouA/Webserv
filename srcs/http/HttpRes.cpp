@@ -163,7 +163,7 @@ std::string HttpRes::join_path() {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
     int index_flag = 0;
 //	if (config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
-	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && (target.get_index().size() != 0 || target.get_is_autoindex())) {
+	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/') {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
         file_path = file_path.substr(config_path.length());
 	    if (config_path == "/" && file_path != "") {
@@ -203,6 +203,7 @@ std::string HttpRes::join_path() {
                 }
             }
         } else {
+            std::cout << "no index directive: " << path_root + config_path + file_path + "index.html" << std::endl;
             return path_root + config_path + file_path + "index.html";
         }
         std::cout << "no macth index: " << path_root + config_path + file_path + *(index_files.begin()) << std::endl;
@@ -779,11 +780,12 @@ int HttpRes::static_handler() {
 	}
 
 //	if (uri[uri.length() - 1] == '/' && !target.get_is_autoindex()) {
-	if (uri[uri.length() - 1] == '/' && !target.get_index().size() && !target.get_is_autoindex()) {
-        //move next handler
-		// なんて返す？ (declined)
-		return DECLINED;
-	}
+
+//	if (uri[uri.length() - 1] == '/' && !target.get_index().size() && !target.get_is_autoindex()) {
+//        //move next handler
+//		// なんて返す？ (declined)
+//		return DECLINED;
+//	}
 
 	//rc = ngx_http_discard_body(r);
 
