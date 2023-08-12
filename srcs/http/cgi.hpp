@@ -44,7 +44,7 @@ class Cgi {
 		std::string cgi_body;
         int resType;
 		int status;
-        std::map<std::string, std::string> envs; // or sep all var
+        std::map<std::string, std::string> envs; 
         std::map<std::string, std::string> header_fields;
 		void fixUp();
 		std::string getToken_to_eof(size_t& idx);

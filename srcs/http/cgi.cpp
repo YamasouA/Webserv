@@ -54,8 +54,7 @@ std::string Cgi::join_path() {
 			config_path = config_path.substr(1);
 	}
 	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		//file_path = file_path.substr(1);
-		if (script_name.size() >= 1) { //
+		if (script_name.size() >= 1) { 
 			script_name = script_name.substr(1);
         }
 	}
@@ -79,8 +78,6 @@ void Cgi::envs_fixUp() {
 		// PATH_INFOとPATH_TRANSLATEDはどちらも存在するかどちらも存在しない
 		status = 502;
     }
-	// QUERY_STRINGはURI-encodedされた値を確認
-
     if (envs.count("REMOTE_ADDR") == 0) {
 		status = 502;
     }
@@ -169,7 +166,6 @@ void Cgi::fork_process() {
 	if (status != 200)
 		return;
 	pid = fork();
-	// 子プロセス
 	if (pid == 0) {
 //		set_signal_handler(SIGINT, SIG_DFL);
 //		set_signal_handler(SIGQUIT, SIG_DFL);
