@@ -149,10 +149,11 @@ void read_request(int fd, Client& client, std::vector<virtualServer> server_conf
     assign_server(server_confs, client);
 	std::cout << "phase4" << std::endl;
     HttpRes respons(client, kq);
-	std::cout << client.get_vServer() << std::endl;
-	std::cout << "phase5" << std::endl;
-    respons.runHandlers();
-	std::cout << "phase6" << std::endl;
+    if (httpreq.getErrStatus() > 0) {
+        respons.handleReqErr(httpreq.getErrStatus());
+    } else {
+        respons.runHandlers();
+    }
     client.set_httpRes(respons);
     kq.disable_event(fd, EVFILT_READ);
 	kq.set_event(fd, EVFILT_WRITE);

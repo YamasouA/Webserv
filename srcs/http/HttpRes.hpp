@@ -153,11 +153,14 @@ class HttpRes {
 		Location longestMatchLocation(std::string request_path, std::vector<Location> locations);
         bool isAllowMethod(std::string method);
         std::string join_path();
+//        void set_status_code(int status_code);
+//        int get_status_code() const;
         void set_body(std::string strs);
         void set_cgi(Cgi cgi);
         Cgi get_cgi() const;
 		void createResponse();
         void runHandlers();
+        void handleReqErr(int req_err_status);
 		std::string buf;
         size_t header_size;
         std::string out_buf;
