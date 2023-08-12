@@ -10,7 +10,7 @@ for env in envs:
 		val = os.getenv(env)
 	else:
 		val = ""
-	print(env + "=" + val) 
+	print(env + "=" + val)
 
 # Content-Length ヘッダーからデータ長を取得
 content_length = int(os.environ.get("CONTENT_LENGTH", 0))
@@ -20,4 +20,3 @@ body = sys.stdin.read(content_length)
 print("body")
 print(body)
 print("end cgi")
-hogehogehogehogehogehogehogehoge
