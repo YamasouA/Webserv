@@ -92,12 +92,6 @@ void httpReq::setHeaderField(const std::string& name, const std::string value)
     } else {
         this->header_fields.insert(std::make_pair(name, value));
     }
-//    if (this->header_fields.insert(std::make_pair(name, value)).second == false && name == "host") {
-//        setErrStatus(400);
-//        return;
-//    }
-    //Treat duplicates as an error?
-    //At least 400 error for duplicate Host
 }
 
 void httpReq::setErrStatus(int err_status) {
