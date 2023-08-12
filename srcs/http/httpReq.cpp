@@ -537,7 +537,10 @@ void httpReq::set_meta_variables(Location loc) {
 			std::cout << "SET_SCRIPT_NAME" << std::endl;
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
-			cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
+			if (cgi_envs["PATH_INFO"] != "")
+				cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
+			else
+				cgi_envs["PATH_TRANSLATED"] = "";
 		}
 	}
 	cgi_envs["QUERY_STRING"] = percent_encode();

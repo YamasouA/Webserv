@@ -13,10 +13,11 @@ for env in envs:
 	print(env + "=" + val) 
 
 # Content-Length ヘッダーからデータ長を取得
-content_length = int(os.environ.get("HTTP_CONTENT_LENGTH", 0))
+content_length = int(os.environ.get("CONTENT_LENGTH", 0))
 print(content_length)
 # 標準入力からデータを読み取る
 body = sys.stdin.read(content_length)
 print("body")
 print(body)
 print("end cgi")
+hogehogehogehogehogehogehogehoge
