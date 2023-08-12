@@ -5,14 +5,12 @@
 #include "conf/Location.hpp"
 #include "http/httpReq.hpp"
 #include "http/HttpRes.hpp"
-//#include "http/httpParser.hpp" //necessary?
 
 class HttpRes;
 
 class Client {
 	private:
 		httpReq httpreq;
-        //httpParser parsed_req;
 		HttpRes httpres;
 
 		virtualServer vServer;
@@ -29,7 +27,6 @@ class Client {
 		void set_fd(int fd);
 
 		void set_httpReq(const HttpRes& source);
-        //void set_parsedReq(httpParser parsed_req);
         void set_httpReq(httpReq httpreq);
 		void set_httpRes(HttpRes source);
 		void set_vServer(const virtualServer& source);
@@ -38,7 +35,6 @@ class Client {
         void set_port(int port);
 
 		int get_fd() const;
-		//httpParser get_parsedReq() const;
 		httpReq get_httpReq() const;
 		HttpRes get_httpRes() const;
         HttpRes* get_httpResp() const;
