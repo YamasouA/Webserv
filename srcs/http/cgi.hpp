@@ -7,6 +7,7 @@
 
 
 enum response_types {
+    NO_MATCH_TYPE = -1,
     DOCUMENT = 0,
     LOCAL_REDIRECT = 1,
     CLIENT_REDIRECT = 2,
@@ -33,20 +34,19 @@ class Cgi {
         void run_handler();
         void send_body_to_child();
         void set_env();
-        void fix_up();
+        void envs_fixUp();
         std::string encode_uri();
         bool check_meta_var(std::string var1, std::string var2);
         std::string join_path();
-//        std::string join_path(std::string& script_name);
-//        int parse_cgi_response();
 
         httpReq httpreq;
         Location target;
 		std::string cgi_body;
         int resType;
+		int status;
         std::map<std::string, std::string> envs; // or sep all var
         std::map<std::string, std::string> header_fields;
-		void fixUp(int& status);
+		void fixUp();
 		std::string getToken_to_eof(size_t& idx);
 		std::string getToken_to_eol(size_t& idx);
 		std::string getToken(char delimiter, size_t& idx);
@@ -54,20 +54,12 @@ class Cgi {
 		void skipSpace(size_t& idx);
 		void setHeaderField(const std::string& name, const std::string value);
 		void trim(std::string& str);
-		void expect(char c, size_t& idx);
+		bool expect(char c, size_t& idx);
+		std::string toLower(std::string str);
 
         bool isLocalRedirect();
         bool isClientRedirect();
         void detectResType();
-
-		class SyntaxException: public std::exception {
-			public:
-				explicit SyntaxException(const std::string& what_arg);
-				~SyntaxException() throw();
-				virtual const char* what() const throw(); // throw() = noexcept
-			private:
-				std::string msg;
-		};
 };
 
 #endif

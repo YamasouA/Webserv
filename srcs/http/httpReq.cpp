@@ -29,6 +29,7 @@ httpReq::httpReq(const httpReq& src)
     content_body(src.getContentBody()),
 	parse_error(false),
     keep_alive(src.getKeepAlive()),
+	query_string(src.getQueryString())
     content_length(src.getContentLength()),
     err_status(src.getErrStatus())
 {
@@ -53,6 +54,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->content_length = rhs.getContentLength();
     this->cgi_envs = rhs.get_meta_variables();
     this->redirect_cnt = rhs.getRedirectCnt();
+    this->query_string = rhs.getQueryString();
     this->content_length = rhs.getContentLength();
     this->err_status = rhs.getErrStatus();
     return *this;
@@ -158,13 +160,13 @@ int httpReq::getKeepAlive() const
 {
     return this->keep_alive;
 }
-//std::vector<httpReq> httpReq::getHeaderInfo() const
-//{
-//    return this->header_info;
-//}
 
 int httpReq::getRedirectCnt() const {
     return this->redirect_cnt;
+}
+
+std::string httpReq::getQueryString() const {
+    return this->query_string;
 }
 
 int httpReq::getErrStatus() const {
@@ -242,7 +244,6 @@ std::string httpReq::getToken(char delimiter)
 //        std::cerr << "status 400" << std::endl;
         return "";
     }
-//	trim(token);
 	return token;
 }
 
@@ -283,7 +284,6 @@ void httpReq::parseChunk() {
             return;
         }
 		content_body += buf.substr(idx, chunkSize);
-//        std::cout << "body: " << content_body << std::endl;
 		idx += chunkSize;
         if (!checkHeaderEnd()) {
             std::cerr << "400 Bad request" << std::endl;
@@ -291,7 +291,6 @@ void httpReq::parseChunk() {
             return;
         }
 		content_length += chunkSize;
-//        std::cout << "current: " << buf[idx] << std::endl;
         tmp = getToken_to_eol();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
@@ -299,7 +298,6 @@ void httpReq::parseChunk() {
             return;
         }
 	    std::stringstream(tmp) >> std::hex >> chunkSize;
-//        std::cout << "size:" << chunkSize << std::endl;
 	}
 
     // probably
@@ -335,16 +333,17 @@ void httpReq::checkUri() {
         args = uri.substr(query_pos + 1, fragment_pos);
 //        fragment = uri.substr(fragment_pos + 1);
     }
+	if (query_pos != std::string::npos) {
+		query_string = uri.substr(query_pos + 1);
+	}
     uri = uri.substr(0, query_pos);
 }
 
 void httpReq::parse_scheme() {
 	if (toLower(uri.substr(0, 5)).compare(0, 5, "https") == 0) {
         uri = uri.substr(6);
-//        scheme = HTTPS;
 	} else if (toLower(uri.substr(0, 6)).compare(0, 4, "http") == 0) {
         uri = uri.substr(5);
-//        scheme = HTTP;
 	} else {
         std::cerr << "invalid scheme Error" << std::endl;
         setErrStatus(400);
@@ -371,7 +370,6 @@ void httpReq::parse_host_port() {
     if (uri[i] == ':') {
         path_pos = uri.find('/');
         i = path_pos;
-        //if (port_pos != std::string::npos) {
         if (path_pos != std::string::npos) {
             port_str = uri.substr(i + 1, path_pos);
             std::stringstream ss(port_str);
@@ -620,16 +618,6 @@ void httpReq::checkFieldsValue() {
 	}
 }
 
-//void httpReq::checkURI() {
-//    std::string valid_symbol("-.~:@!$'()");
-//    for (std::string::const_iterator it = uri.cbegin(); it != uri.cend(); ++it) {
-//        if (!(std::isalnum(*it)) && valid_symbol.find(*it) == std::string::npos) {
-//            parse_error = true;
-//            return;
-//        }
-//    }
-//}
-
 void httpReq::skipEmptyLines() {
     while (1) {
         if (buf[idx] != ' ' && buf[idx] != '\t') {
@@ -663,12 +651,10 @@ void httpReq::parseRequest()
     if (getErrStatus() > 0) {
         return;
     }
-//   std::cout << "req line ok" << std::endl;
     while (idx < buf.size()) {
         if (checkHeaderEnd()) {
             break;
         }
-//        httpReq header_field;
         std::string field_name = getToken(':');
         if (getErrStatus() > 0) { // or field_name == ""
             return;
@@ -677,9 +663,7 @@ void httpReq::parseRequest()
         skipSpace(); //
 		std::string field_value = getToken_to_eol();
 		trim(field_value);
-//        header_field.setValue(s);
         setHeaderField(toLower(field_name), field_value);
-//        header_info.push_back(header_field);
     }
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
@@ -696,22 +680,33 @@ std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;
 }
 
+std::string httpReq::percent_encode() {
+	std::ostringstream rets;
+	for(size_t n = 0; n < query_string.size(); n++) {
+	  unsigned char c = (unsigned char)query_string[n];
+	  // query_stringでの予約文字
+	  if (isalnum(c) || c == '+' || c == '&' || c == '=' )
+	    rets << c;
+	  else {
+		rets << '%' << std::setw(2) << std::setfill('0') << std::hex << std::uppercase << int(c);
+	  }
+	}
+	return rets.str();
+}
+
 void httpReq::set_meta_variables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
-    if (getContentLength()) {
-        cgi_envs["CONTENT_LENGTH"] = getContentLength(); //　メタ変数名後で大文字にする
+    if (header_fields.count("content-length") != 0) {
+        cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"]; //　メタ変数名後で大文字にする
     }
-    if (header_fields["content_type"].length() > 0) {
-        cgi_envs["CONTENT_TYPE"] = header_fields["content_type"];
+    if (header_fields.count("content-type") != 0) {
+        cgi_envs["CONTENT_TYPE"] = header_fields["content-type"];
     }
-    cgi_envs["GETAWAY_INTERFACE"] = "CGI/1.1";
+    cgi_envs["GATEWAY_INTERFACE"] = "CGI/1.1";
 	// Locationで取得したcgi拡張子とマッチするものがあるときにPATH_INFOを区切る
 	std::vector<std::string> ext = loc.get_cgi_ext();
 	for (std::vector<std::string>::iterator it = ext.begin(); it != ext.end(); it++) {
 		std::string::size_type idx = uri.find(*it);
-		std::cout << "uri: " << uri << std::endl;
-		std::cout << "ext: " << *it<< std::endl;
-		std::cout << "idx: " << idx << std::endl;
 		size_t len = (*it).size();
 		if (idx == std::string::npos)
 			continue;
@@ -719,10 +714,14 @@ void httpReq::set_meta_variables(Location loc) {
 			std::cout << "SET_SCRIPT_NAME" << std::endl;
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
+			if (cgi_envs["PATH_INFO"] != "")
+				cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
+			else
+				cgi_envs["PATH_TRANSLATED"] = "";
 		}
 	}
-//    cgi_envs["paht_translated"] = //完全飾ドメイン名(プロトコルの後ろから最初の'/'まで);
-    cgi_envs["PATH_TRANSLATED"] = header_fields["host"]; // FQDNをセットする
+	cgi_envs["QUERY_STRING"] = percent_encode();
+	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
 //    struct sockaddr_in client_addr = get_client_addr();
 //    std::string client_ip_str = my_inet_ntop(client_addr, NULL, 0); // httpReqにclientがもっているsockaddr_inをread_request内で渡す
     cgi_envs["REMOTE_ADDR"] = getClientIP();//恐らくacceptの第二引数でとれる値; inet系使えないと無理では？
@@ -730,6 +729,7 @@ void httpReq::set_meta_variables(Location loc) {
 //    cgi_envs["REMOTE_HOST"] = header_fields["host"]; //REMOTE_ADDRの値の方が良さそう(DNSに毎回問い合わせる重い処理をサーバー側でやらない方が良さげなので)
 	cgi_envs["REQUEST_METHOD"] = getMethod();
     cgi_envs["SERVER_NAME"] = header_fields["host"];
+	// util関数
     std::stringstream ss;
     std::string port_str;
     ss << getPort();
@@ -737,7 +737,6 @@ void httpReq::set_meta_variables(Location loc) {
     cgi_envs["SERVER_PORT"] = port_str;//port番号; urlからparse時にportを保存する<= ではなくhtonsなどでsocketから取得する？ or config fileから?(一つのserverに複数portあった時が厳しい)
     cgi_envs["SERVER_PROTOCOL"] = "HTTP/1.1";
     cgi_envs["SERVER_SOFTWARE"] = "WebServe";
-    //cgi_envs["script_name"] = getUri(); //どうやってどこまでがscript_name(uri)でどこからがpath_infoなのかをみるか？
 }
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {

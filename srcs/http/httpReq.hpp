@@ -7,6 +7,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <iomanip>
 #include "../conf/Location.hpp"
 
 class httpReq {
@@ -35,6 +36,7 @@ class httpReq {
         std::string getContentBody() const;
         std::string getBuf() const;
         int getContentLength() const;
+		std::string getQueryString() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
@@ -63,6 +65,7 @@ class httpReq {
         std::string content_body;
 		bool parse_error;
         int keep_alive;
+		std::string query_string;
         int content_length;
 
 
@@ -96,6 +99,9 @@ class httpReq {
 		void parse_authority_and_path();
 //		int parseChunk();
 		void parseChunk();
+		std::string percent_encode();
+
+
 
 //        std::string method;
 //        std::string uri;
