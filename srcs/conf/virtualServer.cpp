@@ -53,24 +53,17 @@ virtualServer& virtualServer::operator=(const virtualServer& rhs)
 virtualServer::~virtualServer()
 {}
 
-//void virtualServer::set_listen(std::string listen){
 void virtualServer::set_listen(int listen){
     this->listen.push_back(listen);
-//	this->listen = listen;
 }
 
 void virtualServer::set_uri2location(std::map<std::string, Location> uri2location){
 	this->uri2location = uri2location;
 }
 
-//void virtualServer::set_server_name(std::string server_name){
 void virtualServer::set_server_name(std::vector<std::string> server_name){
 	this->server_names.insert(this->server_names.end(), server_name.begin(), server_name.end());
-    //this->server_name = server_name;
 }
-//void virtualServer::set_index(std::string index){
-//	this->index = index;
-//}
 
 void virtualServer::set_location(Location location){
 	locations.push_back(location);
@@ -84,19 +77,13 @@ std::map<std::string, Location> virtualServer::get_uri2location() const {
 	return uri2location;
 }
 
-//int virtualServer::get_listen() const{
 std::vector<int> virtualServer::get_listen() const{
-//std::string virtualServer::get_listen() const{
 	return listen;
 }
 
-//std::string virtualServer::get_server_name() const{
 std::vector<std::string> virtualServer::get_server_names() const{
 	return server_names;
 }
-//std::string virtualServer::get_index(){
-//	return index;
-//}
 std::vector<Location> virtualServer::get_locations() const{
 	return locations;
 }
@@ -157,7 +144,6 @@ void virtualServer::set_cgi_ext(std::vector<std::string> tokens) {
 
 void virtualServer::set_error_pages(std::vector<std::string> tokens)
 {
-//	std::cout << "tokens: " << tokens[0] << " " << tokens[1] << std::endl;
 	// status_codeとpathは必ず存在する
 	if (tokens.size() < 2) {
 		return;
@@ -173,7 +159,6 @@ void virtualServer::set_error_pages(std::vector<std::string> tokens)
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;
-//		std::cout << "status: " << status_code << std::endl;
 		if (ss.fail() || status_code > 999) {
 			continue;
 		}
@@ -192,7 +177,6 @@ bool virtualServer::get_is_autoindex() const{
 std::string virtualServer::get_upload_path() const{
 	return upload_path;
 }
-//std::string virtualServer::get_index() const{
 std::vector<std::string> virtualServer::get_index() const{
 	return index;
 }
@@ -241,21 +225,11 @@ void virtualServer::append_cgi_ext(std::vector<std::string> elems) {
 
 std::ostream& operator <<(std::ostream& stream, const virtualServer& obj) {
 		const std::vector<Location> tmp = obj.get_locations();
-//		stream << "listen: " << obj.get_listen() << std::endl
-//		<< "server_name: " << obj.get_server_name() << std::endl
 		stream << "server root: " << obj.get_root() << std::endl
-//		<< "index: " << obj.get_index() << std::endl
 		<< "locations:" << tmp.size() << std::endl << std::endl;
 		for (std::vector<Location>::const_iterator it = tmp.begin(); it != tmp.end(); ++it) {
 			stream << "location: " << *it << std::endl;
 		}
-//		stream << "===== uri2location phase =====" << std::endl;
-//		const std::map<std::string, Location> tmp2 = obj.get_uri2location();
-//		for (std::map<std::string, Location>::const_iterator it = tmp2.begin();
-//			it != tmp2.end(); it++) {
-//			stream << "uri: " << it->first << std::endl;
-//			stream << "location: " << it->second << std::endl;
-//		}
 		stream << std::endl;
 		return stream;
 }

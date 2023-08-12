@@ -28,7 +28,6 @@ class configParser {
 		void checkLocation();
 		void set_buf(std::string strs);
 	private:
-//		std::map<std::string> directive_map; //neccesary?
 		std::string buf;
 		std::vector<virtualServer> serve_confs;
 		size_t idx;
@@ -44,7 +43,6 @@ class configParser {
         static const int kErrorPageExist = 256;
         static const int kCgiExtExist = 512;
 
-		//void parseServe(size_t i);
 		virtualServer parseServe();
 		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv);
 		void uriToMap(virtualServer& vServer);
@@ -52,36 +50,31 @@ class configParser {
 		std::string getToken(char delimiter);
 		std::string get_token_to_eol();
 		std::map<std::string, Location> uri2location;
-		// シンタックスエラー
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);
 				~SyntaxException() throw();
-				virtual const char* what() const throw(); // throw() = noexcept
+				virtual const char* what() const throw(); 
 			private:
 				std::string msg;
 		};
-		// 設定重複エラー
 		class DupulicateException: public std::exception {
 			public:
 				explicit DupulicateException(const std::string& what_arg);
 				~DupulicateException() throw();
-				virtual const char* what() const throw(); // throw() = noexcept
+				virtual const char* what() const throw(); 
 			private:
 				std::string msg;
 		};
-		//
 		class ConfigValueException: public std::exception {
 			public:
 				explicit ConfigValueException(const std::string& what_arg);
 				~ConfigValueException() throw();
-				virtual const char* what() const throw(); // throw() = noexcept
+				virtual const char* what() const throw(); 
 			private:
 				std::string msg;
 		};
 };
 
-//static std::vector<std::string> methodsSplit(std::string strs, char delimi);
-//void skip();
 const std::string readConfFile(const std::string& file_name);
 #endif

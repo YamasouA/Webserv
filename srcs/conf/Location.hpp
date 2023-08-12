@@ -10,15 +10,12 @@
 class Location {
 	public:
 		void set_uri(std::string uri);
-//		void set_methods(std::string method);
 		void set_methods(std::vector<std::string> methods);
 		void set_root(std::string root);
 		void set_is_autoindex(bool autoindex);
 		void set_upload_path(std::string upload_path);
 		void set_index(std::vector<std::string> index);
-//		void set_index(std::string index);
 		void set_max_body_size(int max_body_size);
-//		void set_max_body_size(size_t max_body_size);
 		void set_cgi_path(std::string cgi_path);
 		void set_return(std::string ret);
 		void set_location(Location location);
@@ -36,9 +33,7 @@ class Location {
 		bool get_is_autoindex() const;
 		std::string get_upload_path() const;
         std::vector<std::string> get_index() const;
-//		std::string get_index() const;
 		int get_max_body_size() const;
-//		size_t get_max_body_size() const;
 		std::string get_cgi_path() const;
 		std::string get_return() const;
 		std::string get_error_page(int status_code) const;
@@ -58,7 +53,6 @@ class Location {
 		std::string uri;
 		std::string root;
         std::vector<std::string> index;
-//		std::string index;
 		std::string ret;
 		std::vector<std::string> methods;
 		std::string upload_path;
@@ -68,7 +62,6 @@ class Location {
 		std::string alias;
 		bool autoindex;
 		int max_body_size;
-//		size_t max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::string> cgi_ext;
         int whichOneExist;

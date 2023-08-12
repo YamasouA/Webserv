@@ -48,14 +48,9 @@ void Location::set_uri(std::string uri)
 	this->uri = uri;
 }
 
-//void set_method(std::string method)
 void Location::set_methods(std::vector<std::string> methods)
 {
 	this->methods = methods;
-//	for (std::vector<std::string>::iterator it = this->methods.begin();
-//		it != this->methods.end(); it++) {
-//		std::cout << *it << std::endl;
-//	}
 }
 
 void Location::set_root(std::string root)
@@ -73,13 +68,11 @@ void Location::set_upload_path(std::string upload_path)
 	this->upload_path = upload_path;
 }
 
-//void Location::set_index(std::string index)
 void Location::set_index(std::vector<std::string> index)
 {
 	this->index = index;
 }
 
-//void Location::set_max_body_size(size_t max_body_size)
 void Location::set_max_body_size(int max_body_size)
 {
 	this->max_body_size = max_body_size;
@@ -114,8 +107,6 @@ void Location::set_cgi_ext(std::vector<std::string> tokens) {
 
 void Location::set_error_pages(std::vector<std::string> tokens)
 {
-//	std::cout << "tokens: " << tokens[0] << " " << tokens[1] << std::endl;
-	// status_codeとpathは必ず存在する
 	if (tokens.size() < 2) {
 		return;
 	}
@@ -130,7 +121,6 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;
-//		std::cout << "status: " << status_code << std::endl;
 		if (ss.fail() || status_code > 999) {
 			continue;
 		}
@@ -161,11 +151,9 @@ bool Location::get_is_autoindex() const{
 std::string Location::get_upload_path() const{
 	return upload_path;
 }
-//std::string Location::get_index() const{
 std::vector<std::string> Location::get_index() const{
 	return index;
 }
-//size_t Location::get_max_body_size() const {
 int Location::get_max_body_size() const {
 	return max_body_size;
 }

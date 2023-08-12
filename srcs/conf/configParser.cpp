@@ -67,7 +67,7 @@ std::string configParser::get_token_to_eol() {
 void configParser::skip()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t'
-		|| buf[idx] == '\015' || buf[idx] == '\012') { //|| buf[idx] == ';') {
+		|| buf[idx] == '\015' || buf[idx] == '\012') { 
 		++idx;
 	}
 }
@@ -82,7 +82,6 @@ void configParser::trim(std::string& str)
 }
 
 
-//How handle case no semicolon ?
 std::string configParser::getToken(char delimiter)
 {
 	std::string token = "";
@@ -107,7 +106,6 @@ std::string configParser::getToken(char delimiter)
 	return token;
 }
 
-//stringstreamを使わない実装の方が高速なので後でそちらに変更もあり
 static std::vector<std::string> methodsSplit(const std::string &strs, char delimi)
 {
 	std::vector<std::string> methods;
@@ -124,9 +122,6 @@ static std::vector<std::string> methodsSplit(const std::string &strs, char delim
 
 Location configParser::parseLocation() {
 	Location location;
-//	bool is_set_method = false;
-//	bool is_set_max_size = false;
-//	bool is_set_autoindex = false;
     int whichOneExistInLoc = 0;
 
 	skip();
@@ -173,44 +168,35 @@ Location configParser::parseLocation() {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
             whichOneExistInLoc |= kMethodExist;
-//			is_set_method = true;
 			const std::string methods = getToken(';');
 			location.set_methods(methodsSplit(methods, ' '));
-			// ' 'か', 'でsplitしてベクターに変換して返す
 		} else if (directive == "autoindex") {
             //must single
-            if (whichOneExistInLoc & kAutoIndexExist) { //bool -> int
+            if (whichOneExistInLoc & kAutoIndexExist) { 
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
-//	        is_set_autoindex = true;
             whichOneExistInLoc |= kAutoIndexExist;
 			location.set_is_autoindex(getToken(';')=="on");
-			// autoindexはbooleanで持つ？
 		} else if (directive == "upload_path") {
             if (location.get_upload_path() != "") {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
             whichOneExistInLoc |= kUploadPathExist;
 			location.set_upload_path(getToken(';'));
-			// ワンチャンupload_pathは公式のものじゃないかも
 		} else if (directive == "max_body_size") {
             //must single
             if (whichOneExistInLoc & kMaxSizeExist) {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
-//	        is_set_max_size = true;
             whichOneExistInLoc |= kMaxSizeExist;
 			std::stringstream sstream(getToken(';'));
 			int result;
-//			size_t result;
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
-//			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
 			}
 			location.set_max_body_size(result);
 		} else if (directive == "alias") {
-            //must single and not coexist with root
             if (location.get_alias() != "" || location.get_root() != "") {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
@@ -220,7 +206,6 @@ Location configParser::parseLocation() {
 			std::cout << "location-location" << std::endl;
 			location.set_location(parseLocation());
 		} else if (directive == "error_page") {
-            //can multiple, but first one is used when same status code
             whichOneExistInLoc |= kErrorPageExist;
 			const std::string pages = getToken(';');
 			location.set_error_pages(methodsSplit(pages, ' '));
@@ -233,7 +218,6 @@ Location configParser::parseLocation() {
             }
             whichOneExistInLoc |= kCgiExtExist;
 		} else if (directive == "") {
-            // comment out
             continue;
         } else {
 			throw SyntaxException("Location: no such directive: " + directive);
@@ -241,7 +225,6 @@ Location configParser::parseLocation() {
 		}
 	}
 
-//	if (!is_set_method) {
 	if (!(whichOneExistInLoc & kMethodExist)) {
 		location.set_methods(methodsSplit("POST GET DELETE", ' '));
 	}
@@ -254,16 +237,13 @@ Location configParser::parseLocation() {
 void configParser::setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv) {
 	std::string locationRoot = location.get_root();;
 	std::string locationUri = location.get_uri();
-	//std::string path = prefix + locationRoot + locationUri;
 	std::string path = prefix + locationUri;
 	std::vector<Location> locations = location.get_locations();
-	// rootはこの時点でLocationに入れる
 	std::string root = (locationRoot != "") ? locationRoot: prefix_root;
 	for (std::vector<Location>::iterator it = locations.begin();
 		it != locations.end(); it++) {
 		setUriToMap(path, root, *it, v_serv);
 	}
-	//path = root + path;
 	location.set_root(root);
 	int whichOneExist = location.getWhichOneExist();
     std::cout << "which: " << whichOneExist << std::endl;
@@ -470,7 +450,6 @@ void configParser::checkServer() {
         }
         for (std::vector<int>::iterator l_it = listen.begin(); l_it != listen.end(); ++l_it) {
             if (*l_it == 0) {
-//            if (v_it->get_listen() == 0) {
                 throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
             }
         }
@@ -480,7 +459,6 @@ void configParser::checkServer() {
         }
         for (std::vector<std::string>::iterator n_it = server_names.begin(); n_it != server_names.end(); ++n_it) {
             if (*n_it == "") {
-//            if (v_it->get_server_name() == "") {
                 throw ConfigValueException("virtualServer derective should have servername");
             }
         }
@@ -508,7 +486,7 @@ void configParser::parseConf()
 		if (directive != "server") {
 			throw SyntaxException("need server derective");
 		}
-		skip(); // 空白などの読み飛ばし
+		skip();
 		serve_confs.push_back(parseServe());
 	}
 	expect('}');
