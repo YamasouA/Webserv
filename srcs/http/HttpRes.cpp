@@ -242,20 +242,12 @@ std::string HttpRes::join_path() {
     //std::cout << "file_path(in join_path): " << file_path << std::endl;
     if ((upload_path != "" && method == "POST" && path_root.size() && path_root[path_root.size() - 1] == '/')
         || (upload_path != "" && method == "POST" && path_root.size() == 0)) {
-        if (upload_path.size() >= 1) {
             upload_path = upload_path.substr(1);
-        }
     }
     else if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
         upload_path = "";
-	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		//file_path = file_path.substr(1);
-//		if (file_path.size() >= 1) { //
-//			file_path = file_path.substr(1);
-//        }
 	}
     if (index_flag) {
         std::vector<std::string> index_files = target.get_index();
