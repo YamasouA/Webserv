@@ -29,6 +29,8 @@ class Cgi {
         int parse_cgi_response();
         std::string buf;
 
+        int getStatusCode() const;
+
     private:
         void fork_process();
         void run_handler();
@@ -44,7 +46,7 @@ class Cgi {
 		std::string cgi_body;
         int resType;
 		int status;
-        std::map<std::string, std::string> envs; 
+        std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
 		void fixUp();
 		std::string getToken_to_eof(size_t& idx);
@@ -60,6 +62,7 @@ class Cgi {
         bool isLocalRedirect();
         bool isClientRedirect();
         void detectResType();
+//        void get_exit_status(pid_t pid);
 };
 
 #endif

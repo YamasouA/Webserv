@@ -40,6 +40,10 @@ int Cgi::getResType() const {
     return resType;
 }
 
+int Cgi::getStatusCode() const {
+    return status;
+}
+
 std::string Cgi::join_path() {
     std::cerr << "===== join_path(cgi) =====" << std::endl;
 	std::string path_root = target.get_root();
@@ -54,7 +58,7 @@ std::string Cgi::join_path() {
 			config_path = config_path.substr(1);
 	}
 	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (script_name.size() >= 1) { 
+		if (script_name.size() >= 1) {
 			script_name = script_name.substr(1);
         }
 	}
@@ -160,27 +164,46 @@ void Cgi::fork_process() {
 	int fd[2];
 	int fd2[2];
 
-	pipe(fd);
-	pipe(fd2);
+	if (pipe(fd) == -1) {
+        status = 502;
+        return;
+    }
+	if (pipe(fd2) == -1) {
+        status = 502;
+        return;
+    }
 	set_env();
 	if (status != 200)
 		return;
 	pid = fork();
+    if (pid == -1) {
+        status = 502;
+        return;
+    }
 	if (pid == 0) {
 //		set_signal_handler(SIGINT, SIG_DFL);
 //		set_signal_handler(SIGQUIT, SIG_DFL);
 		close(fd[1]);
 		close(fd2[0]);
-		dup2(fd[0], 0);
-		dup2(fd2[1], 1);
-
+		if (dup2(fd[0], 0) == -1) {
+            exit(1);
+        }
+        if (dup2(fd2[1], 1) == -1) {
+            exit(1);
+        }
 		run_handler();
 		exit(1);
 	}
 	close(fd[0]);
 	close(fd2[1]);
-	dup2(fd[1], 1);
-	dup2(fd2[0], 0);
+	if (dup2(fd[1], 1) == -1) {
+        status = 502;
+        return;
+    }
+	if (dup2(fd2[0], 0) == -1) {
+        status = 502;
+        return;
+    }
 	send_body_to_child();
 	close(fd[1]);
     char tmp_buf;
@@ -354,7 +377,7 @@ int Cgi::parse_cgi_response() {
     size_t idx = 0;
 	if (status != 200)
 		return status;
-	
+
 	while (idx < buf.length()) {
         if (checkHeaderEnd(idx)) {
             break;
@@ -376,14 +399,54 @@ int Cgi::parse_cgi_response() {
     return status;
 }
 
+//void	Cgi::get_exit_status(pid_t pid)
+//{
+//	int		exit_status;
+//	pid_t	pid2;
+//
+//	pid2 = 0;
+//	while (pid2 != -1)
+//	{
+//		pid2 = waitpid(-1, &exit_status, 0);
+//		if (pid == pid2)
+//		{
+//			if (WIFSIGNALED(exit_status))
+//			{
+////				if (WTERMSIG(status) == SIGQUIT)
+//                status = 502;
+////				status = WTERMSIG(status);
+////                std::cout << "exit status" << status << std::endl;
+//			}
+////			else if (WIFEXITED(exit_status))
+////				exit_status = WEXITSTATUS(exit_status);
+//		}
+//	}
+//}
+
+
 void Cgi::run_cgi() {
 	int backup_stdin = dup(STDIN_FILENO);
+    if (backup_stdin == -1) {
+        status = 502;
+        return;
+    }
 	int backup_stdout = dup(STDOUT_FILENO);
+    if (backup_stdout == -1) {
+        status = 502;
+        return;
+    }
 
 	fork_process();
 
-	dup2(backup_stdin, STDIN_FILENO);
-	dup2(backup_stdout, STDOUT_FILENO);
+	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
+        status = 502;
+        return;
+    }
+    if (dup2(backup_stdout, STDOUT_FILENO) == -1) {
+        status = 502;
+        return;
+    }
 	close(backup_stdin);
 	close(backup_stdout);
+//    get_exit_status(pid);
 }

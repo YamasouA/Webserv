@@ -1107,6 +1107,10 @@ void HttpRes::runHandlers() {
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
+        if (cgi.getStatusCode() > 400) {
+            status_code = cgi.getStatusCode();
+            finalize_res(status_code);
+        }
         handler_status = cgi.parse_cgi_response();
         if (cgi.getResType() == DOCUMENT) {
             status_code = handler_status;
