@@ -67,7 +67,7 @@ std::string configParser::get_token_to_eol() {
 void configParser::skip()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t'
-		|| buf[idx] == '\015' || buf[idx] == '\012') { 
+		|| buf[idx] == '\015' || buf[idx] == '\012') {
 		++idx;
 	}
 }
@@ -172,7 +172,7 @@ Location configParser::parseLocation() {
 			location.set_methods(methodsSplit(methods, ' '));
 		} else if (directive == "autoindex") {
             //must single
-            if (whichOneExistInLoc & kAutoIndexExist) { 
+            if (whichOneExistInLoc & kAutoIndexExist) {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
             whichOneExistInLoc |= kAutoIndexExist;
@@ -194,6 +194,7 @@ Location configParser::parseLocation() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("Location: invalid value: " + directive);
 			}
 			location.set_max_body_size(result);
 		} else if (directive == "alias") {
@@ -376,6 +377,7 @@ virtualServer configParser::parseServe() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("v_serv: invalid value: " + directive);
 			}
 			v_serv.set_max_body_size(result);
 		} else if (directive == "alias") {
