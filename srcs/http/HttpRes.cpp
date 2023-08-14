@@ -903,7 +903,7 @@ int HttpRes::return_redirect() {
 static std::string createMtime(time_t modified)
 {
     char buf[1000];
-    struct tm tm = *gmtime(&modified);
+    struct tm tm = *std::gmtime(&modified);
     std::strftime(buf, sizeof(buf), "%d-%b-%Y %H:%M ", &tm);
     std::string str(buf);
     return str;
