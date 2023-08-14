@@ -1,6 +1,7 @@
 #ifndef HTTPPARSER_HPP
 #define HTTPPARSER_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <map>
@@ -13,7 +14,7 @@
 class httpReq {
     public:
         httpReq();
-        httpReq(const std::string& request_msg);
+		httpReq(const std::string& request_msg);
         httpReq(const httpReq& src);
         httpReq& operator=(const httpReq& rhs);
         ~httpReq();
@@ -42,19 +43,23 @@ class httpReq {
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
         int getErrStatus() const;
-		void parseRequest();
+		//void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
 		void appendReq(char *str);
+		void parseHeader();
+		bool isEndOfHeader();
     private:
+        std::string body_buf;
         std::string buf;
         size_t idx;
         std::string client_ip;
         int port;
 		int redirect_cnt;
 		static const int kRedirectLimit = 10;
+		bool isHeaderEnd;
 
         std::string method;
         std::string uri;
@@ -87,6 +92,8 @@ class httpReq {
 		void parse_authority_and_path();
 		void parseChunk();
 		std::string percent_encode();
+		void appendHeader(std::string str);
+		void appendBody(std::string str);
 
 
 
