@@ -636,7 +636,6 @@ int HttpRes::static_handler() {
 		return status_code;
 	}
 
-//	int _fd = -1;
 	std::string file_name = join_path();
     struct stat sb;
     status_code = 200;
@@ -672,11 +671,9 @@ int HttpRes::static_handler() {
             if (target.get_index().size() > 0 || target.get_is_autoindex()) {
                 return static_handler();
             } else {
-//			    close(_fd);
                 return DECLINED;
             }
         } else if (!S_ISREG(sb.st_mode)) {
-//			close(_fd);
             std::cerr << "NOT FOUND(404)" << std::endl;
             status_code = NOT_FOUND;
             return NOT_FOUND;
@@ -686,26 +683,21 @@ int HttpRes::static_handler() {
     } else if (method == "POST") {
         if (stat(file_name.c_str(), &sb) == -1) {
 			if (errno != ENOENT) {
-//				close(_fd);
                 std::cerr << "stat Error" << std::endl;
                 return INTERNAL_SERVER_ERROR;
 			}
 			status_code = 201;
         }
         if (S_ISDIR(sb.st_mode)) {
-//            close(_fd);
             return DECLINED;
         }
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
         if (!S_ISREG(sb.st_mode) && status_code != 201) {
 			std::cerr << "stat Error" << std::endl;
-//			close(_fd);
         	return INTERNAL_SERVER_ERROR;
         } else {
             std::ofstream ofs(file_name.c_str(), std::ios::app);
-//			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
-//			if (_fd == -1) {
 			if (!ofs) {
                 std::cerr << "POST open Error" << std::endl;
                 return INTERNAL_SERVER_ERROR;
@@ -713,10 +705,8 @@ int HttpRes::static_handler() {
 			std::string body = httpreq.getContentBody();
             ofs << body;
             ofs.close();
-//			write(_fd, body.c_str(), body.size());
 		}
     }
-//    close(_fd);
     //discoard request body here ?
 	set_content_type();
     //set_etag(); //necessary?
