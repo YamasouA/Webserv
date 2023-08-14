@@ -640,7 +640,7 @@ int HttpRes::static_handler() {
 	std::string file_name = join_path();
     struct stat sb;
     status_code = 200;
-    if (method == "GET") {
+    if (method == "GET" || method == "HEAD") {
         _fd = open(file_name.c_str(), O_RDONLY);
         if (_fd == -1) {
             std::cerr << "open Error" << std::endl;
@@ -724,10 +724,12 @@ int HttpRes::static_handler() {
         std::cerr << "ifstream ko" << std::endl;
         abort();
     }
-    std::ostringstream oss;
-    oss << ifs.rdbuf();
-    out_buf = oss.str();
-    body_size = content_length_n;
+    if (!(method == "HEAD")) {
+        std::ostringstream oss;
+        oss << ifs.rdbuf();
+        out_buf = oss.str();
+        body_size = content_length_n;
+    }
     return OK;
 }
 
@@ -1052,8 +1054,10 @@ int HttpRes::auto_index_handler() {
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
     }
-    out_buf = create_auto_index_html(index_of);
-    body_size = out_buf.length();
+    if (!(method != "HEAD")) {
+        out_buf = create_auto_index_html(index_of);
+        body_size = out_buf.length();
+    }
     return OK;
 
 }
