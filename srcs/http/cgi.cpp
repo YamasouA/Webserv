@@ -186,13 +186,13 @@ void Cgi::fork_process() {
 		close(fd[1]);
 		close(fd2[0]);
 		if (dup2(fd[0], 0) == -1) {
-            exit(1);
+            std::exit(1);
         }
         if (dup2(fd2[1], 1) == -1) {
-            exit(1);
+            std::exit(1);
         }
 		run_handler();
-		exit(1);
+        std::exit(1);
 	}
 	close(fd[0]);
 	close(fd2[1]);
