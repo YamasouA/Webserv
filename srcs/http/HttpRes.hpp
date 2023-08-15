@@ -104,6 +104,12 @@ class HttpRes {
 		bool is_sended_body;
 
 		Location target;
+
+		std::string buf;
+        size_t header_size;
+        std::string out_buf;
+        size_t body_size;
+
 		void createResponseHeader(struct stat sb);
 		//void createResponseBody();
 		std::string getStatusString();
@@ -135,10 +141,8 @@ class HttpRes {
         std::string joinPathAutoindex();
 
         int checkClientBodySize();
-		std::string buf;
-        size_t header_size;
-        std::string out_buf;
-        size_t body_size;
+        void cgiHandler();
+        void httpHandler();
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);

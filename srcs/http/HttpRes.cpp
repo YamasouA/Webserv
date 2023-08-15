@@ -1105,68 +1105,78 @@ int HttpRes::checkClientBodySize() {
     return OK;
 }
 
-void HttpRes::runHandlers() {
+void HttpRes::cgiHandler() {
+    std::cout << "================== cgi ==================" << std::endl;
+	Location location = getUri2Location(httpreq.getUri()); //req uri?
+    httpreq.set_meta_variables(location);
+	Cgi cgi(httpreq ,location);
+	cgi.runCgi();
 	int handler_status = 0;
+    handler_status = cgi.parseCgiResponse();
+    if (cgi.getResType() == DOCUMENT) {
+        status_code = handler_status;
+        cgi.getHeaderFields().erase("status");
+        setCgi(cgi);
+        sendHeader(); //tmp here
+        out_buf = cgi.getCgiBody();
+        if (cgi.getHeaderFields().count("content-length")) {
+			// ここもutil関数
+            std::stringstream ss(cgi.getHeaderFields()["content-length"]);
+            ss >> body_size;
+        } else {
+            body_size = out_buf.length();
+        }
+
+        return finalizeRes(status_code);
+    } else if (cgi.getResType() == LOCAL_REDIRECT) {
+		if (httpreq.isRedirectLimit()) {
+            status_code = 500;
+            return finalizeRes(status_code);
+		}
+        httpreq.setUri(cgi.getHeaderFields()["Location"]);
+		httpreq.incrementRedirectCnt();
+        return runHandlers();
+    } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+        status_code = 302;
+		redirect_path = cgi.getHeaderFields()["Location"];
+		body = cgi.getCgiBody();
+		headerFilter();
+
+		return finalizeRes(status_code);
+    } else {
+		status_code = handler_status;
+		return finalizeRes(status_code);
+	}
+}
+
+void HttpRes::httpHandler() {
+	int handler_status = 0;
+	handler_status = returnRedirect();
+	if (handler_status != DECLINED) {
+		return finalizeRes(handler_status);
+	}
+    handler_status = staticHandler();
+    if (handler_status != DECLINED) {
+    	return finalizeRes(handler_status);
+    }
+    handler_status = autoindexHandler();
+    if (handler_status != DECLINED) {
+    	return finalizeRes(handler_status);
+    }
+	handler_status = deleteHandler();
+    if (handler_status != DECLINED) {
+        return finalizeRes(handler_status);
+    }
+}
+
+void HttpRes::runHandlers() {
+//	int handler_status = 0;
     if (checkClientBodySize() != OK) {
         return finalizeRes(status_code);
     }
 	if (isCgi()) {
-        std::cout << "================== cgi ==================" << std::endl;
-	    Location location = getUri2Location(httpreq.getUri()); //req uri?
-        httpreq.set_meta_variables(location);
-		Cgi cgi(httpreq ,location);
-		cgi.runCgi();
-        handler_status = cgi.parseCgiResponse();
-        if (cgi.getResType() == DOCUMENT) {
-            status_code = handler_status;
-            cgi.getHeaderFields().erase("status");
-            setCgi(cgi);
-            sendHeader(); //tmp here
-            out_buf = cgi.getCgiBody();
-            if (cgi.getHeaderFields().count("content-length")) {
-				// ここもutil関数
-                std::stringstream ss(cgi.getHeaderFields()["content-length"]);
-                ss >> body_size;
-            } else {
-                body_size = out_buf.length();
-            }
-
-            return finalizeRes(status_code);
-        } else if (cgi.getResType() == LOCAL_REDIRECT) {
-			if (httpreq.isRedirectLimit()) {
-                status_code = 500;
-                return finalizeRes(status_code);
-			}
-            httpreq.setUri(cgi.getHeaderFields()["Location"]);
-			httpreq.incrementRedirectCnt();
-            return runHandlers();
-        } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-            status_code = 302;
-			redirect_path = cgi.getHeaderFields()["Location"];
-			body = cgi.getCgiBody();
-			headerFilter();
-
-			return finalizeRes(status_code);
-        } else {
-			status_code = handler_status;
-			return finalizeRes(status_code);
-		}
+        return cgiHandler();
 	} else {
-		handler_status = returnRedirect();
-		if (handler_status != DECLINED) {
-			return finalizeRes(handler_status);
-		}
-    	handler_status = staticHandler();
-    	if (handler_status != DECLINED) {
-    	    return finalizeRes(handler_status);
-    	}
-    	handler_status = autoindexHandler();
-    	if (handler_status != DECLINED) {
-    	    return finalizeRes(handler_status);
-    	}
-		handler_status = deleteHandler();
-        if (handler_status != DECLINED) {
-            return finalizeRes(handler_status);
-        }
+        return httpHandler();
 	}
 }
