@@ -67,7 +67,7 @@ std::string configParser::get_token_to_eol() {
 void configParser::skip()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t'
-		|| buf[idx] == '\015' || buf[idx] == '\012') { 
+		|| buf[idx] == '\015' || buf[idx] == '\012') {
 		++idx;
 	}
 }
@@ -172,7 +172,7 @@ Location configParser::parseLocation() {
 			location.set_methods(methodsSplit(methods, ' '));
 		} else if (directive == "autoindex") {
             //must single
-            if (whichOneExistInLoc & kAutoIndexExist) { 
+            if (whichOneExistInLoc & kAutoIndexExist) {
                 throw SyntaxException("Location: duplicate directive: " + directive);
             }
             whichOneExistInLoc |= kAutoIndexExist;
@@ -226,7 +226,7 @@ Location configParser::parseLocation() {
 	}
 
 	if (!(whichOneExistInLoc & kMethodExist)) {
-		location.set_methods(methodsSplit("POST GET DELETE", ' '));
+		location.set_methods(methodsSplit("POST GET HEAD DELETE", ' '));
 	}
     location.setWhichOneExist(whichOneExistInLoc);
 	expect('}');
@@ -406,7 +406,7 @@ virtualServer configParser::parseServe() {
 		}
 	}
 	if (!(whichOneExistInServ & kMethodExist)) {
-		v_serv.set_methods(methodsSplit("POST GET DELETE", ' '));
+		v_serv.set_methods(methodsSplit("POST GET HEAD DELETE", ' '));
 	}
 	expect('}');
 	skip();
