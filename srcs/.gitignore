@@ -7,8 +7,8 @@ logs/*
 *.html
 .vscode/
 out
-*.sh
 *.txt
 .devcontainer/devcontainer.json
 *.pl
 .DS_store
+tester
