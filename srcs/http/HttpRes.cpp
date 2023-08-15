@@ -697,11 +697,14 @@ int HttpRes::static_handler() {
 		return status_code;
 	}
 
+    if (method == "HEAD") {
+        header_only = 1;
+    }
 	int _fd = -1;
 	std::string file_name = join_path();
     struct stat sb;
     status_code = 200;
-    if (method == "GET") {
+    if (method == "GET" || method == "HEAD") {
         _fd = open(file_name.c_str(), O_RDONLY);
         if (_fd == -1) {
             std::cerr << "open Error" << std::endl;
@@ -845,10 +848,13 @@ int HttpRes::static_handler() {
         std::cerr << "ifstream ko" << std::endl;
         abort();
     }
-    std::ostringstream oss;
-    oss << ifs.rdbuf();
-    out_buf = oss.str();
-    body_size = content_length_n;
+//    if (!(method == "HEAD")) {
+    if (!header_only) {
+        std::ostringstream oss;
+        oss << ifs.rdbuf();
+        out_buf = oss.str();
+        body_size = content_length_n;
+    }
     return OK;
 }
 
@@ -1116,6 +1122,10 @@ int HttpRes::auto_index_handler() {
         status_code = NOT_ALLOWED;
 		return status_code;
 	}
+
+    if (method == "HEAD") {
+        header_only = 1;
+    }
     // discard req body
 
     std::string dir_path = join_path_autoindex();
@@ -1173,8 +1183,10 @@ int HttpRes::auto_index_handler() {
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
     }
-    out_buf = create_auto_index_html(index_of);
-    body_size = out_buf.length();
+    if (!header_only) {
+        out_buf = create_auto_index_html(index_of);
+        body_size = out_buf.length();
+    }
     return OK;
 
 }
@@ -1227,6 +1239,9 @@ void HttpRes::runHandlers() {
             cgi.getHeaderFields().erase("status");
             set_cgi(cgi);
             sendHeader(); //tmp here
+            if (httpreq.getMethod() == "HEAD") {
+                return finalize_res(status_code);
+            }
             out_buf = cgi.getCgiBody();
             if (cgi.getHeaderFields().count("content-length")) {
 				// ここもutil関数
