@@ -1118,6 +1118,9 @@ void HttpRes::runHandlers() {
             cgi.getHeaderFields().erase("status");
             set_cgi(cgi);
             sendHeader(); //tmp here
+            if (methods == "HEAD") {
+                return finalize_res(status_code);
+            }
             out_buf = cgi.getCgiBody();
             if (cgi.getHeaderFields().count("content-length")) {
 				// ここもutil関数
