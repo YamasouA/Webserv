@@ -1118,7 +1118,7 @@ void HttpRes::runHandlers() {
             cgi.getHeaderFields().erase("status");
             set_cgi(cgi);
             sendHeader(); //tmp here
-            if (methods == "HEAD") {
+            if (httpreq.getMethod() == "HEAD") {
                 return finalize_res(status_code);
             }
             out_buf = cgi.getCgiBody();
