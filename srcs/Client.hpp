@@ -15,7 +15,7 @@ class Client {
 
 		virtualServer vServer;
 		int fd;
-		std::map<std::string, Location> uritolocation;
+//		std::map<std::string, Location> uritolocation;
         std::string client_ip;
         int port;
 	public:
@@ -30,7 +30,7 @@ class Client {
         void setHttpReq(httpReq httpreq);
 		void setHttpRes(HttpRes source);
 		void setVserver(const virtualServer& source);
-		void setUritolocation(const std::map<std::string, Location> map);
+//		void setUritolocation(const std::map<std::string, Location> map);
         void setClientIp(std::string client_ip);
         void setPort(int port);
 
@@ -39,7 +39,7 @@ class Client {
 		HttpRes getHttpRes() const;
         HttpRes* getHttpResp() const;
 		virtualServer getVserver() const;
-		std::map<std::string, Location> getUriToLocation() const;
+//		std::map<std::string, Location> getUriToLocation() const;
         std::string getClientIp() const;
         int getPort() const;
 };

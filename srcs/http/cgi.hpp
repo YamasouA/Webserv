@@ -30,6 +30,12 @@ class Cgi {
         std::string buf;
 
     private:
+        httpReq httpreq;
+        Location target;
+		std::string cgi_body;
+        int resType;
+		int status;
+
         void forkProcess();
         void runHandler();
         void sendBodyToChild();
@@ -39,11 +45,6 @@ class Cgi {
         bool checkMetaVar(std::string var1, std::string var2);
         std::string joinPath();
 
-        httpReq httpreq;
-        Location target;
-		std::string cgi_body;
-        int resType;
-		int status;
         std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
 		void fixUp();

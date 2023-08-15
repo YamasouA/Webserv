@@ -523,7 +523,7 @@ void HttpRes::headerFilter() {
             if (status_code == NO_CONTENT) {
                 header_only = 1;
                 content_type = "";
-                last_modified = NULL;
+                last_modified_time = NULL;
             }
             status_line = "HTTP/1.1 " + status_code_str + ' ' +  status_msg[status_code];
         } else {

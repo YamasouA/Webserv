@@ -75,7 +75,7 @@ class HttpRes {
 		size_t body_idx;
 		int status_code;
 		std::string status_string;
-		std::string status_line;
+		std::string status_line; //Doesn't have to be a member variable?
 		size_t content_length_n;
 		std::string content_type;
 		static const std::string default_type;
@@ -84,7 +84,7 @@ class HttpRes {
 		bool is_posted;
 		std::string location;
 		bool header_only;
-        time_t last_modified;
+//        time_t last_modified;
         std::string charset;
         int keep_alive;
 

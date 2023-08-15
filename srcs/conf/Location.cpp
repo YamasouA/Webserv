@@ -1,6 +1,6 @@
 #include "Location.hpp"
 
-Location::Location(): depth(-1), max_body_size(-1), whichOneExist(0) {
+Location::Location(): depth(-1), max_body_size(-1), which_one_exist(0) {
 }
 
 Location::Location(const Location& src) {
@@ -17,7 +17,7 @@ Location::Location(const Location& src) {
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
-    this->whichOneExist = src.whichOneExist;
+    this->which_one_exist = src.which_one_exist;
 }
 
 Location& Location::operator=(const Location& src)
@@ -39,7 +39,7 @@ Location& Location::operator=(const Location& src)
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
-    this->whichOneExist = src.whichOneExist;
+    this->which_one_exist = src.which_one_exist;
 	return *this;
 }
 
@@ -133,8 +133,8 @@ void Location::setErrorPages(std::map<int, std::string> error_pages) {
     this->error_pages = error_pages;
 }
 
-void Location::setWhichOneExist(int whichOneExist) {
-    this->whichOneExist = whichOneExist;
+void Location::setWhichOneExist(int which_one_exist) {
+    this->which_one_exist = which_one_exist;
 }
 std::string Location::get_uri() const{
 	return uri;
@@ -194,7 +194,7 @@ std::vector<std::string> Location::getCgiExt() const {
 }
 
 int Location::getWhichOneExist() const {
-    return whichOneExist;
+    return which_one_exist;
 }
 
 void Location::appendIndex(std::vector<std::string> elems) {

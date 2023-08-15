@@ -64,7 +64,7 @@ class Location {
 		int max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::string> cgi_ext;
-        int whichOneExist;
+        int which_one_exist;
 };
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj);
