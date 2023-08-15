@@ -477,7 +477,7 @@ void httpReq::fix_up() {
 				break;
 			}
 		}
-		if (c_it == connections.end())
+		if (c_it == connections.end() || connections.size() == 0)
 			keep_alive = 1;
 		else
 			keep_alive = 0;
