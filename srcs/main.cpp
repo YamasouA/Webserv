@@ -53,7 +53,7 @@ std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
         std::cout << "ap: " << i << "   :" << ap[i] << std::endl;
     }
     std::cout << std::endl;
-    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3]; 
+    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3];
     ss >> ip;
 	return ip;
 }
@@ -171,6 +171,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
+    if (access(config_path.c_str(), R_OK) != 0) {
+        std::cerr << "couldn't open the specified config file" << std::endl;
+        return 1;
+    }
 	configParser conf;
 	try {
 		std::string txt= readConfFile(config_path);
