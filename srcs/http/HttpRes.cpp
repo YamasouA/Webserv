@@ -636,6 +636,9 @@ int HttpRes::static_handler() {
 		return status_code;
 	}
 
+    if (method == "HEAD") {
+        header_only = 1;
+    }
 	int _fd = -1;
 	std::string file_name = join_path();
     struct stat sb;
@@ -724,7 +727,8 @@ int HttpRes::static_handler() {
         std::cerr << "ifstream ko" << std::endl;
         abort();
     }
-    if (!(method == "HEAD")) {
+//    if (!(method == "HEAD")) {
+    if (!header_only) {
         std::ostringstream oss;
         oss << ifs.rdbuf();
         out_buf = oss.str();
@@ -997,6 +1001,10 @@ int HttpRes::auto_index_handler() {
         status_code = NOT_ALLOWED;
 		return status_code;
 	}
+
+    if (method == "HEAD") {
+        header_only = 1;
+    }
     // discard req body
 
     std::string dir_path = join_path_autoindex();
@@ -1054,7 +1062,7 @@ int HttpRes::auto_index_handler() {
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
     }
-    if (!(method != "HEAD")) {
+    if (!header_only) {
         out_buf = create_auto_index_html(index_of);
         body_size = out_buf.length();
     }
