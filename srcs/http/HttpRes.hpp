@@ -110,29 +110,29 @@ class HttpRes {
 		void createControlData();
         std::string createDate(time_t now, std::string fieldName);
 		void createContentLength();
-		void set_content_type();
-		void post_event();
-		void ev_queue_insert();
-		void header_filter();
-        int static_handler();
+		void setContentType();
+		void postEvent();
+		void evQueueInsert();
+		void headerFilter();
+        int staticHandler();
         void sendHeader();
-        Location get_uri2location(std::string uri) const;
+        Location getUri2Location(std::string uri) const;
 
-		int dav_delete_handler();
-		int dav_delete_path(bool is_dir);
+		int deleteHandler();
+		int deletePath(bool is_dir);
 		int dav_depth();
-        int delete_error();
-        std::string join_dir_path(const std::string& dir_path, const std::string& elem_name);
-        void diving_through_dir(const std::string& path);
-        void finalize_res(int handler_status);
-        std::string create_err_page();
-        int redirect_handler();
-		int return_redirect();
-        int send_error_page();
-        int auto_index_handler();
-        std::string create_auto_index_html(std::map<std::string, dir_t> index_of);
-		bool is_cgi();
-        std::string join_path_autoindex();
+        int deleteError();
+        std::string joinDirPath(const std::string& dir_path, const std::string& elem_name);
+        void divingThroughDir(const std::string& path);
+        void finalizeRes(int handler_status);
+        std::string createErrPage();
+        int redirectHandle();
+		int returnRedirect();
+        int sendErrorPage();
+        int autoindexHandler();
+        std::string createAutoIndexHtml(std::map<std::string, dir_t> index_of);
+		bool isCgi();
+        std::string joinPathAutoindex();
 
         int checkClientBodySize();
 	public:
@@ -142,10 +142,10 @@ class HttpRes {
 		~HttpRes();
 		Location longestMatchLocation(std::string request_path, std::vector<Location> locations);
         bool isAllowMethod(std::string method);
-        std::string join_path();
-        void set_body(std::string strs);
-        void set_cgi(Cgi cgi);
-        Cgi get_cgi() const;
+        std::string joinPath();
+        void setBody(std::string strs);
+        void setCgi(Cgi cgi);
+        Cgi getCgi() const;
 		void createResponse();
         void runHandlers();
         void handleReqErr(int req_err_status);
@@ -154,10 +154,10 @@ class HttpRes {
         std::string out_buf;
         size_t body_size;
 		std::string redirect_path;
-		void set_is_sended_header(bool b);
-		void set_is_sended_body(bool b);
-		bool get_is_sended_body() const;
-		bool get_is_sended_header() const;
+		void setIsSendedHeader(bool b);
+		void setIsSendedBody(bool b);
+		bool getIsSendedBody() const;
+		bool getIsSendedHeader() const;
 };
 
 #endif

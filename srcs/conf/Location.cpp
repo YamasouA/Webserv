@@ -43,69 +43,69 @@ Location& Location::operator=(const Location& src)
 	return *this;
 }
 
-void Location::set_uri(std::string uri)
+void Location::setUri(std::string uri)
 {
 	this->uri = uri;
 }
 
-void Location::set_methods(std::vector<std::string> methods)
+void Location::setMethods(std::vector<std::string> methods)
 {
 	this->methods = methods;
 }
 
-void Location::set_root(std::string root)
+void Location::setRoot(std::string root)
 {
 	this->root = root;
 }
 
-void Location::set_is_autoindex(bool autoindex)
+void Location::setIsAutoindex(bool autoindex)
 {
 	this->autoindex = autoindex;
 }
 
-void Location::set_upload_path(std::string upload_path)
+void Location::setUploadPath(std::string upload_path)
 {
 	this->upload_path = upload_path;
 }
 
-void Location::set_index(std::vector<std::string> index)
+void Location::setIndex(std::vector<std::string> index)
 {
 	this->index = index;
 }
 
-void Location::set_max_body_size(int max_body_size)
+void Location::setMaxBodySize(int max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
 
-void Location::set_cgi_path(std::string cgi_path)
+void Location::setCgiPath(std::string cgi_path)
 {
 	this->cgi_path = cgi_path;
 }
 
-void Location::set_return(std::string ret)
+void Location::setReturn(std::string ret)
 {
 	this->ret = ret;
 }
 
-void Location::set_location(Location location){
+void Location::setLocation(Location location){
 	locations.push_back(location);
 }
 
-void Location::set_depth(int depth){
+void Location::setDepth(int depth){
 	this->depth = (depth);
 }
 
-void Location::set_alias(std::string alias)
+void Location::setAlias(std::string alias)
 {
 	this->alias = alias;
 }
 
-void Location::set_cgi_ext(std::vector<std::string> tokens) {
+void Location::setCgiExt(std::vector<std::string> tokens) {
 	this->cgi_ext = tokens;
 }
 
-void Location::set_error_pages(std::vector<std::string> tokens)
+void Location::setErrorPages(std::vector<std::string> tokens)
 {
 	if (tokens.size() < 2) {
 		return;
@@ -129,7 +129,7 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 	}
 }
 
-void Location::set_error_pages(std::map<int, std::string> error_pages) {
+void Location::setErrorPages(std::map<int, std::string> error_pages) {
     this->error_pages = error_pages;
 }
 
@@ -142,54 +142,54 @@ std::string Location::get_uri() const{
 std::vector<std::string> Location::get_methods() const{
 	return methods;
 }
-std::string Location::get_root() const{
+std::string Location::getRoot() const{
 	return root;
 }
-bool Location::get_is_autoindex() const{
+bool Location::getIsAutoindex() const{
 	return autoindex;
 }
-std::string Location::get_upload_path() const{
+std::string Location::getUploadPath() const{
 	return upload_path;
 }
-std::vector<std::string> Location::get_index() const{
+std::vector<std::string> Location::getIndex() const{
 	return index;
 }
-int Location::get_max_body_size() const {
+int Location::getMaxBodySize() const {
 	return max_body_size;
 }
 
-std::string Location::get_cgi_path() const {
+std::string Location::getCgiPath() const {
 	return cgi_path;
 }
 
-std::string Location::get_return() const {
+std::string Location::getReturn() const {
 	return ret;
 }
 
-std::vector<Location> Location::get_locations() const{
+std::vector<Location> Location::getLocations() const{
 	return locations;
 }
 
-int Location::get_depth() const{
+int Location::getDepth() const{
 	return depth;
 }
 
-std::string Location::get_alias() const {
+std::string Location::getAlias() const {
 	return alias;
 }
 
-std::string Location::get_error_page(int status_code) const{
+std::string Location::getErrorPage(int status_code) const{
 	std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 	if (it != error_pages.end())
 		return it->second;
 	return "";
 }
 
-std::map<int, std::string> Location::get_error_pages() const{
+std::map<int, std::string> Location::getErrorPages() const{
 	return error_pages;
 }
 
-std::vector<std::string> Location::get_cgi_ext() const {
+std::vector<std::string> Location::getCgiExt() const {
 	return cgi_ext;
 }
 
@@ -197,17 +197,17 @@ int Location::getWhichOneExist() const {
     return whichOneExist;
 }
 
-void Location::append_index(std::vector<std::string> elems) {
+void Location::appendIndex(std::vector<std::string> elems) {
     index.insert(index.end(), elems.begin(), elems.end());
 }
 
-void Location::append_cgi_ext(std::vector<std::string> elems) {
+void Location::appendCgiExt(std::vector<std::string> elems) {
     cgi_ext.insert(cgi_ext.end(), elems.begin(), elems.end());
 }
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			const std::vector<std::string> tmp = obj.get_methods();
-            const std::vector<std::string> tmp4 = obj.get_index();
+            const std::vector<std::string> tmp4 = obj.getIndex();
 			stream << "====== Location data =====" << std::endl
 			<< "uri: " << obj.get_uri() << std::endl
 			<< "methods: ";
@@ -215,30 +215,30 @@ std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 				stream << *it << " ";
 			}
 			stream << std::endl;
-			stream << "location root: " << obj.get_root() << std::endl
-			<< "is_autoindex: " << obj.get_is_autoindex() << std::endl
-			<< "upload_path: " << obj.get_upload_path() << std::endl
-			<< "index: ";// << obj.get_index() << std::endl
+			stream << "location root: " << obj.getRoot() << std::endl
+			<< "is_autoindex: " << obj.getIsAutoindex() << std::endl
+			<< "upload_path: " << obj.getUploadPath() << std::endl
+			<< "index: ";// << obj.getIndex() << std::endl
 			for (std::vector<std::string>::const_iterator it2 = tmp4.begin(); it2 != tmp4.end(); ++it2) {
 				stream << *it2 << " ";
 			}
             stream << std::endl;
-			stream << "max_body_size: " << obj.get_max_body_size() << std::endl
-			<< "cgi_path: " << obj.get_cgi_path() << std::endl
-			<< "return: " << obj.get_cgi_path() << std::endl;
-			std::map<int, std::string>map = obj.get_error_pages();
+			stream << "max_body_size: " << obj.getMaxBodySize() << std::endl
+			<< "cgi_path: " << obj.getCgiPath() << std::endl
+			<< "return: " << obj.getCgiPath() << std::endl;
+			std::map<int, std::string>map = obj.getErrorPages();
 			std::map<int, std::string>::iterator it= map.begin();
 			for (; it != map.end(); it++) {
 				stream << "status_code: " << it->first
 				<< ", path: " << it->second << std::endl;
 			}
 			stream << "cgi_extension: ";
-			const std::vector<std::string> tmp3 = obj.get_cgi_ext();
+			const std::vector<std::string> tmp3 = obj.getCgiExt();
 			for (std::vector<std::string>::const_iterator it = tmp3.begin(); it != tmp3.end(); ++it) {
 				stream << *it << " ";
 			}
 			stream << "locations: ";
-			const std::vector<Location> tmp2 = obj.get_locations();
+			const std::vector<Location> tmp2 = obj.getLocations();
 			for (std::vector<Location>::const_iterator it = tmp2.begin(); it != tmp2.end(); ++it) {
 				stream << *it << " ";
 			}

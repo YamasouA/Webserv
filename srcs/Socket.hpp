@@ -16,12 +16,12 @@ class Socket {
 		Socket(const Socket& source);
 		Socket& operator =(const Socket& source);
 
-		int set_socket();
-		void set_listenfd();
-		void set_port(int port);
-		void set_serv_addr();
+		int setSocket();
+		void setListenFd();
+		void setPort(int port);
+		void setServerAddr();
 
-		int get_listenfd();
-		int get_port();
-		struct sockaddr_in get_serv_addr();
+		int getListenFd();
+		int getPort();
+		struct sockaddr_in getServerAddr();
 };

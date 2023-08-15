@@ -30,7 +30,7 @@ Kqueue& Kqueue::operator=(const Kqueue& rhs) {
 Kqueue::~Kqueue() {
 }
 
-void Kqueue::set_event(int fd, short ev_filter) {
+void Kqueue::setEvent(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	changes.push_back(register_event);
@@ -40,7 +40,7 @@ void Kqueue::set_event(int fd, short ev_filter) {
     }
 }
 
-void Kqueue::disable_event(int fd, short ev_filter) {
+void Kqueue::disableEvent(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_DELETE, 0, 0, NULL);
 	changes.push_back(register_event);
@@ -48,21 +48,21 @@ void Kqueue::disable_event(int fd, short ev_filter) {
 		perror("kevent Error(in disable)");
     }
 	if (ev_filter == EVFILT_WRITE) {
-		std::cout << "close in disable_event" << std::endl;
+		std::cout << "close in disableEvent" << std::endl;
 		close(fd);
 	}
 }
 
-int Kqueue::get_kq() {
+int Kqueue::getKq() {
 	return kq;
 }
 
-int Kqueue::get_events_num() {
+int Kqueue::getEventsNum() {
 	int event_num = kevent(kq, NULL, 0, reciver_event, 100, &time_over);
 	std::cout << "event_num: " << event_num << std::endl;
 	return event_num;
 }
 
-struct kevent* Kqueue::get_reciver_event() {
+struct kevent* Kqueue::getReciverEvent() {
 	return reciver_event;
 }

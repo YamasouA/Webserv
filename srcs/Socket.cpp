@@ -18,7 +18,7 @@ Socket& Socket::operator =(const Socket& source) {
 	return *this;
 }
 
-void Socket::set_listenfd() {
+void Socket::setListenFd() {
 	this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->listenfd == -1) {
 		std::cout << "socket() failed Error" << std::endl;
@@ -26,11 +26,11 @@ void Socket::set_listenfd() {
 	}
 }
 
-void Socket::set_port(int port) {
+void Socket::setPort(int port) {
 	this->port = port;
 }
 
-void Socket::set_serv_addr() {
+void Socket::setServerAddr() {
 	memset(&this->serv_addr, 0, sizeof(this->serv_addr));
 
 	this->serv_addr.sin_family = AF_INET;
@@ -38,8 +38,8 @@ void Socket::set_serv_addr() {
 	this->serv_addr.sin_port = htons(this->port);
 }
 
-int Socket::set_socket() {
-	Socket::set_listenfd();
+int Socket::setSocket() {
+	Socket::setListenFd();
 	int optval = 1;
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
 		std::cout << "setsockopt() failed Error" << std::endl;
@@ -47,7 +47,7 @@ int Socket::set_socket() {
 		return -1;
 	}
 
-	Socket::set_serv_addr();
+	Socket::setServerAddr();
 	if (bind(this->listenfd, (struct sockaddr*)&this->serv_addr, sizeof(this->serv_addr)) == -1) {
 		std::cout << "bind() faild.(" << errno << ") Error" << std::endl;
 		close(this->listenfd);
@@ -61,14 +61,14 @@ int Socket::set_socket() {
 	return 0;
 }
 
-int Socket::get_listenfd() {
+int Socket::getListenFd() {
 	return listenfd;
 }
 
-int Socket::get_port() {
+int Socket::getPort() {
 	return port;
 }
 
-struct sockaddr_in Socket::get_serv_addr() {
+struct sockaddr_in Socket::getServerAddr() {
 	return serv_addr;
 }

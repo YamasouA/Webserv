@@ -22,7 +22,7 @@ class configParser {
 		void skip();
 		void trim(std::string& str);
 		void expect(char c);
-		std::vector<virtualServer> get_serve_confs()const;
+		std::vector<virtualServer> getServerConfs()const;
 		void fixUp();
 		void checkServer();
 		void checkLocation();
@@ -48,13 +48,13 @@ class configParser {
 		void uriToMap(virtualServer& vServer);
 		Location parseLocation();
 		std::string getToken(char delimiter);
-		std::string get_token_to_eol();
+		std::string getTokenToEOL();
 		std::map<std::string, Location> uri2location;
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);
 				~SyntaxException() throw();
-				virtual const char* what() const throw(); 
+				virtual const char* what() const throw();
 			private:
 				std::string msg;
 		};
@@ -62,7 +62,7 @@ class configParser {
 			public:
 				explicit DupulicateException(const std::string& what_arg);
 				~DupulicateException() throw();
-				virtual const char* what() const throw(); 
+				virtual const char* what() const throw();
 			private:
 				std::string msg;
 		};
@@ -70,7 +70,7 @@ class configParser {
 			public:
 				explicit ConfigValueException(const std::string& what_arg);
 				~ConfigValueException() throw();
-				virtual const char* what() const throw(); 
+				virtual const char* what() const throw();
 			private:
 				std::string msg;
 		};
