@@ -1,10 +1,6 @@
 #include "Client.hpp"
 #include "http/HttpRes.hpp"
 
-//void Client::set_httpReq(httpReq httpReq){
-//	this->httpReq = httpReq;
-//}
-
 Client::Client()
 : httpreq()
 {}
@@ -15,7 +11,6 @@ Client::Client(const Client& source)
     vServer(source.get_vServer()),
     client_ip(source.get_client_ip()),
     port(source.get_port())
-    //fd(source.get_fd())
 {
 	this->fd = source.get_fd();
 }
@@ -65,11 +60,6 @@ int Client::get_fd() const{
 	return fd;
 }
 
-//httpReq Client::get_httpReq(){
-//	return httpReq;
-//}
-
-//httpParser Client::get_parsedReq() const
 httpReq Client::get_httpReq() const
 {
     return httpreq;
@@ -78,10 +68,6 @@ httpReq Client::get_httpReq() const
 HttpRes Client::get_httpRes() const {
 	return httpres;
 }
-
-//HttpRes* Client::get_httpResp() const {
-//    return httpres;
-//}
 
 virtualServer Client::get_vServer() const{
 	return vServer;

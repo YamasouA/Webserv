@@ -1,7 +1,8 @@
 #include "Location.hpp"
 
-Location::Location(): depth(-1) {
+Location::Location(): depth(-1), max_body_size(-1), whichOneExist(0) {
 }
+
 Location::Location(const Location& src) {
 	this->uri = src.uri;
 	this->root = src.root;
@@ -16,6 +17,7 @@ Location::Location(const Location& src) {
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
+    this->whichOneExist = src.whichOneExist;
 }
 
 Location& Location::operator=(const Location& src)
@@ -37,6 +39,7 @@ Location& Location::operator=(const Location& src)
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
+    this->whichOneExist = src.whichOneExist;
 	return *this;
 }
 
@@ -45,14 +48,9 @@ void Location::set_uri(std::string uri)
 	this->uri = uri;
 }
 
-//void set_method(std::string method)
 void Location::set_methods(std::vector<std::string> methods)
 {
 	this->methods = methods;
-//	for (std::vector<std::string>::iterator it = this->methods.begin();
-//		it != this->methods.end(); it++) {
-//		std::cout << *it << std::endl;
-//	}
 }
 
 void Location::set_root(std::string root)
@@ -70,13 +68,12 @@ void Location::set_upload_path(std::string upload_path)
 	this->upload_path = upload_path;
 }
 
-//void Location::set_index(std::string index)
 void Location::set_index(std::vector<std::string> index)
 {
 	this->index = index;
 }
 
-void Location::set_max_body_size(size_t max_body_size)
+void Location::set_max_body_size(int max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
@@ -110,8 +107,6 @@ void Location::set_cgi_ext(std::vector<std::string> tokens) {
 
 void Location::set_error_pages(std::vector<std::string> tokens)
 {
-//	std::cout << "tokens: " << tokens[0] << " " << tokens[1] << std::endl;
-	// status_codeとpathは必ず存在する
 	if (tokens.size() < 2) {
 		return;
 	}
@@ -126,13 +121,20 @@ void Location::set_error_pages(std::vector<std::string> tokens)
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;
-//		std::cout << "status: " << status_code << std::endl;
 		if (ss.fail() || status_code > 999) {
 			continue;
 		}
 		error_pages[status_code] = path;
 		std::cout << error_pages.size() << std::endl;
 	}
+}
+
+void Location::set_error_pages(std::map<int, std::string> error_pages) {
+    this->error_pages = error_pages;
+}
+
+void Location::setWhichOneExist(int whichOneExist) {
+    this->whichOneExist = whichOneExist;
 }
 std::string Location::get_uri() const{
 	return uri;
@@ -149,11 +151,10 @@ bool Location::get_is_autoindex() const{
 std::string Location::get_upload_path() const{
 	return upload_path;
 }
-//std::string Location::get_index() const{
 std::vector<std::string> Location::get_index() const{
 	return index;
 }
-size_t Location::get_max_body_size() const {
+int Location::get_max_body_size() const {
 	return max_body_size;
 }
 
@@ -190,6 +191,18 @@ std::map<int, std::string> Location::get_error_pages() const{
 
 std::vector<std::string> Location::get_cgi_ext() const {
 	return cgi_ext;
+}
+
+int Location::getWhichOneExist() const {
+    return whichOneExist;
+}
+
+void Location::append_index(std::vector<std::string> elems) {
+    index.insert(index.end(), elems.begin(), elems.end());
+}
+
+void Location::append_cgi_ext(std::vector<std::string> elems) {
+    cgi_ext.insert(cgi_ext.end(), elems.begin(), elems.end());
 }
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj) {

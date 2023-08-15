@@ -1,18 +1,20 @@
 #ifndef HTTPPARSER_HPP
 #define HTTPPARSER_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <map>
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <iomanip>
 #include "../conf/Location.hpp"
 
 class httpReq {
     public:
         httpReq();
-        httpReq(const std::string& request_msg);
+		httpReq(const std::string& request_msg);
         httpReq(const httpReq& src);
         httpReq& operator=(const httpReq& rhs);
         ~httpReq();
@@ -25,6 +27,7 @@ class httpReq {
         void setContentBody(const std::string&);
 		void setHeaderField(const std::string& name, const std::string value);
         void set_meta_variables(Location loc);
+        void setErrStatus(int err_status);
 
         std::string getClientIP() const;
         int getPort() const;
@@ -34,24 +37,29 @@ class httpReq {
         std::string getContentBody() const;
         std::string getBuf() const;
         int getContentLength() const;
+		std::string getQueryString() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
-		void parseRequest();
+        int getErrStatus() const;
+		//void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
-		int content_length;
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
 		void appendReq(char *str);
+		void parseHeader();
+		bool isEndOfHeader();
     private:
+        std::string body_buf;
         std::string buf;
         size_t idx;
         std::string client_ip;
         int port;
 		int redirect_cnt;
 		static const int kRedirectLimit = 10;
+		bool isHeaderEnd;
 
         std::string method;
         std::string uri;
@@ -62,11 +70,13 @@ class httpReq {
         std::string content_body;
 		bool parse_error;
         int keep_alive;
+		std::string query_string;
+        int content_length;
+        int err_status;
 
-		void trim(std::string& str);
         void skipEmptyLines();
 		void skipSpace();
-		void expect(char c);
+		int expect(char c);
 		std::string getToken(char delimiter);
 		std::string getToken_to_eol();
 		void parseReqLine();
@@ -81,16 +91,12 @@ class httpReq {
 		void absurl_parse();
 		void parse_authority_and_path();
 		void parseChunk();
-//        std::string method;
-//        std::string uri;
-//        std::string version;
-//        std::string user_agent;
-//        std::string accept_language;
-//        std::string accept_encoding;
-//        std::string connection;
-//        std::string upgrade_insecure_req;
-//        std::string content_type;
-//        size_t content_length;
+		std::string percent_encode();
+		void appendHeader(std::string str);
+		void appendBody(std::string str);
+
+
+
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);

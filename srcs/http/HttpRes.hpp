@@ -81,7 +81,6 @@ class HttpRes {
 		static const std::string default_type;
 		time_t last_modified_time;
 //		struct timespec last_modified_time;
-//		std::string buf;
 		bool is_posted;
 		std::string location;
 		bool header_only;
@@ -96,9 +95,6 @@ class HttpRes {
 
 		// 対応可能なMedia-Typeを持つ
 		//static const std::map<std::string, std::string> types;// = {{"html", "text/html"},{"json", "application/json"}};
-		// request, vserverはclientのをそのまま使うからデータの持ち方どうしよう
-		// 親のクライアントへの参照を持つのはあり
-//		httpReq httpReq;
 
 		httpReq httpreq;
 		virtualServer vServer;
@@ -110,15 +106,11 @@ class HttpRes {
 		bool is_sended_body;
 
 		Location target;
-		void write_file();
-		void delete_file();
-		void read_file();
 		void createResponseHeader(struct stat sb);
 		//void createResponseBody();
 		std::string getStatusString();
 		void createControlData();
         std::string createDate(time_t now, std::string fieldName);
-//        void createDate(time_t now, std::string fieldName);
 		void createContentLength();
 		void set_content_type();
 		void post_event();
@@ -128,8 +120,6 @@ class HttpRes {
         void sendHeader();
         Location get_uri2location(std::string uri) const;
 
-//		void dav_delete_handler();
-//		void dav_delete_path(bool is_dir);
 		int dav_delete_handler();
 		int dav_delete_path(bool is_dir);
 		int dav_depth();
@@ -146,7 +136,7 @@ class HttpRes {
 		bool is_cgi();
         std::string join_path_autoindex();
 
-        //void createDate();
+        int checkClientBodySize();
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
@@ -160,6 +150,7 @@ class HttpRes {
         Cgi get_cgi() const;
 		void createResponse();
         void runHandlers();
+        void handleReqErr(int req_err_status);
 		std::string buf;
         size_t header_size;
         std::string out_buf;
