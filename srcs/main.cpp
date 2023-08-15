@@ -120,27 +120,26 @@ void read_request(int fd, Client& client, std::vector<virtualServer> server_conf
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
 	httpReq httpreq = client.get_httpReq();
-    httpreq.setClientIP(client.get_client_ip());
-    httpreq.setPort(client.get_port());
 	while (1) {
 		recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
-		std::cout << "cnt: " << recv_cnt << std::endl;
 		if (recv_cnt <= 0) {
 			break;
 		}
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
 	}
-	client.set_httpReq(httpreq);
-	if (!httpreq.isEndOfHeader()) {
+	if (!httpreq.isEndOfReq()) {
+		client.set_httpReq(httpreq);
 		return;
     }
+    httpreq.setClientIP(client.get_client_ip());
+    httpreq.setPort(client.get_port());
 	try {
-		std::cout << "try" << std::endl;
 		httpreq.parseHeader();
-	std::cout << httpreq << std::endl;
+		std::cout << httpreq << std::endl;
 	} catch (const std::exception &e) {
 		std::cout << e.what() << std::endl;
+		// Clientをクリアする
 	}
 	client.set_fd(fd);
     client.set_httpReq(httpreq);
@@ -152,7 +151,6 @@ void read_request(int fd, Client& client, std::vector<virtualServer> server_conf
         respons.runHandlers();
     }
     client.set_httpRes(respons);
-	std::cout << "Hoge" << std::endl;
     kq.disable_event(fd, EVFILT_READ);
 	kq.set_event(fd, EVFILT_WRITE);
 }
