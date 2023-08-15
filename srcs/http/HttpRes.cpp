@@ -66,6 +66,22 @@ bool HttpRes::getIsSendedHeader() const {
 	return is_sended_header;
 }
 
+std::string HttpRes::getBuf() const {
+    return buf;
+}
+
+size_t HttpRes:: getHeaderSize() const {
+    return header_size;
+}
+
+std::string HttpRes::getResBody() const {
+    return out_buf;
+}
+
+size_t HttpRes::getBodySize() const {
+    return body_size;
+}
+
 Location HttpRes::getUri2Location(std::string uri) const
 {
 	std::map<std::string, Location> uri2location = vServer.getUri2Location();

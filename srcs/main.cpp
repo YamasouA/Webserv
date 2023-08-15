@@ -24,14 +24,14 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 
 	if (!res.getIsSendedHeader()) {
 		std::cout << "=== send header ===" << std::endl;
-		send_cnt = write(acceptfd, res.buf.c_str(), res.header_size);
+		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
 		if (send_cnt < 0)
 			return;
 		res.setIsSendedHeader(true);
 	    client.setHttpRes(res);
 	}
 	std::cout << "=== send body ===" << std::endl;
-	send_cnt = write(acceptfd, res.out_buf.c_str(), res.body_size);
+	send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
 	if (send_cnt < 0)
 		return;
 	res.setIsSendedBody(true);

@@ -27,11 +27,11 @@ class Cgi {
         std::string getCgiBody() const;
         int getResType() const;
         int parseCgiResponse();
-        std::string buf;
 
     private:
         httpReq httpreq;
         Location target;
+        std::string buf;
 		std::string cgi_body;
         int resType;
 		int status;

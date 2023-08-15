@@ -135,6 +135,10 @@ class HttpRes {
         std::string joinPathAutoindex();
 
         int checkClientBodySize();
+		std::string buf;
+        size_t header_size;
+        std::string out_buf;
+        size_t body_size;
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
@@ -149,10 +153,10 @@ class HttpRes {
 		void createResponse();
         void runHandlers();
         void handleReqErr(int req_err_status);
-		std::string buf;
-        size_t header_size;
-        std::string out_buf;
-        size_t body_size;
+        std::string getBuf() const;
+        size_t getHeaderSize() const;
+        std::string getResBody() const;
+        size_t getBodySize() const;
 		std::string redirect_path;
 		void setIsSendedHeader(bool b);
 		void setIsSendedBody(bool b);
