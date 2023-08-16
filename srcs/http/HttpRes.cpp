@@ -175,18 +175,11 @@ std::string HttpRes::join_path() {
 	std::string file_path = httpreq.getUri().substr(config_path.length());
 
     std::string method = httpreq.getMethod();
-	std::cout << "root: " << path_root << std::endl;
-	std::cout << "config: " << config_path << std::endl;
-    std::cout << "upload_path: " << upload_path << std::endl;
-	std::cout << "file: " << file_path << std::endl;
-//	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
+    if (method != "POST") {
+        upload_path = "";
+    }
     int index_flag = 0;
-//	if (config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
-	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && !(upload_path != "" && method == "POST")) {
-//	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
-	    if (config_path == "/") {
-		    config_path = "";
-        }
+	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST") {
         index_flag = 1;
 	}
 	std::string alias;
@@ -194,8 +187,6 @@ std::string HttpRes::join_path() {
 		config_path = "";
         path_root = alias;
 	}
-    //std::cout << "not auto index" << std::endl;
-    //std::cout << "file_path(in join_path): " << file_path << std::endl;
     if ((upload_path != "" && method == "POST" && path_root.size() && path_root[path_root.size() - 1] == '/')
         || (upload_path != "" && method == "POST" && path_root.size() == 0)) {
             upload_path = upload_path.substr(1);
@@ -203,9 +194,6 @@ std::string HttpRes::join_path() {
     else if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
-        upload_path = "";
-	} else {
-        upload_path = "";
     }
     if (index_flag) {
         std::vector<std::string> index_files = target.get_index();
@@ -224,9 +212,7 @@ std::string HttpRes::join_path() {
         std::cout << "no macth index: " << path_root + config_path + file_path + *(index_files.begin()) << std::endl;
         return path_root + config_path + file_path + *(index_files.begin());
     }
-	//std::cout << "path: " << path_root + config_path + file_path << std::endl;
 	std::cout << "join_path: " << path_root + upload_path + config_path + file_path << std::endl;
-//    std::cout << "===== End join_path =====" << std::endl;
 	return path_root + upload_path + config_path + file_path;
 }
 
@@ -1073,11 +1059,6 @@ std::string HttpRes::join_path_autoindex() {
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
-	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (file_path.size() >= 1) {
-			file_path = file_path.substr(1);
-        }
 	}
 	std::cout << "auto index join_path: " << path_root + config_path + file_path << std::endl;
 	return path_root + config_path + file_path;
