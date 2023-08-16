@@ -91,6 +91,8 @@ class HttpRes {
         int err_status;
 //        size_t header_size;
 
+        std::string location_field;
+
 		// 対応可能なMedia-Typeを持つ
 		//static const std::map<std::string, std::string> types;// = {{"html", "text/html"},{"json", "application/json"}};
 
@@ -162,10 +164,13 @@ class HttpRes {
         std::string getResBody() const;
         size_t getBodySize() const;
 		std::string redirect_path;
+
 		void setIsSendedHeader(bool b);
 		void setIsSendedBody(bool b);
 		bool getIsSendedBody() const;
 		bool getIsSendedHeader() const;
+    void setLocationField(std::string loc);
+    std::string getLocationField() const;
 };
 
 #endif

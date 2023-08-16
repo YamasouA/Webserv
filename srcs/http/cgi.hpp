@@ -28,6 +28,8 @@ class Cgi {
         int getResType() const;
         int parseCgiResponse();
 
+        int getStatusCode() const;
+
     private:
         httpReq httpreq;
         Location target;
@@ -61,6 +63,7 @@ class Cgi {
         bool isLocalRedirect();
         bool isClientRedirect();
         void detectResType();
+//        void get_exit_status(pid_t pid);
 };
 
 #endif

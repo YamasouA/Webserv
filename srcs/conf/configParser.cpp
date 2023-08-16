@@ -194,6 +194,7 @@ Location configParser::parseLocation() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("Location: invalid value: " + directive);
 			}
 			location.setMaxBodySize(result);
 		} else if (directive == "alias") {
@@ -226,7 +227,7 @@ Location configParser::parseLocation() {
 	}
 
 	if (!(which_one_exist & kMethodExist)) {
-		location.setMethods(methodsSplit("POST GET DELETE", ' '));
+		location.setMethods(methodsSplit("POST GET HEAD DELETE", ' '));
 	}
     location.setWhichOneExist(which_one_exist);
 	expect('}');
@@ -376,6 +377,7 @@ virtualServer configParser::parseServe() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("v_serv: invalid value: " + directive);
 			}
 			v_serv.setMaxBodySize(result);
 		} else if (directive == "alias") {
@@ -405,8 +407,9 @@ virtualServer configParser::parseServe() {
 			throw SyntaxException("Server: no such directive: " + directive);
 		}
 	}
+
 	if (!(which_one_exist & kMethodExist)) {
-		v_serv.setMethods(methodsSplit("POST GET DELETE", ' '));
+		v_serv.setMethods(methodsSplit("POST GET HEAD DELETE", ' '));
 	}
 	expect('}');
 	skip();

@@ -21,6 +21,39 @@ std::string getContentType(std::string type) {
 	return "";
 }
 
+std::string getContentExtension(std::string content_type) {
+    std::cout << "ct: " << content_type << std::endl;
+    if (content_type == "text/html") {
+        return ".html";
+    } else if (content_type == "text/plain") {
+        return ".txt";
+    } else if (content_type == "text/csv") {
+        return ".csv";
+    } else if (content_type == "text/css") {
+        return ".css";
+    } else if (content_type == "text/js") {
+        return ".js";
+    } else if (content_type == "application/json") {
+        return ".json";
+    } else if (content_type == "application/pdf") {
+        return ".pdf";
+    } else if (content_type == "application/zip") {
+        return ".zip";
+    } else if (content_type == "image/png") {
+        return ".png";
+    } else if (content_type == "image/jpeg" || content_type == "image/jpg") {
+        return ".jpeg";
+    } else if (content_type == "image/webp") {
+        return ".webp";
+    } else if (content_type == "image/gif") {
+        return ".gif";
+    } else if (content_type == "audio/wav") {
+        return ".wav";
+    } else {
+        return "";
+    }
+}
+
 HttpRes::HttpRes() {
 }
 
@@ -66,6 +99,7 @@ bool HttpRes::getIsSendedHeader() const {
 	return is_sended_header;
 }
 
+
 std::string HttpRes::getBuf() const {
     return buf;
 }
@@ -83,6 +117,16 @@ size_t HttpRes::getBodySize() const {
 }
 
 Location HttpRes::getUri2Location(std::string uri) const
+
+void HttpRes::setLocationField(std::string loc) {
+    this->location_field = loc;
+}
+
+std::string HttpRes::getLocationField() const {
+    return location_field;
+}
+
+
 {
 	std::map<std::string, Location> uri2location = vServer.getUri2Location();
 	std::map<std::string, Location>::const_iterator loc = uri2location.find(uri);
@@ -146,33 +190,30 @@ std::string HttpRes::joinPath() {
 //    std::cout << "===== joinPath =====" << std::endl;
 	std::string path_root = target.getRoot();
 	std::string config_path  = target.get_uri();
-	std::string file_path = httpreq.getUri();
+    std::string upload_path = target.get_upload_path();
+	std::string file_path = httpreq.getUri().substr(config_path.length());
+
+    std::string method = httpreq.getMethod();
+    if (method != "POST") {
+        upload_path = "";
+    }
     int index_flag = 0;
-	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/') {
-        file_path = file_path.substr(config_path.length());
-	    if (config_path == "/" && file_path != "") {
-		    config_path = "";
-        }
+	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST") {
         index_flag = 1;
 	}
-    if (!index_flag) {
-        file_path = file_path.substr(config_path.length());
-    }
 	std::string alias;
 	if ((alias = target.getAlias()) != "") {
 		config_path = "";
         path_root = alias;
 	}
-	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
+    if ((upload_path != "" && method == "POST" && path_root.size() && path_root[path_root.size() - 1] == '/')
+        || (upload_path != "" && method == "POST" && path_root.size() == 0)) {
+            upload_path = upload_path.substr(1);
+    }
+    else if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
-	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		//file_path = file_path.substr(1);
-//		if (file_path.size() >= 1) { //
-//			file_path = file_path.substr(1);
-//        }
-	}
+    }
     if (index_flag) {
         std::vector<std::string> index_files = target.getIndex();
         if (index_files.size() != 0) {
@@ -190,8 +231,8 @@ std::string HttpRes::joinPath() {
         std::cout << "no macth index: " << path_root + config_path + file_path + *(index_files.begin()) << std::endl;
         return path_root + config_path + file_path + *(index_files.begin());
     }
-	std::cout << "joinPath: " << path_root + config_path + file_path << std::endl;
-	return path_root + config_path + file_path;
+	std::cout << "join_path: " << path_root + upload_path + config_path + file_path << std::endl;
+	return path_root + upload_path + config_path + file_path;
 }
 
 void HttpRes::setBody(std::string strs)
@@ -602,6 +643,10 @@ void HttpRes::headerFilter() {
 	    buf += "Connection: close";
     }
 	buf += "\r\n";
+    if (status_code == 201 && getLocationField() != "") {
+        buf += "Location: " + getLocationField();
+        buf += "\r\n";
+    }
 	if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
 		buf += "Location: " + redirect_path;
 		buf += "\r\n";
@@ -652,13 +697,15 @@ int HttpRes::staticHandler() {
 		return status_code;
 	}
 
-	int _fd = -1;
+    if (method == "HEAD") {
+        header_only = 1;
+    }
 	std::string file_name = joinPath();
+  
     struct stat sb;
     status_code = 200;
-    if (method == "GET") {
-        _fd = open(file_name.c_str(), O_RDONLY);
-        if (_fd == -1) {
+    if (method == "GET" || method == "HEAD") {
+        if (access(file_name.c_str(), R_OK) < 0) {
             std::cerr << "open Error" << std::endl;
             if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
                 if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
@@ -681,7 +728,9 @@ int HttpRes::staticHandler() {
         }
         if (stat(file_name.c_str(), &sb) == -1) {
             std::cout << "GET Error(stat)" << std::endl;
-            abort();
+            status_code = INTERNAL_SERVER_ERROR;
+            return status_code;
+//            abort();
         }
         if (S_ISDIR(sb.st_mode)) {
             uri.push_back('/');
@@ -689,11 +738,9 @@ int HttpRes::staticHandler() {
             if (target.getIndex().size() > 0 || target.getIsAutoindex()) {
                 return staticHandler();
             } else {
-			    close(_fd);
                 return DECLINED;
             }
         } else if (!S_ISREG(sb.st_mode)) {
-			close(_fd);
             std::cerr << "NOT FOUND(404)" << std::endl;
             status_code = NOT_FOUND;
             return NOT_FOUND;
@@ -702,34 +749,83 @@ int HttpRes::staticHandler() {
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST") {
         if (stat(file_name.c_str(), &sb) == -1) {
-			if (errno != ENOENT) {
-				close(_fd);
-                std::cerr << "stat Error" << std::endl;
-                return INTERNAL_SERVER_ERROR;
-			}
-			status_code = 201;
+			if (errno == ENOENT) {
+		        status_code = CREATED;
+                setLocationField(file_name);
+			} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
+                status_code = NOT_FOUND;
+                return status_code;
+            } else {
+//                std::cout << "POST errno: " << errno << std::endl;
+            }
+        } else {
+            status_code = 200;
         }
         if (S_ISDIR(sb.st_mode)) {
-            close(_fd);
-            return DECLINED;
+            time_t tm = std::time(NULL);
+            std::stringstream ss;
+            ss << tm;
+            std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+            if (file_name[file_name.length() - 1] != '/') {
+                file_name = file_name + '/' + ss.str() + ext;
+            } else {
+                file_name = file_name + ss.str() + ext;
+            }
+            std::ofstream tmp_ofs(file_name);
+            if (tmp_ofs.bad()) {
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+            }
+            tmp_ofs.close();
+            if (access(file_name.c_str(), W_OK) < 0) {
+                std::cerr << "POST open Error" << std::endl;
+                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+                    std::cout << "NOT FOUND" << std::endl;
+                    status_code = NOT_FOUND;
+                    return NOT_FOUND;
+                } else if (EACCES){
+                    std::cout << "FORBIDDEN" << std::endl;
+                    status_code = FORBIDDEN;
+                    return FORBIDDEN;
+                }
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+            }
+            status_code = CREATED;
+            setLocationField(file_name);
         }
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
-        if (!S_ISREG(sb.st_mode) && status_code != 201) {
+        if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
 			std::cerr << "stat Error" << std::endl;
-			close(_fd);
         	return INTERNAL_SERVER_ERROR;
         } else {
-			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
-			if (_fd == -1) {
+            if (access(file_name.c_str(), W_OK) < 0) {
+                std::cerr << "reg file open Error" << std::endl;
+                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+                    std::cout << "NOT FOUND" << std::endl;
+                    status_code = NOT_FOUND;
+                    return NOT_FOUND;
+                } else if (EACCES){
+                    std::cout << "FORBIDDEN" << std::endl;
+                    status_code = FORBIDDEN;
+                    return FORBIDDEN;
+                }
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+            }
+            std::ofstream ofs(file_name.c_str(), std::ios::app);
+			if (!ofs) {
                 std::cerr << "POST open Error" << std::endl;
+                status_code = INTERNAL_SERVER_ERROR;
                 return INTERNAL_SERVER_ERROR;
 			}
-			std::string body = httpreq.getContentBody().c_str();
-			write(_fd, body.c_str(), body.size());
+			std::string body = httpreq.getContentBody();
+            ofs << body;
+            ofs.close();
+            //content_length_n = body.size();
 		}
     }
-    close(_fd);
     //discoard request body here ?
 	setContentType();
     //set_etag(); //necessary?
@@ -738,12 +834,16 @@ int HttpRes::staticHandler() {
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
     if (!ifs) {
         std::cerr << "ifstream ko" << std::endl;
-        abort();
+        status_code = INTERNAL_SERVER_ERROR;
+        return status_code;
     }
-    std::ostringstream oss;
-    oss << ifs.rdbuf();
-    out_buf = oss.str();
-    body_size = content_length_n;
+//    if (!(method == "HEAD")) {
+    if (!header_only) {
+        std::ostringstream oss;
+        oss << ifs.rdbuf();
+        out_buf = oss.str();
+        body_size = content_length_n;
+    }
     return OK;
 }
 
@@ -926,7 +1026,7 @@ int HttpRes::returnRedirect() {
 static std::string createMtime(time_t modified)
 {
     char buf[1000];
-    struct tm tm = *gmtime(&modified);
+    struct tm tm = *std::gmtime(&modified);
     std::strftime(buf, sizeof(buf), "%d-%b-%Y %H:%M ", &tm);
     std::string str(buf);
     return str;
@@ -983,12 +1083,8 @@ std::string HttpRes::joinPathAutoindex() {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
 	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (file_path.size() >= 1) {
-			file_path = file_path.substr(1);
-        }
-	}
-	std::cout << "auto index joinPath: " << path_root + config_path + file_path << std::endl;
+
+	std::cout << "auto index join_path: " << path_root + config_path + file_path << std::endl;
 	return path_root + config_path + file_path;
 }
 
@@ -1011,6 +1107,10 @@ int HttpRes::autoindexHandler() {
         status_code = NOT_ALLOWED;
 		return status_code;
 	}
+
+    if (method == "HEAD") {
+        header_only = 1;
+    }
     // discard req body
 
     std::string dir_path = joinPathAutoindex();
@@ -1056,8 +1156,12 @@ int HttpRes::autoindexHandler() {
         std::string abs_path = joinDirPath(dir_path, file_name);
         if (!dir_info.valid_info) {
             if (stat(abs_path.c_str(), &(dir_info.d_info)) == -1) {
-                //only EACCES
-                continue;
+                if (errno == EACCES) {
+                    continue;
+                } else {
+                    status_code = INTERNAL_SERVER_ERROR;
+                    return status_code;
+                }
             }
             // handle ENOENT or ELOOP -> error or INTERNAL_SERVER_ERROR
         }
@@ -1068,8 +1172,11 @@ int HttpRes::autoindexHandler() {
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
     }
-    out_buf = createAutoIndexHtml(index_of);
-    body_size = out_buf.length();
+
+    if (!header_only) {
+        out_buf = createAutoIndexHtml(index_of);
+        body_size = out_buf.length();
+    }
     return OK;
 
 }
@@ -1106,44 +1213,69 @@ int HttpRes::checkClientBodySize() {
 }
 
 void HttpRes::cgiHandler() {
-    std::cout << "================== cgi ==================" << std::endl;
+  std::cout << "================== cgi ==================" << std::endl;
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
-    httpreq.set_meta_variables(location);
+  httpreq.set_meta_variables(location);
 	Cgi cgi(httpreq ,location);
 	cgi.runCgi();
 	int handler_status = 0;
-    handler_status = cgi.parseCgiResponse();
-    if (cgi.getResType() == DOCUMENT) {
-        status_code = handler_status;
-        cgi.getHeaderFields().erase("status");
-        setCgi(cgi);
-        sendHeader(); //tmp here
-        out_buf = cgi.getCgiBody();
-        if (cgi.getHeaderFields().count("content-length")) {
-			// ここもutil関数
-            std::stringstream ss(cgi.getHeaderFields()["content-length"]);
-            ss >> body_size;
-        } else {
-            body_size = out_buf.length();
-        }
-
-        return finalizeRes(status_code);
-    } else if (cgi.getResType() == LOCAL_REDIRECT) {
-		if (httpreq.isRedirectLimit()) {
-            status_code = 500;
-            return finalizeRes(status_code);
+  if (cgi.getStatusCode() > 400) {
+    status_code = cgi.getStatusCode();
+    finalize_res(status_code);
+  }
+  handler_status = cgi.parseCgiResponse();
+  if (cgi.getResType() == DOCUMENT) {
+    status_code = handler_status;
+    cgi.getHeaderFields().erase("status");
+    setCgi(cgi);
+    sendHeader(); //tmp here
+    if (httpreq.getMethod() == "HEAD") {
+      return finalize_res(status_code);
+    }
+    out_buf = cgi.getCgiBody();
+    if (cgi.getHeaderFields().count("content-length")) {
+		  // ここもutil関数
+      std::stringstream ss(cgi.getHeaderFields()["content-length"]);
+      ss >> body_size;
+    } else {
+      body_size = out_buf.length();
+    }
+    return finalize_res(status_code);
+  } else if (cgi.getResType() == LOCAL_REDIRECT) {
+	  if (httpreq.isRedirectLimit()) {
+      status_code = 500;
+      return finalize_res(status_code);
 		}
-        httpreq.setUri(cgi.getHeaderFields()["Location"]);
-		httpreq.incrementRedirectCnt();
-        return runHandlers();
+      httpreq.setUri(cgi.getHeaderFields()["Location"]);
+			httpreq.incrementRedirectCnt();
+      return runHandlers();
     } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-        status_code = 302;
+      status_code = 302;
+			redirect_path = cgi.getHeaderFields()["Location"];
+			body = cgi.getCgiBody();
+			header_filter();
+
+			return finalize_res(status_code);
+    } else {
+      body_size = out_buf.length();
+    }
+    return finalizeRes(status_code);
+  } else if (cgi.getResType() == LOCAL_REDIRECT) {
+		if (httpreq.isRedirectLimit()) {
+      status_code = 500;
+      return finalizeRes(status_code);
+		}
+    httpreq.setUri(cgi.getHeaderFields()["Location"]);
+		httpreq.incrementRedirectCnt();
+    return runHandlers();
+  } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+    status_code = 302;
 		redirect_path = cgi.getHeaderFields()["Location"];
 		body = cgi.getCgiBody();
 		headerFilter();
 
 		return finalizeRes(status_code);
-    } else {
+  } else {
 		status_code = handler_status;
 		return finalizeRes(status_code);
 	}

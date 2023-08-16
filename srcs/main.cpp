@@ -80,9 +80,15 @@ void initializeFd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<v
             if (m.find(*it_listen) == m.end()) {
                 std::cout << "listen: " << *it_listen << std::endl;
                 socket = new Socket(*it_listen);
-                socket->setSocket();
+
+                if (socket->setSocket() != 0) {
+                    std::exit(1);
+                }
                 m[*it_listen] = socket->getListenFd();
-                kqueue.setEvent(socket->getListenFd(), EVFILT_READ);
+                if (kqueue.setEvent(socket->getListenFd(), EVFILT_READ) != 0) {
+                    std::exit(1);
+                }
+
             }
             fd_config_map[m[*it_listen]].push_back(*it);
             std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
@@ -117,23 +123,29 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 
 	memset(buf, 0, sizeof(buf));
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-	size_t recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
-
-	if (recv_cnt < 0) {
-		return;
-	}
-	buf[recv_cnt] = '\0';
+	ssize_t recv_cnt = 0;
+	std::cout << "read_request" << std::endl;
 	httpReq httpreq = client.getHttpReq();
-	httpreq.appendReq(buf);
-	client.setHttpReq(httpreq);
-	if (recv_cnt == sizeof(buf) - 1) {
+    httpreq.setClientIP(client.getClientIp());
+    httpreq.setPort(client.getPort());
+	while (1) {
+		recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
+		std::cout << "cnt: " << recv_cnt << std::endl;
+		if (recv_cnt <= 0) {
+			break;
+		}
+		buf[recv_cnt] = '\0';
+		httpreq.appendReq(buf);
+	}
+	client.set_httpReq(httpreq);
+	if (!httpreq.isEndOfHeader()) {
 		return;
     }
 
-    httpreq.setClientIP(client.getClientIp());
-    httpreq.setPort(client.getPort());
 	try {
-		httpreq.parseRequest();
+		std::cout << "try" << std::endl;
+		httpreq.parseHeader();
+	std::cout << httpreq << std::endl;
 	} catch (const std::exception &e) {
 		std::cout << e.what() << std::endl;
 	}
@@ -146,6 +158,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
     } else {
         respons.runHandlers();
     }
+
     client.setHttpRes(respons);
     kq.disableEvent(fd, EVFILT_READ);
 	kq.setEvent(fd, EVFILT_WRITE);
@@ -165,6 +178,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
+    if (access(config_path.c_str(), R_OK) != 0) {
+        std::cerr << "couldn't open the specified config file" << std::endl;
+        return 1;
+    }
 	configParser conf;
 	try {
 		std::string txt= readConfFile(config_path);
@@ -218,8 +235,10 @@ int main(int argc, char *argv[]) {
                 socklen_t addrlen = sizeof(sin);
                 getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
                 int port_num = ntohs(sin.sin_port);
+
 				std::cout << port_num << std::endl;
                 client.setPort(port_num);
+
 				fd_client_map[acceptfd] =  client;
 				kqueue.setEvent(acceptfd, EVFILT_READ);
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {

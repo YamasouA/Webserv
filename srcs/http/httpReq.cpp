@@ -3,7 +3,9 @@
 httpReq::httpReq()
 :idx(0),
     redirect_cnt(0),
-    keep_alive(0)
+    keep_alive(0),
+    content_length(-1),
+    err_status(0)
 {}
 
 httpReq::httpReq(const std::string& request_msg)
@@ -16,7 +18,8 @@ httpReq::httpReq(const std::string& request_msg)
 {}
 
 httpReq::httpReq(const httpReq& src)
-:buf(src.buf),
+:body_buf(src.body_buf),
+	buf(src.buf),
 	idx(src.idx),
 	client_ip(src.getClientIP()),
     port(src.getPort()),
@@ -43,6 +46,7 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     }
     this->client_ip = rhs.getClientIP();
     this->buf = rhs.buf;
+    this->body_buf = rhs.body_buf;
     this->idx = rhs.idx;
     this->port = rhs.getPort();
     this->method = rhs.getMethod();
@@ -69,9 +73,31 @@ std::string httpReq::getBuf() const{
 }
 
 void httpReq::appendReq(char *str) {
-	std::cout << buf << std::endl;
+	if (isEndOfHeader()) {
+		appendBody(str);
+	} else {
+		appendHeader(str);
+	}
+}
+
+void httpReq::appendHeader(std::string str) {
 	this->buf += str;
-	std::cout << buf.size() << std::endl;
+	std::cout << buf << std::endl;
+	size_t nl_idx = buf.find("\r\n\r\n");
+	if (nl_idx != std::string::npos) {
+		isHeaderEnd = true;
+		appendBody(buf.substr(nl_idx));
+		buf = buf.substr(0, nl_idx);
+	}
+	std::cout << isHeaderEnd << std::endl;
+}
+
+void httpReq::appendBody(std::string str) {
+	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
+}
+
+bool httpReq::isEndOfHeader() {
+	return isHeaderEnd;
 }
 
 void httpReq::setClientIP(std::string client_ip) {
@@ -496,7 +522,7 @@ void httpReq::fixUp() {
 		header_fields["transfer-encoding"] = "chunked";
     }
 
-	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
+	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
         setErrStatus(501);
         return;
@@ -628,6 +654,40 @@ void httpReq::skipEmptyLines() {
     }
 }
 
+void httpReq::parseHeader() {
+	if (!isHeaderEnd) {
+		return;
+	}
+	skipEmptyLines();
+	if (getErrStatus() > 0) {
+		return ;
+	}
+    parseReqLine();
+	while (idx < buf.size()) {
+		if (checkHeaderEnd()) {
+			break;
+		}
+		std::cout << buf << std::endl;
+		std::cout << buf[idx] << std::endl;
+		std::string field_name = getToken(':');
+		if (getErrStatus() > 0) {
+			return;
+		}
+		skipSpace();
+		std::string field_value = getToken_to_eol();
+		trim(field_value);
+		setHeaderField(toLower(field_name), field_value);
+	}
+	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
+		parseChunk();
+        if (getErrStatus() > 0) {
+            return;
+        }
+    }
+	fix_up();
+}
+
+/*
 void httpReq::parseRequest()
 {
 	std::cout << buf << std::endl;
@@ -662,6 +722,7 @@ void httpReq::parseRequest()
     }
     fixUp();
 }
+*/
 
 std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;
