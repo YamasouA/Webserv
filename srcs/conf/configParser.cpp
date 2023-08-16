@@ -194,6 +194,7 @@ Location configParser::parseLocation() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("Location: invalid value: " + directive);
 			}
 			location.set_max_body_size(result);
 		} else if (directive == "alias") {
@@ -376,6 +377,7 @@ virtualServer configParser::parseServe() {
 			sstream >> result;
 			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
+                throw SyntaxException("v_serv: invalid value: " + directive);
 			}
 			v_serv.set_max_body_size(result);
 		} else if (directive == "alias") {

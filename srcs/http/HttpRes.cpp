@@ -708,7 +708,9 @@ int HttpRes::static_handler() {
         }
         if (stat(file_name.c_str(), &sb) == -1) {
             std::cout << "GET Error(stat)" << std::endl;
-            abort();
+            status_code = INTERNAL_SERVER_ERROR;
+            return status_code;
+//            abort();
         }
         if (S_ISDIR(sb.st_mode)) {
             uri.push_back('/');
@@ -812,7 +814,8 @@ int HttpRes::static_handler() {
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
     if (!ifs) {
         std::cerr << "ifstream ko" << std::endl;
-        abort();
+        status_code = INTERNAL_SERVER_ERROR;
+        return status_code;
     }
 //    if (!(method == "HEAD")) {
     if (!header_only) {
@@ -1132,8 +1135,12 @@ int HttpRes::auto_index_handler() {
         std::string abs_path = join_dir_path(dir_path, file_name);
         if (!dir_info.valid_info) {
             if (stat(abs_path.c_str(), &(dir_info.d_info)) == -1) {
-                //only EACCES
-                continue;
+                if (errno == EACCES) {
+                    continue;
+                } else {
+                    status_code = INTERNAL_SERVER_ERROR;
+                    return status_code;
+                }
             }
             // handle ENOENT or ELOOP -> error or INTERNAL_SERVER_ERROR
         }
@@ -1194,6 +1201,10 @@ void HttpRes::runHandlers() {
         httpreq.set_meta_variables(location);
 		Cgi cgi(httpreq ,location);
 		cgi.run_cgi();
+        if (cgi.getStatusCode() > 400) {
+            status_code = cgi.getStatusCode();
+            finalize_res(status_code);
+        }
         handler_status = cgi.parse_cgi_response();
         if (cgi.getResType() == DOCUMENT) {
             status_code = handler_status;

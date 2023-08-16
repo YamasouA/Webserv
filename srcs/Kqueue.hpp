@@ -22,8 +22,8 @@ class Kqueue {
 		struct kevent* get_reciver_event();
 		int get_events_num();
 		int get_kq();
-		void set_event(int fd, short ev_filter);
-        void disable_event(int fd, short ev_filter);
+		int set_event(int fd, short ev_filter);
+        int disable_event(int fd, short ev_filter);
 };
 
 #endif

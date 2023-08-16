@@ -22,7 +22,7 @@ void Socket::set_listenfd() {
 	this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->listenfd == -1) {
 		std::cout << "socket() failed Error" << std::endl;
-		exit(1);
+        std::exit(1);
 	}
 }
 

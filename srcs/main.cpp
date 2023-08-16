@@ -80,9 +80,13 @@ void initialize_fd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<
             if (m.find(*it_listen) == m.end()) {
                 std::cout << "listen: " << *it_listen << std::endl;
                 socket = new Socket(*it_listen);
-                socket->set_socket();
+                if (socket->set_socket() != 0) {
+                    std::exit(1);
+                }
                 m[*it_listen] = socket->get_listenfd();
-                kqueue.set_event(socket->get_listenfd(), EVFILT_READ);
+                if (kqueue.set_event(socket->get_listenfd(), EVFILT_READ) != 0) {
+                    std::exit(1);
+                }
             }
             fd_config_map[m[*it_listen]].push_back(*it);
             std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
