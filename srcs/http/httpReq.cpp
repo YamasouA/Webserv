@@ -3,7 +3,9 @@
 httpReq::httpReq()
 :idx(0),
     redirect_cnt(0),
-    keep_alive(0)
+    keep_alive(0),
+    content_length(-1),
+    err_status(0)
 {}
 
 httpReq::httpReq(const std::string& request_msg)
@@ -273,7 +275,7 @@ std::string httpReq::getToken(char delimiter)
 	return token;
 }
 
-std::string httpReq::getToken_to_eol() {
+std::string httpReq::getTokenToEOL() {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -295,7 +297,7 @@ void httpReq::parseChunk() {
 	int chunkSize = 0;
 
     std::cout << "==================parse chunk==================" << buf << std::endl;
-    std::string tmp = getToken_to_eol();
+    std::string tmp = getTokenToEOL();
     if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
         std::cerr << "400 Bad request" << std::endl;
         setErrStatus(400);
@@ -317,7 +319,7 @@ void httpReq::parseChunk() {
             return;
         }
 		content_length += chunkSize;
-        tmp = getToken_to_eol();
+        tmp = getTokenToEOL();
         if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
             setErrStatus(400);
@@ -333,12 +335,12 @@ void httpReq::parseChunk() {
         return;
     }
 	// discard trailer fields
-	getToken_to_eof();
+	getTokenToEOF();
 	header_fields["Transfer-Encoding"].erase();
     return;
 }
 
-std::string httpReq::getToken_to_eof() {
+std::string httpReq::getTokenToEOF() {
 	std::string body = "";
 	while (idx < buf.length()) {
 		body += buf[idx];
@@ -365,7 +367,7 @@ void httpReq::checkUri() {
     uri = uri.substr(0, query_pos);
 }
 
-void httpReq::parse_scheme() {
+void httpReq::parseScheme() {
 	if (toLower(uri.substr(0, 5)).compare(0, 5, "https") == 0) {
         uri = uri.substr(6);
 	} else if (toLower(uri.substr(0, 6)).compare(0, 4, "http") == 0) {
@@ -376,7 +378,7 @@ void httpReq::parse_scheme() {
 	}
 }
 
-void httpReq::parse_host_port() {
+void httpReq::parseHostPort() {
     std::string host;
 	size_t i = 0;
 	size_t path_pos;
@@ -424,18 +426,18 @@ void httpReq::parse_host_port() {
     // host以降の始めが/ではなかった場合invalid format
 }
 
-void httpReq::parse_authority_and_path() {
-	parse_host_port(); //関数に分けなくても良い?
+void httpReq::parseAuthorityAndPath() {
+	parseHostPort(); //関数に分けなくても良い?
 }
 
-void httpReq::absurl_parse() {
-	parse_scheme();
+void httpReq::absUrlParse() {
+	parseScheme();
     if (getErrStatus() > 0) {
         return;
     }
     if (uri[0] && uri[0] == '/' && uri[1] == '/') {
         uri.substr(2);
-	    parse_authority_and_path();
+	    parseAuthorityAndPath();
     } else {
         setErrStatus(400);
     }
@@ -457,7 +459,7 @@ static std::vector<std::string> fieldValueSplit(const std::string &strs, char de
 }
 
 
-void httpReq::fix_up() {
+void httpReq::fixUp() {
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
         setErrStatus(400);
@@ -525,13 +527,13 @@ void httpReq::fix_up() {
 		header_fields["transfer-encoding"] = "chunked";
     }
 
-	if (!(method == "GET" || method == "DELETE" || method == "POST")) {
+	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
         setErrStatus(501);
         return;
 	}
 	if (uri.length() != 0 && uri[0] != '/') {
-		absurl_parse();
+		absUrlParse();
 	}
 }
 
@@ -546,7 +548,7 @@ void httpReq::parseReqLine()
     uri = getToken(' ');
 	checkUri();
 	if (uri.length() != 0 && uri[0] != '/') {
-		absurl_parse();
+		absUrlParse();
 	}
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
@@ -711,7 +713,7 @@ void httpReq::parseRequest()
             return;
         }
         skipSpace(); //
-		std::string field_value = getToken_to_eol();
+		std::string field_value = getTokenToEOL();
 		trim(field_value);
         setHeaderField(toLower(field_name), field_value);
     }
@@ -721,9 +723,9 @@ void httpReq::parseRequest()
             return;
         }
     } else {
-		content_body = getToken_to_eof();
+		content_body = getTokenToEOF();
     }
-    fix_up();
+    fixUp();
 }
 */
 
@@ -731,7 +733,7 @@ std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;
 }
 
-std::string httpReq::percent_encode() {
+std::string httpReq::percentEncode() {
 	std::ostringstream rets;
 	for(size_t n = 0; n < query_string.size(); n++) {
 	  unsigned char c = (unsigned char)query_string[n];
@@ -754,7 +756,7 @@ void httpReq::set_meta_variables(Location loc) {
     }
     cgi_envs["GATEWAY_INTERFACE"] = "CGI/1.1";
 	// Locationで取得したcgi拡張子とマッチするものがあるときにPATH_INFOを区切る
-	std::vector<std::string> ext = loc.get_cgi_ext();
+	std::vector<std::string> ext = loc.getCgiExt();
 	for (std::vector<std::string>::iterator it = ext.begin(); it != ext.end(); it++) {
 		std::string::size_type idx = uri.find(*it);
 		size_t len = (*it).size();
@@ -765,12 +767,12 @@ void httpReq::set_meta_variables(Location loc) {
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
 			if (cgi_envs["PATH_INFO"] != "")
-				cgi_envs["PATH_TRANSLATED"] = loc.get_root() + cgi_envs["PATH_INFO"];
+				cgi_envs["PATH_TRANSLATED"] = loc.getRoot() + cgi_envs["PATH_INFO"];
 			else
 				cgi_envs["PATH_TRANSLATED"] = "";
 		}
 	}
-	cgi_envs["QUERY_STRING"] = percent_encode();
+	cgi_envs["QUERY_STRING"] = percentEncode();
 	std::cout << "envs: " << cgi_envs["QUERY_STRING"] << std::endl;
     cgi_envs["REMOTE_ADDR"] = getClientIP();
     cgi_envs["REMOTE_HOST"] = cgi_envs["REMOTE_ADDR"];

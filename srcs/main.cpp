@@ -15,28 +15,28 @@
 #include <set>
 #include <utility>
 
-void send_response(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
+void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	size_t send_cnt;
 	std::cout << "===== send response =====" << std::endl;
 	Client client = fd_client_map[acceptfd];
-	HttpRes res = client.get_httpRes();
+	HttpRes res = client.getHttpRes();
 
-	if (!res.get_is_sended_header()) {
+	if (!res.getIsSendedHeader()) {
 		std::cout << "=== send header ===" << std::endl;
-		send_cnt = write(acceptfd, res.buf.c_str(), res.header_size);
+		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
 		if (send_cnt < 0)
 			return;
-		res.set_is_sended_header(true);
-	    client.set_httpRes(res);
+		res.setIsSendedHeader(true);
+	    client.setHttpRes(res);
 	}
 	std::cout << "=== send body ===" << std::endl;
-	send_cnt = write(acceptfd, res.out_buf.c_str(), res.body_size);
+	send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
 	if (send_cnt < 0)
 		return;
-	res.set_is_sended_body(true);
-	client.set_httpRes(res);
-	kq.disable_event(acceptfd, EVFILT_WRITE);
+	res.setIsSendedBody(true);
+	client.setHttpRes(res);
+	kq.disableEvent(acceptfd, EVFILT_WRITE);
 	fd_client_map.erase(acceptfd);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
@@ -53,7 +53,7 @@ std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
         std::cout << "ap: " << i << "   :" << ap[i] << std::endl;
     }
     std::cout << std::endl;
-    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3]; 
+    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3];
     ss >> ip;
 	return ip;
 }
@@ -69,20 +69,26 @@ std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
 	return ip;
 }
 
-void initialize_fd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<virtualServer> >& fd_config_map) {
-	std::vector<virtualServer> server_confs = conf.get_serve_confs();
+void initializeFd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<virtualServer> >& fd_config_map) {
+	std::vector<virtualServer> server_confs = conf.getServerConfs();
 	std::map<int, int> m;
 	for (std::vector<virtualServer>::iterator it = server_confs.begin(); it != server_confs.end(); it++) {
-        std::vector<int> listen = it->get_listen();
+        std::vector<int> listen = it->getListen();
         for (std::vector<int>::iterator it_listen = listen.begin(); it_listen != listen.end(); ++it_listen) {
 
             Socket *socket;
             if (m.find(*it_listen) == m.end()) {
                 std::cout << "listen: " << *it_listen << std::endl;
                 socket = new Socket(*it_listen);
-                socket->set_socket();
-                m[*it_listen] = socket->get_listenfd();
-                kqueue.set_event(socket->get_listenfd(), EVFILT_READ);
+
+                if (socket->setSocket() != 0) {
+                    std::exit(1);
+                }
+                m[*it_listen] = socket->getListenFd();
+                if (kqueue.setEvent(socket->getListenFd(), EVFILT_READ) != 0) {
+                    std::exit(1);
+                }
+
             }
             fd_config_map[m[*it_listen]].push_back(*it);
             std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
@@ -90,36 +96,37 @@ void initialize_fd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<
 	}
 }
 
-void assign_server(std::vector<virtualServer> server_confs, Client& client) {
+void assignServer(std::vector<virtualServer> server_confs, Client& client) {
 	for (std::vector<virtualServer>::iterator it = server_confs.begin();
 		it != server_confs.end(); it++) {
 
-        std::map<std::string, std::string> tmp = client.get_httpReq().getHeaderFields();
+        std::map<std::string, std::string> tmp = client.getHttpReq().getHeaderFields();
         std::string host_name;
-		host_name = client.get_httpReq().getHeaderFields()["host"];
+		host_name = client.getHttpReq().getHeaderFields()["host"];
 		std::cout << "host name: " << host_name << std::endl;
-        std::vector<std::string> vec = it->get_server_names();
+        std::vector<std::string> vec = it->getServerNames();
         for (std::vector<std::string>::iterator vit = vec.begin(); vit != vec.end(); ++vit) {
             std::cout << "name: " << *vit << std::endl;
             if (*vit == host_name) {
                 std::cout << "match name" << std::endl;
-                client.set_vServer(*it);
+                client.setVserver(*it);
                 return;
             }
         }
 	}
 	std::cout << "no match" << std::endl;
-	client.set_vServer(server_confs[0]);
+	client.setVserver(server_confs[0]);
 }
 
-void read_request(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
+void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
 	char buf[1024];
 
 	memset(buf, 0, sizeof(buf));
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
-	httpReq httpreq = client.get_httpReq();
+	httpReq httpreq = client.getHttpReq();
+
 	while (1) {
 		recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 		if (recv_cnt <= 0) {
@@ -132,8 +139,10 @@ void read_request(int fd, Client& client, std::vector<virtualServer> server_conf
 		client.set_httpReq(httpreq);
 		return;
     }
-    httpreq.setClientIP(client.get_client_ip());
-    httpreq.setPort(client.get_port());
+
+    httpreq.setClientIP(client.getClientIp());
+    httpreq.setPort(client.getPort());
+
 	try {
 		httpreq.parseHeader();
 		std::cout << httpreq << std::endl;
@@ -141,18 +150,20 @@ void read_request(int fd, Client& client, std::vector<virtualServer> server_conf
 		std::cout << e.what() << std::endl;
 		// Clientをクリアする
 	}
-	client.set_fd(fd);
-    client.set_httpReq(httpreq);
-    assign_server(server_confs, client);
+	client.setFd(fd);
+    client.setHttpReq(httpreq);
+    assignServer(server_confs, client);
     HttpRes respons(client, kq);
     if (httpreq.getErrStatus() > 0) {
         respons.handleReqErr(httpreq.getErrStatus());
     } else {
         respons.runHandlers();
     }
-    client.set_httpRes(respons);
-    kq.disable_event(fd, EVFILT_READ);
-	kq.set_event(fd, EVFILT_WRITE);
+
+    client.setHttpRes(respons);
+    kq.disableEvent(fd, EVFILT_READ);
+	kq.setEvent(fd, EVFILT_WRITE);
+
 }
 
 int main(int argc, char *argv[]) {
@@ -169,6 +180,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
+    if (access(config_path.c_str(), R_OK) != 0) {
+        std::cerr << "couldn't open the specified config file" << std::endl;
+        return 1;
+    }
 	configParser conf;
 	try {
 		std::string txt= readConfFile(config_path);
@@ -179,7 +194,7 @@ int main(int argc, char *argv[]) {
 		std::exit(1);
 	}
 	Kqueue kqueue;
-	initialize_fd(conf, kqueue, fd_config_map);
+	initializeFd(conf, kqueue, fd_config_map);
 	std::cout << fd_config_map.size() << std::endl;
 	int acceptfd;
 
@@ -188,7 +203,7 @@ int main(int argc, char *argv[]) {
 	time_over.tv_nsec = 0;
 
 	while (1) {
-		int events_num = kqueue.get_events_num();
+		int events_num = kqueue.getEventsNum();
 		if (events_num == -1) {
 			perror("kevent");
 			std::exit(1);
@@ -198,7 +213,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		for (int i = 0; i < events_num; ++i) {
-			struct kevent* reciver_event = kqueue.get_reciver_event();
+			struct kevent* reciver_event = kqueue.getReciverEvent();
 			int event_fd = reciver_event[i].ident;
 			fcntl(event_fd, F_SETFL, O_NONBLOCK);
 			std::cout << "event_fd(): " << event_fd << std::endl;
@@ -217,26 +232,29 @@ int main(int argc, char *argv[]) {
 					continue;
 				}
                 std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
-                client.set_client_ip(client_ip); // or Have the one after adapting inet_ntoa
+                client.setClientIp(client_ip); // or Have the one after adapting inet_ntoa
                 struct sockaddr_in sin;
                 socklen_t addrlen = sizeof(sin);
                 getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
                 int port_num = ntohs(sin.sin_port);
-				//std::cout << port_num << std::endl;
-                client.set_port(port_num);
+
+				std::cout << port_num << std::endl;
+                client.setPort(port_num);
+
 				fd_client_map[acceptfd] =  client;
-				kqueue.set_event(acceptfd, EVFILT_READ);
+				kqueue.setEvent(acceptfd, EVFILT_READ);
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
                 std::cout << "==================READ_EVENT==================" << std::endl;
 				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
-				read_request(acceptfd, fd_client_map[acceptfd], acceptfd_to_config[acceptfd], kqueue);
+				std::cout << acceptfd << std::endl;
+				readRequest(acceptfd, fd_client_map[acceptfd], acceptfd_to_config[acceptfd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
 				acceptfd = event_fd;
-                HttpRes res = fd_client_map[acceptfd].get_httpRes();
-				send_response(acceptfd, kqueue, fd_client_map);
+                HttpRes res = fd_client_map[acceptfd].getHttpRes();
+				sendResponse(acceptfd, kqueue, fd_client_map);
 			}
 		}
 	}

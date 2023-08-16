@@ -9,42 +9,42 @@
 
 class Location {
 	public:
-		void set_uri(std::string uri);
-		void set_methods(std::vector<std::string> methods);
-		void set_root(std::string root);
-		void set_is_autoindex(bool autoindex);
-		void set_upload_path(std::string upload_path);
-		void set_index(std::vector<std::string> index);
-		void set_max_body_size(int max_body_size);
-		void set_cgi_path(std::string cgi_path);
-		void set_return(std::string ret);
-		void set_location(Location location);
-		void set_depth(int depth);
-		void set_alias(std::string alias);
-		void set_error_pages(std::vector<std::string> tokens);
-		void set_error_pages(std::map<int, std::string> error_pages);
-		void set_cgi_ext(std::vector<std::string> tokens);
+		void setUri(std::string uri);
+		void setMethods(std::vector<std::string> methods);
+		void setRoot(std::string root);
+		void setIsAutoindex(bool autoindex);
+		void setUploadPath(std::string upload_path);
+		void setIndex(std::vector<std::string> index);
+		void setMaxBodySize(int max_body_size);
+		void setCgiPath(std::string cgi_path);
+		void setReturn(std::string ret);
+		void setLocation(Location location);
+		void setDepth(int depth);
+		void setAlias(std::string alias);
+		void setErrorPages(std::vector<std::string> tokens);
+		void setErrorPages(std::map<int, std::string> error_pages);
+		void setCgiExt(std::vector<std::string> tokens);
         void setWhichOneExist(int whichOneExist);
 
-		std::vector<Location> get_locations() const;
+		std::vector<Location> getLocations() const;
 		std::string get_uri() const;
 		std::vector<std::string> get_methods() const;
-		std::string get_root() const;
-		bool get_is_autoindex() const;
-		std::string get_upload_path() const;
-        std::vector<std::string> get_index() const;
-		int get_max_body_size() const;
-		std::string get_cgi_path() const;
-		std::string get_return() const;
-		std::string get_error_page(int status_code) const;
-		std::map<int, std::string> get_error_pages() const;
-		int get_depth() const;
-		std::string get_alias() const;
-		std::vector<std::string> get_cgi_ext() const;
+		std::string getRoot() const;
+		bool getIsAutoindex() const;
+		std::string getUploadPath() const;
+        std::vector<std::string> getIndex() const;
+		int getMaxBodySize() const;
+		std::string getCgiPath() const;
+		std::string getReturn() const;
+		std::string getErrorPage(int status_code) const;
+		std::map<int, std::string> getErrorPages() const;
+		int getDepth() const;
+		std::string getAlias() const;
+		std::vector<std::string> getCgiExt() const;
         int getWhichOneExist() const;
 
-        void append_index(std::vector<std::string> elems);
-        void append_cgi_ext(std::vector<std::string> elems);
+        void appendIndex(std::vector<std::string> elems);
+        void appendCgiExt(std::vector<std::string> elems);
 
         Location(const Location& src);
 		Location();
@@ -64,7 +64,7 @@ class Location {
 		int max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::string> cgi_ext;
-        int whichOneExist;
+        int which_one_exist;
 };
 
 std::ostream& operator <<(std::ostream& stream, const Location& obj);

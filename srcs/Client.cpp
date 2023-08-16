@@ -6,13 +6,13 @@ Client::Client()
 {}
 
 Client::Client(const Client& source)
-:httpreq(source.get_httpReq()),
-    httpres(source.get_httpRes()),
-    vServer(source.get_vServer()),
-    client_ip(source.get_client_ip()),
-    port(source.get_port())
+:httpreq(source.getHttpReq()),
+    httpres(source.getHttpRes()),
+    vServer(source.getVserver()),
+    client_ip(source.getClientIp()),
+    port(source.getPort())
 {
-	this->fd = source.get_fd();
+	this->fd = source.getFd();
 }
 
 Client& Client::operator=(const Client& rhs)
@@ -20,12 +20,12 @@ Client& Client::operator=(const Client& rhs)
     if (this == &rhs) {
         return *this;
     }
-    httpreq = rhs.get_httpReq();
-    httpres = rhs.get_httpRes();
-    vServer = rhs.get_vServer();
-    fd = rhs.get_fd();
-    client_ip = rhs.get_client_ip();
-    port = rhs.get_port();
+    httpreq = rhs.getHttpReq();
+    httpres = rhs.getHttpRes();
+    vServer = rhs.getVserver();
+    fd = rhs.getFd();
+    client_ip = rhs.getClientIp();
+    port = rhs.getPort();
     return *this;
 }
 
@@ -33,50 +33,50 @@ Client::~Client()
 {}
 
 
-void Client::set_fd(int fd) {
+void Client::setFd(int fd) {
 	this->fd = fd;
 }
 
-void Client::set_httpReq(httpReq httpreq){
+void Client::setHttpReq(httpReq httpreq){
 	this->httpreq = httpreq;
 }
 
-void Client::set_httpRes(HttpRes httpres){
+void Client::setHttpRes(HttpRes httpres){
 	this->httpres = httpres;
 }
-void Client::set_vServer(const virtualServer& vServer){
+void Client::setVserver(const virtualServer& vServer){
 	this->vServer = vServer;
 }
 
-void Client::set_client_ip(std::string client_ip) {
+void Client::setClientIp(std::string client_ip) {
     this->client_ip = client_ip;
 }
 
-void Client::set_port(int port) {
+void Client::setPort(int port) {
     this->port = port;
 }
 
-int Client::get_fd() const{
+int Client::getFd() const{
 	return fd;
 }
 
-httpReq Client::get_httpReq() const
+httpReq Client::getHttpReq() const
 {
     return httpreq;
 }
 
-HttpRes Client::get_httpRes() const {
+HttpRes Client::getHttpRes() const {
 	return httpres;
 }
 
-virtualServer Client::get_vServer() const{
+virtualServer Client::getVserver() const{
 	return vServer;
 }
 
-std::string Client::get_client_ip() const {
+std::string Client::getClientIp() const {
     return client_ip;
 }
 
-int Client::get_port() const {
+int Client::getPort() const {
     return port;
 }

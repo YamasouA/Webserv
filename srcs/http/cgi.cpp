@@ -40,13 +40,18 @@ int Cgi::getResType() const {
     return resType;
 }
 
-std::string Cgi::join_path() {
-    std::cerr << "===== join_path(cgi) =====" << std::endl;
-	std::string path_root = target.get_root();
+int Cgi::getStatusCode() const {
+    return status;
+}
+
+std::string Cgi::joinPath() {
+    std::cerr << "===== joinPath(cgi) =====" << std::endl;
+	std::string path_root = target.getRoot();
+
 	std::string config_path  = target.get_uri();
     std::string script_name = envs["SCRIPT_NAME"];
 	std::string alias;
-	if ((alias = target.get_alias()) != "") {
+	if ((alias = target.getAlias()) != "") {
 		config_path = alias;
 	}
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
@@ -54,17 +59,17 @@ std::string Cgi::join_path() {
 			config_path = config_path.substr(1);
 	}
 	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (script_name.size() >= 1) { 
+		if (script_name.size() >= 1) {
 			script_name = script_name.substr(1);
         }
 	}
-	std::cerr << "join_path: " << path_root + config_path + script_name << std::endl;
-    std::cerr << "===== End join_path =====" << std::endl;
+	std::cerr << "joinPath: " << path_root + config_path + script_name << std::endl;
+    std::cerr << "===== End joinPath =====" << std::endl;
 	return path_root + config_path + script_name;
 }
 
 
-void Cgi::envs_fixUp() {
+void Cgi::envsFixUp() {
 	if (envs.count("CONTENT_LENGTH") == 0) {
 		envs["CONTENT_LENGTH"] = "0";
 	}
@@ -107,7 +112,7 @@ void Cgi::envs_fixUp() {
 	envs.erase("HTTP_CONTENT_TYPE");
 }
 
-void Cgi::set_env() {
+void Cgi::setEnv() {
     std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
 	std::map<std::string, std::string>::iterator it = header_fields.begin();
 	for (; it != header_fields.end(); it++) {
@@ -120,16 +125,16 @@ void Cgi::set_env() {
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
 	}
-	envs_fixUp();
+	envsFixUp();
 }
 
-void Cgi::send_body_to_child() {
+void Cgi::sendBodyToChild() {
     if (httpreq.getContentBody().length() > 0) {
 	    write(1, httpreq.getContentBody().c_str(), httpreq.getContentBody().length());
     }
 }
 
-void Cgi::run_handler() {
+void Cgi::runHandler() {
 	char **envs_ptr;
     std::map<std::string, std::string>::iterator its = envs.begin();
     for (; its != envs.end(); ++its) {
@@ -149,39 +154,62 @@ void Cgi::run_handler() {
 		i++;
     }
 	envs_ptr[envs.size()] = 0;
-    std::string path = join_path();
+    std::string path = joinPath();
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }
 }
 
-void Cgi::fork_process() {
+void Cgi::forkProcess() {
 	pid_t pid;
 	int fd[2];
 	int fd2[2];
 
-	pipe(fd);
-	pipe(fd2);
-	set_env();
+
+	if (pipe(fd) == -1) {
+        status = 502;
+        return;
+    }
+	if (pipe(fd2) == -1) {
+        status = 502;
+        return;
+    }
+	setEnv();
+
 	if (status != 200)
 		return;
 	pid = fork();
+    if (pid == -1) {
+        status = 502;
+        return;
+    }
 	if (pid == 0) {
 //		set_signal_handler(SIGINT, SIG_DFL);
 //		set_signal_handler(SIGQUIT, SIG_DFL);
 		close(fd[1]);
 		close(fd2[0]);
-		dup2(fd[0], 0);
-		dup2(fd2[1], 1);
 
-		run_handler();
-		exit(1);
+		if (dup2(fd[0], 0) == -1) {
+            std::exit(1);
+        }
+        if (dup2(fd2[1], 1) == -1) {
+            std::exit(1);
+        }
+		runHandler();
+        std::exit(1);
 	}
 	close(fd[0]);
 	close(fd2[1]);
-	dup2(fd[1], 1);
-	dup2(fd2[0], 0);
-	send_body_to_child();
+	if (dup2(fd[1], 1) == -1) {
+        status = 502;
+        return;
+    }
+	if (dup2(fd2[0], 0) == -1) {
+        status = 502;
+        return;
+    }
+	sendBodyToChild();
+
 	close(fd[1]);
     char tmp_buf;
     while (read(0, &tmp_buf, 1) > 0) {
@@ -285,7 +313,7 @@ std::string Cgi::getToken(char delimiter, size_t& idx)
 	return token;
 }
 
-std::string Cgi::getToken_to_eol(size_t& idx) {
+std::string Cgi::getTokenToEOL(size_t& idx) {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -303,7 +331,7 @@ std::string Cgi::getToken_to_eol(size_t& idx) {
 	return line;
 }
 
-std::string Cgi::getToken_to_eof(size_t& idx) {
+std::string Cgi::getTokenToEOF(size_t& idx) {
 	std::string body = "";
 	while (idx < buf.length()) {
 		body += buf[idx];
@@ -350,11 +378,11 @@ bool Cgi::expect(char c, size_t& idx)
 	return true;
 }
 
-int Cgi::parse_cgi_response() {
+int Cgi::parseCgiResponse() {
     size_t idx = 0;
 	if (status != 200)
 		return status;
-	
+
 	while (idx < buf.length()) {
         if (checkHeaderEnd(idx)) {
             break;
@@ -366,24 +394,65 @@ int Cgi::parse_cgi_response() {
 		}
 		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
-        std::string field_value = getToken_to_eol(idx);
+        std::string field_value = getTokenToEOL(idx);
 		std::cout << "field_value: " << field_value<< std::endl;
         trim(field_value);
         setHeaderField(toLower(field_name), field_value);
     }
-    cgi_body = getToken_to_eof(idx);
+    cgi_body = getTokenToEOF(idx);
     fixUp();
     return status;
 }
 
-void Cgi::run_cgi() {
+//void	Cgi::get_exit_status(pid_t pid)
+//{
+//	int		exit_status;
+//	pid_t	pid2;
+//
+//	pid2 = 0;
+//	while (pid2 != -1)
+//	{
+//		pid2 = waitpid(-1, &exit_status, 0);
+//		if (pid == pid2)
+//		{
+//			if (WIFSIGNALED(exit_status))
+//			{
+////				if (WTERMSIG(status) == SIGQUIT)
+//                status = 502;
+////				status = WTERMSIG(status);
+////                std::cout << "exit status" << status << std::endl;
+//			}
+////			else if (WIFEXITED(exit_status))
+////				exit_status = WEXITSTATUS(exit_status);
+//		}
+//	}
+//}
+
+
+void Cgi::runCgi() {
+
 	int backup_stdin = dup(STDIN_FILENO);
+    if (backup_stdin == -1) {
+        status = 502;
+        return;
+    }
 	int backup_stdout = dup(STDOUT_FILENO);
+    if (backup_stdout == -1) {
+        status = 502;
+        return;
+    }
 
-	fork_process();
+	forkProcess();
 
-	dup2(backup_stdin, STDIN_FILENO);
-	dup2(backup_stdout, STDOUT_FILENO);
+	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
+        status = 502;
+        return;
+    }
+    if (dup2(backup_stdout, STDOUT_FILENO) == -1) {
+        status = 502;
+        return;
+    }
 	close(backup_stdin);
 	close(backup_stdout);
+//    get_exit_status(pid);
 }

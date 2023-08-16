@@ -5,7 +5,7 @@ Kqueue::Kqueue()
 	kq = kqueue();
 	if (kq < -1) {
 		std::cerr << "kqueue Error" << std::endl;
-		exit(1);
+        std::exit(1);
 	}
 	time_over.tv_sec = 10;
 	time_over.tv_nsec = 0;
@@ -30,39 +30,44 @@ Kqueue& Kqueue::operator=(const Kqueue& rhs) {
 Kqueue::~Kqueue() {
 }
 
-void Kqueue::set_event(int fd, short ev_filter) {
+
+int Kqueue::set_event(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	changes.push_back(register_event);
 	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
 		std::cout << errno << std::endl;
 		perror("kevent Error(register)");
+        return -1;
     }
+    return 0;
 }
 
-void Kqueue::disable_event(int fd, short ev_filter) {
+int Kqueue::disable_event(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_DELETE, 0, 0, NULL);
 	changes.push_back(register_event);
 	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
 		perror("kevent Error(in disable)");
+        return -1;
     }
 	if (ev_filter == EVFILT_WRITE) {
-		std::cout << "close in disable_event" << std::endl;
+		std::cout << "close in disableEvent" << std::endl;
 		close(fd);
 	}
+    return 0;
 }
 
-int Kqueue::get_kq() {
+int Kqueue::getKq() {
 	return kq;
 }
 
-int Kqueue::get_events_num() {
+int Kqueue::getEventsNum() {
 	int event_num = kevent(kq, NULL, 0, reciver_event, 100, &time_over);
 	std::cout << "event_num: " << event_num << std::endl;
 	return event_num;
 }
 
-struct kevent* Kqueue::get_reciver_event() {
+struct kevent* Kqueue::getReciverEvent() {
 	return reciver_event;
 }

@@ -22,33 +22,36 @@ class Cgi {
         Cgi& operator=(const Cgi& rhs);
         ~Cgi();
 
-        void run_cgi();
+        void runCgi();
         std::map<std::string, std::string> getHeaderFields() const;
         std::string getCgiBody() const;
         int getResType() const;
-        int parse_cgi_response();
-        std::string buf;
+        int parseCgiResponse();
+
+        int getStatusCode() const;
 
     private:
-        void fork_process();
-        void run_handler();
-        void send_body_to_child();
-        void set_env();
-        void envs_fixUp();
-        std::string encode_uri();
-        bool check_meta_var(std::string var1, std::string var2);
-        std::string join_path();
-
         httpReq httpreq;
         Location target;
+        std::string buf;
 		std::string cgi_body;
         int resType;
 		int status;
-        std::map<std::string, std::string> envs; 
+
+        void forkProcess();
+        void runHandler();
+        void sendBodyToChild();
+        void setEnv();
+        void envsFixUp();
+        std::string encodeUri();
+        bool checkMetaVar(std::string var1, std::string var2);
+        std::string joinPath();
+
+        std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
 		void fixUp();
-		std::string getToken_to_eof(size_t& idx);
-		std::string getToken_to_eol(size_t& idx);
+		std::string getTokenToEOF(size_t& idx);
+		std::string getTokenToEOL(size_t& idx);
 		std::string getToken(char delimiter, size_t& idx);
 		bool checkHeaderEnd(size_t& idx);
 		void skipSpace(size_t& idx);
@@ -60,6 +63,7 @@ class Cgi {
         bool isLocalRedirect();
         bool isClientRedirect();
         void detectResType();
+//        void get_exit_status(pid_t pid);
 };
 
 #endif
