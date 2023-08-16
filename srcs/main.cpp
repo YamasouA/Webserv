@@ -126,28 +126,29 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
 	httpReq httpreq = client.getHttpReq();
-    httpreq.setClientIP(client.getClientIp());
-    httpreq.setPort(client.getPort());
+
 	while (1) {
 		recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
-		std::cout << "cnt: " << recv_cnt << std::endl;
 		if (recv_cnt <= 0) {
 			break;
 		}
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
 	}
-	client.set_httpReq(httpreq);
-	if (!httpreq.isEndOfHeader()) {
+	if (!httpreq.isEndOfReq()) {
+		client.set_httpReq(httpreq);
 		return;
     }
 
+    httpreq.setClientIP(client.getClientIp());
+    httpreq.setPort(client.getPort());
+
 	try {
-		std::cout << "try" << std::endl;
 		httpreq.parseHeader();
-	std::cout << httpreq << std::endl;
+		std::cout << httpreq << std::endl;
 	} catch (const std::exception &e) {
 		std::cout << e.what() << std::endl;
+		// Clientをクリアする
 	}
 	client.setFd(fd);
     client.setHttpReq(httpreq);
@@ -162,6 +163,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
     client.setHttpRes(respons);
     kq.disableEvent(fd, EVFILT_READ);
 	kq.setEvent(fd, EVFILT_WRITE);
+
 }
 
 int main(int argc, char *argv[]) {

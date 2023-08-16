@@ -51,6 +51,7 @@ class httpReq {
 		void appendReq(char *str);
 		void parseHeader();
 		bool isEndOfHeader();
+		bool isEndOfReq();
     private:
         std::string body_buf;
         std::string buf;
@@ -59,7 +60,8 @@ class httpReq {
         int port;
 		int redirect_cnt;
 		static const int kRedirectLimit = 10;
-		bool isHeaderEnd;
+		bool is_header_end;
+		bool is_req_end;
 
         std::string method;
         std::string uri;

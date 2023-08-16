@@ -85,19 +85,24 @@ void httpReq::appendHeader(std::string str) {
 	std::cout << buf << std::endl;
 	size_t nl_idx = buf.find("\r\n\r\n");
 	if (nl_idx != std::string::npos) {
-		isHeaderEnd = true;
+		is_header_end = true;
 		appendBody(buf.substr(nl_idx));
 		buf = buf.substr(0, nl_idx);
 	}
-	std::cout << isHeaderEnd << std::endl;
 }
 
 void httpReq::appendBody(std::string str) {
+	if (content_length - body_buf.size() <= str.size())
+		is_req_end = true;
 	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
 }
 
 bool httpReq::isEndOfHeader() {
-	return isHeaderEnd;
+	return is_header_end;
+}
+
+bool httpReq::isEndOfReq() {
+	return is_req_end;
 }
 
 void httpReq::setClientIP(std::string client_ip) {
@@ -474,7 +479,7 @@ void httpReq::fixUp() {
 				break;
 			}
 		}
-		if (c_it == connections.end())
+		if (c_it == connections.end() || connections.size() == 0)
 			keep_alive = 1;
 		else
 			keep_alive = 0;
@@ -655,7 +660,7 @@ void httpReq::skipEmptyLines() {
 }
 
 void httpReq::parseHeader() {
-	if (!isHeaderEnd) {
+	if (!is_header_end) {
 		return;
 	}
 	skipEmptyLines();
