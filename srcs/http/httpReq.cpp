@@ -92,7 +92,7 @@ void httpReq::appendHeader(std::string str) {
 }
 
 void httpReq::appendBody(std::string str) {
-	if (content_length - body_buf.size() <= str.size())
+	if (header_fields.size() > 0 && (content_length - body_buf.size() <= str.size()))
 		is_req_end = true;
 	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
 }
@@ -506,9 +506,6 @@ void httpReq::fixUp() {
         ss >> content_length;
     }
 
-	std::string content_length_s = header_fields["content-length"];
-    std::stringstream ss(content_length_s);
-    ss >> content_length;
     std::cout << "cl: " << content_length << std::endl;;
 
     if (content_body != "" && header_fields.count("content-type") != 1) {
@@ -672,8 +669,6 @@ void httpReq::parseHeader() {
 		if (checkHeaderEnd()) {
 			break;
 		}
-		std::cout << buf << std::endl;
-		std::cout << buf[idx] << std::endl;
 		std::string field_name = getToken(':');
 		if (getErrStatus() > 0) {
 			return;
@@ -690,46 +685,10 @@ void httpReq::parseHeader() {
         }
     }
 	fixUp();
-	if (content_length == 0)
+	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
+	if (content_length <= (int)body_buf.size())
 		is_req_end= true;
 }
-
-/*
-void httpReq::parseRequest()
-{
-	std::cout << buf << std::endl;
-    skipEmptyLines();
-    if (getErrStatus() > 0) {
-        return;
-    }
-    parseReqLine();
-    if (getErrStatus() > 0) {
-        return;
-    }
-    while (idx < buf.size()) {
-        if (checkHeaderEnd()) {
-            break;
-        }
-        std::string field_name = getToken(':');
-        if (getErrStatus() > 0) { // or field_name == ""
-            return;
-        }
-        skipSpace(); //
-		std::string field_value = getTokenToEOL();
-		trim(field_value);
-        setHeaderField(toLower(field_name), field_value);
-    }
-	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
-		parseChunk();
-        if (getErrStatus() > 0) {
-            return;
-        }
-    } else {
-		content_body = getTokenToEOF();
-    }
-    fixUp();
-}
-*/
 
 std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;

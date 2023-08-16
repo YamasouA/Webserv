@@ -127,22 +127,25 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	std::cout << "read_request" << std::endl;
 	httpReq httpreq = client.getHttpReq();
 
-	while (1) {
-		recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
-		if (recv_cnt <= 0) {
-			break;
-		}
+	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
+	if (recv_cnt < 0) {
+		// error handling
+	} else {
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
-		httpreq.parseHeader();
+		if (httpreq.isEndOfHeader() && httpreq.getHeaderFields().size() == 0) {
+			httpreq.parseHeader();
+			std::cout << httpreq << std::endl;
+		}
 	}
 	if (!httpreq.isEndOfReq()) {
+		std::cout << "hgoe" << std::endl;
 		client.setHttpReq(httpreq);
 		return;
     }
-
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
+	std::cout << "hoge" << std::endl;
 
 	client.setFd(fd);
     client.setHttpReq(httpreq);
