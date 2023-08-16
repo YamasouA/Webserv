@@ -44,13 +44,14 @@ int Cgi::getStatusCode() const {
     return status;
 }
 
-std::string Cgi::join_path() {
-    std::cerr << "===== join_path(cgi) =====" << std::endl;
-	std::string path_root = target.get_root();
+std::string Cgi::joinPath() {
+    std::cerr << "===== joinPath(cgi) =====" << std::endl;
+	std::string path_root = target.getRoot();
+
 	std::string config_path  = target.get_uri();
     std::string script_name = envs["SCRIPT_NAME"];
 	std::string alias;
-	if ((alias = target.get_alias()) != "") {
+	if ((alias = target.getAlias()) != "") {
 		config_path = alias;
 	}
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
@@ -62,13 +63,13 @@ std::string Cgi::join_path() {
 			script_name = script_name.substr(1);
         }
 	}
-	std::cerr << "join_path: " << path_root + config_path + script_name << std::endl;
-    std::cerr << "===== End join_path =====" << std::endl;
+	std::cerr << "joinPath: " << path_root + config_path + script_name << std::endl;
+    std::cerr << "===== End joinPath =====" << std::endl;
 	return path_root + config_path + script_name;
 }
 
 
-void Cgi::envs_fixUp() {
+void Cgi::envsFixUp() {
 	if (envs.count("CONTENT_LENGTH") == 0) {
 		envs["CONTENT_LENGTH"] = "0";
 	}
@@ -111,7 +112,7 @@ void Cgi::envs_fixUp() {
 	envs.erase("HTTP_CONTENT_TYPE");
 }
 
-void Cgi::set_env() {
+void Cgi::setEnv() {
     std::map<std::string, std::string> header_fields = httpreq.getHeaderFields();
 	std::map<std::string, std::string>::iterator it = header_fields.begin();
 	for (; it != header_fields.end(); it++) {
@@ -124,16 +125,16 @@ void Cgi::set_env() {
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
 	}
-	envs_fixUp();
+	envsFixUp();
 }
 
-void Cgi::send_body_to_child() {
+void Cgi::sendBodyToChild() {
     if (httpreq.getContentBody().length() > 0) {
 	    write(1, httpreq.getContentBody().c_str(), httpreq.getContentBody().length());
     }
 }
 
-void Cgi::run_handler() {
+void Cgi::runHandler() {
 	char **envs_ptr;
     std::map<std::string, std::string>::iterator its = envs.begin();
     for (; its != envs.end(); ++its) {
@@ -153,16 +154,17 @@ void Cgi::run_handler() {
 		i++;
     }
 	envs_ptr[envs.size()] = 0;
-    std::string path = join_path();
+    std::string path = joinPath();
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
     }
 }
 
-void Cgi::fork_process() {
+void Cgi::forkProcess() {
 	pid_t pid;
 	int fd[2];
 	int fd2[2];
+
 
 	if (pipe(fd) == -1) {
         status = 502;
@@ -172,7 +174,8 @@ void Cgi::fork_process() {
         status = 502;
         return;
     }
-	set_env();
+	setEnv();
+
 	if (status != 200)
 		return;
 	pid = fork();
@@ -185,13 +188,14 @@ void Cgi::fork_process() {
 //		set_signal_handler(SIGQUIT, SIG_DFL);
 		close(fd[1]);
 		close(fd2[0]);
+
 		if (dup2(fd[0], 0) == -1) {
             std::exit(1);
         }
         if (dup2(fd2[1], 1) == -1) {
             std::exit(1);
         }
-		run_handler();
+		runHandler();
         std::exit(1);
 	}
 	close(fd[0]);
@@ -204,7 +208,8 @@ void Cgi::fork_process() {
         status = 502;
         return;
     }
-	send_body_to_child();
+	sendBodyToChild();
+
 	close(fd[1]);
     char tmp_buf;
     while (read(0, &tmp_buf, 1) > 0) {
@@ -308,7 +313,7 @@ std::string Cgi::getToken(char delimiter, size_t& idx)
 	return token;
 }
 
-std::string Cgi::getToken_to_eol(size_t& idx) {
+std::string Cgi::getTokenToEOL(size_t& idx) {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -326,7 +331,7 @@ std::string Cgi::getToken_to_eol(size_t& idx) {
 	return line;
 }
 
-std::string Cgi::getToken_to_eof(size_t& idx) {
+std::string Cgi::getTokenToEOF(size_t& idx) {
 	std::string body = "";
 	while (idx < buf.length()) {
 		body += buf[idx];
@@ -373,7 +378,7 @@ bool Cgi::expect(char c, size_t& idx)
 	return true;
 }
 
-int Cgi::parse_cgi_response() {
+int Cgi::parseCgiResponse() {
     size_t idx = 0;
 	if (status != 200)
 		return status;
@@ -389,12 +394,12 @@ int Cgi::parse_cgi_response() {
 		}
 		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
-        std::string field_value = getToken_to_eol(idx);
+        std::string field_value = getTokenToEOL(idx);
 		std::cout << "field_value: " << field_value<< std::endl;
         trim(field_value);
         setHeaderField(toLower(field_name), field_value);
     }
-    cgi_body = getToken_to_eof(idx);
+    cgi_body = getTokenToEOF(idx);
     fixUp();
     return status;
 }
@@ -424,7 +429,8 @@ int Cgi::parse_cgi_response() {
 //}
 
 
-void Cgi::run_cgi() {
+void Cgi::runCgi() {
+
 	int backup_stdin = dup(STDIN_FILENO);
     if (backup_stdin == -1) {
         status = 502;
@@ -436,7 +442,7 @@ void Cgi::run_cgi() {
         return;
     }
 
-	fork_process();
+	forkProcess();
 
 	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
         status = 502;

@@ -15,7 +15,7 @@ class Client {
 
 		virtualServer vServer;
 		int fd;
-		std::map<std::string, Location> uritolocation;
+//		std::map<std::string, Location> uritolocation;
         std::string client_ip;
         int port;
 	public:
@@ -24,24 +24,24 @@ class Client {
 		Client(const Client& source);
 		Client& operator =(const Client& source);
 
-		void set_fd(int fd);
+		void setFd(int fd);
 
-		void set_httpReq(const HttpRes& source);
-        void set_httpReq(httpReq httpreq);
-		void set_httpRes(HttpRes source);
-		void set_vServer(const virtualServer& source);
-		void set_uritolocation(const std::map<std::string, Location> map);
-        void set_client_ip(std::string client_ip);
-        void set_port(int port);
+		void setHttpReq(const HttpRes& source);
+        void setHttpReq(httpReq httpreq);
+		void setHttpRes(HttpRes source);
+		void setVserver(const virtualServer& source);
+//		void setUritolocation(const std::map<std::string, Location> map);
+        void setClientIp(std::string client_ip);
+        void setPort(int port);
 
-		int get_fd() const;
-		httpReq get_httpReq() const;
-		HttpRes get_httpRes() const;
-        HttpRes* get_httpResp() const;
-		virtualServer get_vServer() const;
-		std::map<std::string, Location> get_uritolocation() const;
-        std::string get_client_ip() const;
-        int get_port() const;
+		int getFd() const;
+		httpReq getHttpReq() const;
+		HttpRes getHttpRes() const;
+        HttpRes* getHttpResp() const;
+		virtualServer getVserver() const;
+//		std::map<std::string, Location> getUriToLocation() const;
+        std::string getClientIp() const;
+        int getPort() const;
 };
 
 #endif

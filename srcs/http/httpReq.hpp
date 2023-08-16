@@ -78,24 +78,22 @@ class httpReq {
 		void skipSpace();
 		int expect(char c);
 		std::string getToken(char delimiter);
-		std::string getToken_to_eol();
+		std::string getTokenToEOL();
 		void parseReqLine();
 		bool checkHeaderEnd();
-		std::string getToken_to_eof();
+		std::string getTokenToEOF();
 		void checkUri();
-		void parse_scheme();
-		void parse_host_port();
+		void parseScheme();
+		void parseHostPort();
 		void checkFieldsValue();
 		bool hasObsFold(std::string str);
-		void fix_up();
-		void absurl_parse();
-		void parse_authority_and_path();
+		void fixUp();
+		void absUrlParse();
+		void parseAuthorityAndPath();
 		void parseChunk();
-		std::string percent_encode();
+		std::string percentEncode();
 		void appendHeader(std::string str);
 		void appendBody(std::string str);
-
-
 
 		class SyntaxException: public std::exception {
 			public:
