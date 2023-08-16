@@ -175,27 +175,20 @@ std::string HttpRes::join_path() {
 	std::string file_path = httpreq.getUri().substr(config_path.length());
 
     std::string method = httpreq.getMethod();
-	/*
-						|            request uri       |
-		/User/root/path/ /config/location/ /file_path.html
-		path_root         config_path     file_path
-	*/
-//	std::cout << "root: " << path_root << std::endl;
-//	std::cout << "config: " << config_path << std::endl;
-//	std::cout << "file: " << file_path << std::endl;
+	std::cout << "root: " << path_root << std::endl;
+	std::cout << "config: " << config_path << std::endl;
+    std::cout << "upload_path: " << upload_path << std::endl;
+	std::cout << "file: " << file_path << std::endl;
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
     int index_flag = 0;
 //	if (config_path[config_path.length() - 1] == '/' && (target.get_index().length() != 0 || target.get_is_autoindex())) { // actually not autoindex, Completely different directive index directive
-	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && (target.get_index().size() != 0 || target.get_is_autoindex()) && !(upload_path != "" && method == "POST")) {
+	if (file_path[file_path.length() -1 ] == '/' && config_path[config_path.length() - 1] == '/' && !(upload_path != "" && method == "POST")) {
 //	if (!file_path.length() && config_path[config_path.length() - 1] == '/' && target.get_index_file() {
 	    if (config_path == "/") {
 		    config_path = "";
         }
         index_flag = 1;
 	}
-    if (!index_flag) {
-        file_path = file_path.substr(config_path.length());
-    }
 	std::string alias;
 	if ((alias = target.get_alias()) != "") {
 		config_path = "";
@@ -211,7 +204,9 @@ std::string HttpRes::join_path() {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
         upload_path = "";
-	}
+	} else {
+        upload_path = "";
+    }
     if (index_flag) {
         std::vector<std::string> index_files = target.get_index();
         if (index_files.size() != 0) {
@@ -680,7 +675,6 @@ void HttpRes::sendHeader() {
 int HttpRes::static_handler() {
 	std::cout << "================== static_handler ==================" << std::endl;
 	std::string uri = httpreq.getUri();
-    std::cout << "uri: " << uri << std::endl;
 	target = get_uri2location(uri);
     if (target.get_uri() == "") {
         status_code = 404;
@@ -701,13 +695,11 @@ int HttpRes::static_handler() {
     if (method == "HEAD") {
         header_only = 1;
     }
-	int _fd = -1;
 	std::string file_name = join_path();
     struct stat sb;
     status_code = 200;
     if (method == "GET" || method == "HEAD") {
-        _fd = open(file_name.c_str(), O_RDONLY);
-        if (_fd == -1) {
+        if (access(file_name.c_str(), R_OK) < 0) {
             std::cerr << "open Error" << std::endl;
             if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
                 if (target.get_is_autoindex() && uri[uri.length() - 1] == '/') {
@@ -749,15 +741,9 @@ int HttpRes::static_handler() {
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST") {
         if (stat(file_name.c_str(), &sb) == -1) {
-
-			// ファイルが存在しない
 			if (errno == ENOENT) {
 		        status_code = CREATED;
                 setLocationField(file_name);
-//				close(_fd);
-//                std::cerr << "stat Error" << std::endl;
-//                return INTERNAL_SERVER_ERROR;
-				// throw error
 			} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
                 status_code = NOT_FOUND;
                 return status_code;
@@ -771,16 +757,19 @@ int HttpRes::static_handler() {
             time_t tm = std::time(NULL);
             std::stringstream ss;
             ss << tm;
-//            std::cout << ss.str() << std::endl;
             std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
             if (file_name[file_name.length() - 1] != '/') {
                 file_name = file_name + '/' + ss.str() + ext;
             } else {
                 file_name = file_name + ss.str() + ext;
             }
-//            std::cout << "file_name: " << file_name << std::endl;
-			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
-            if (_fd == -1) {
+            std::ofstream tmp_ofs(file_name);
+            if (tmp_ofs.bad()) {
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+            }
+            tmp_ofs.close();
+            if (access(file_name.c_str(), W_OK) < 0) {
                 std::cerr << "POST open Error" << std::endl;
                 if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
                     std::cout << "NOT FOUND" << std::endl;
@@ -796,9 +785,6 @@ int HttpRes::static_handler() {
             }
             status_code = CREATED;
             setLocationField(file_name);
-            close(_fd);
-//            return DECLINED;
-
         }
         content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
@@ -806,18 +792,9 @@ int HttpRes::static_handler() {
 			std::cerr << "stat Error" << std::endl;
         	return INTERNAL_SERVER_ERROR;
         } else {
-
-			_fd = open(file_name.c_str(), O_CREAT | O_WRONLY | O_APPEND, 00644);
-            if (_fd == -1) {
+            if (access(file_name.c_str(), W_OK) < 0) {
                 std::cerr << "reg file open Error" << std::endl;
                 if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-//                    } else if (!target.get_index().length() && target.get_is_autoindex()) {
-//                        return DECLINED;
-//                    } else if (target.get_index().size() > 0 && uri[uri.length() - 1] == '/') {
-//                        std::cout << "FORBIDDEN" << std::endl;
-//                        status_code = FORBIDDEN;
-//                        return FORBIDDEN;
-//                    }
                     std::cout << "NOT FOUND" << std::endl;
                     status_code = NOT_FOUND;
                     return NOT_FOUND;
@@ -829,13 +806,16 @@ int HttpRes::static_handler() {
                 status_code = INTERNAL_SERVER_ERROR;
                 return INTERNAL_SERVER_ERROR;
             }
-//			if (_fd == -1) {
-//                std::cerr << "POST open Error" << std::endl;
-//                return INTERNAL_SERVER_ERROR;
-//			}
-			std::string body = httpreq.getContentBody().c_str();
-			write(_fd, body.c_str(), body.size());
-            content_length_n = body.size();
+            std::ofstream ofs(file_name.c_str(), std::ios::app);
+			if (!ofs) {
+                std::cerr << "POST open Error" << std::endl;
+                status_code = INTERNAL_SERVER_ERROR;
+                return INTERNAL_SERVER_ERROR;
+			}
+			std::string body = httpreq.getContentBody();
+            ofs << body;
+            ofs.close();
+            //content_length_n = body.size();
 		}
     }
     //discoard request body here ?

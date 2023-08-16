@@ -3,7 +3,9 @@
 httpReq::httpReq()
 :idx(0),
     redirect_cnt(0),
-    keep_alive(0)
+    keep_alive(0),
+    content_length(-1),
+    err_status(0)
 {}
 
 httpReq::httpReq(const std::string& request_msg)
