@@ -116,7 +116,6 @@ size_t HttpRes::getBodySize() const {
     return body_size;
 }
 
-Location HttpRes::getUri2Location(std::string uri) const
 
 void HttpRes::setLocationField(std::string loc) {
     this->location_field = loc;
@@ -127,6 +126,7 @@ std::string HttpRes::getLocationField() const {
 }
 
 
+Location HttpRes::getUri2Location(std::string uri) const
 {
 	std::map<std::string, Location> uri2location = vServer.getUri2Location();
 	std::map<std::string, Location>::const_iterator loc = uri2location.find(uri);
@@ -162,7 +162,7 @@ Location HttpRes::longestMatchLocation(std::string request_path, std::vector<Loc
 	Location location;
 	size_t max_len = 0;
 	for (std::vector<Location>::iterator it = locations.begin(); it != locations.end(); it++) {
-        std::string location_path = it->get_uri();
+        std::string location_path = it->getUri();
 		if (request_path.find(location_path) == 0) {
 			if (request_path[location_path.length()] == '/' || request_path.length() == location_path.length()) {
 				if (location_path.length() > max_len) {
@@ -189,8 +189,8 @@ bool HttpRes::isAllowMethod(std::string method) {
 std::string HttpRes::joinPath() {
 //    std::cout << "===== joinPath =====" << std::endl;
 	std::string path_root = target.getRoot();
-	std::string config_path  = target.get_uri();
-    std::string upload_path = target.get_upload_path();
+	std::string config_path  = target.getUri();
+    std::string upload_path = target.getUploadPath();
 	std::string file_path = httpreq.getUri().substr(config_path.length());
 
     std::string method = httpreq.getMethod();
@@ -682,7 +682,7 @@ int HttpRes::staticHandler() {
 	std::string uri = httpreq.getUri();
     std::cout << "uri: " << uri << std::endl;
 	target = getUri2Location(uri);
-    if (target.get_uri() == "") {
+    if (target.getUri() == "") {
         status_code = 404;
         return status_code;
     }
@@ -1073,7 +1073,7 @@ std::string HttpRes::createAutoIndexHtml(std::map<std::string, dir_t> index_of) 
 
 std::string HttpRes::joinPathAutoindex() {
 	std::string path_root = target.getRoot();
-	std::string config_path  = target.get_uri();
+	std::string config_path  = target.getUri();
 	std::string file_path = httpreq.getUri().substr(config_path.length());
 	std::string alias;
 	if ((alias = target.getAlias()) != "") {
@@ -1213,72 +1213,53 @@ int HttpRes::checkClientBodySize() {
 }
 
 void HttpRes::cgiHandler() {
-  std::cout << "================== cgi ==================" << std::endl;
+	std::cout << "================== cgi ==================" << std::endl;
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
-  httpreq.set_meta_variables(location);
+	httpreq.set_meta_variables(location);
 	Cgi cgi(httpreq ,location);
 	cgi.runCgi();
 	int handler_status = 0;
-  if (cgi.getStatusCode() > 400) {
-    status_code = cgi.getStatusCode();
-    finalize_res(status_code);
-  }
-  handler_status = cgi.parseCgiResponse();
-  if (cgi.getResType() == DOCUMENT) {
-    status_code = handler_status;
-    cgi.getHeaderFields().erase("status");
-    setCgi(cgi);
-    sendHeader(); //tmp here
-    if (httpreq.getMethod() == "HEAD") {
-      return finalize_res(status_code);
-    }
-    out_buf = cgi.getCgiBody();
-    if (cgi.getHeaderFields().count("content-length")) {
-		  // ここもutil関数
-      std::stringstream ss(cgi.getHeaderFields()["content-length"]);
-      ss >> body_size;
-    } else {
-      body_size = out_buf.length();
-    }
-    return finalize_res(status_code);
-  } else if (cgi.getResType() == LOCAL_REDIRECT) {
-	  if (httpreq.isRedirectLimit()) {
-      status_code = 500;
-      return finalize_res(status_code);
-		}
-      httpreq.setUri(cgi.getHeaderFields()["Location"]);
-			httpreq.incrementRedirectCnt();
-      return runHandlers();
-    } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-      status_code = 302;
-			redirect_path = cgi.getHeaderFields()["Location"];
-			body = cgi.getCgiBody();
-			header_filter();
-
-			return finalize_res(status_code);
-    } else {
-      body_size = out_buf.length();
-    }
-    return finalizeRes(status_code);
-  } else if (cgi.getResType() == LOCAL_REDIRECT) {
+	if (cgi.getStatusCode() > 400) {
+		status_code = cgi.getStatusCode();
+		finalizeRes(status_code);
+	}
+	handler_status = cgi.parseCgiResponse();
+  	if (cgi.getResType() == DOCUMENT) {
+		status_code = handler_status;
+    	cgi.getHeaderFields().erase("status");
+    	setCgi(cgi);
+    	sendHeader(); //tmp here
+    	if (httpreq.getMethod() == "HEAD") {
+    	  return finalizeRes(status_code);
+    	}
+    	out_buf = cgi.getCgiBody();
+    	if (cgi.getHeaderFields().count("content-length")) {
+			  // ここもutil関数
+    	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
+    	  ss >> body_size;
+    	} else {
+    	  body_size = out_buf.length();
+    	}
+    	return finalizeRes(status_code);
+	} else if (cgi.getResType() == LOCAL_REDIRECT) {
 		if (httpreq.isRedirectLimit()) {
-      status_code = 500;
-      return finalizeRes(status_code);
+			status_code = 500;
+			return finalizeRes(status_code);
 		}
-    httpreq.setUri(cgi.getHeaderFields()["Location"]);
+		httpreq.setUri(cgi.getHeaderFields()["Location"]);
 		httpreq.incrementRedirectCnt();
-    return runHandlers();
-  } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-    status_code = 302;
+		return runHandlers();
+    } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+		status_code = 302;
 		redirect_path = cgi.getHeaderFields()["Location"];
 		body = cgi.getCgiBody();
 		headerFilter();
 
 		return finalizeRes(status_code);
-  } else {
-		status_code = handler_status;
-		return finalizeRes(status_code);
-	}
+    } else {
+      body_size = out_buf.length();
+    }
+    return finalizeRes(status_code);
 }
 
 void HttpRes::httpHandler() {

@@ -237,7 +237,7 @@ Location configParser::parseLocation() {
 
 void configParser::setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv) {
 	std::string location_root = location.getRoot();;
-	std::string location_uri = location.get_uri();
+	std::string location_uri = location.getUri();
 	std::string path = prefix + location_uri;
 	std::vector<Location> locations = location.getLocations();
 	std::string root = (location_root != "") ? location_root: prefix_root;
@@ -434,7 +434,7 @@ void configParser::checkLocation() {
 		}
 		std::vector<Location>::iterator l_it = locations.begin();
 		for (; l_it != locations.end(); l_it++) {
-			if (l_it->get_uri() == "") {
+			if (l_it->getUri() == "") {
 				throw ConfigValueException("Location derective should have path");
 			}
 		}

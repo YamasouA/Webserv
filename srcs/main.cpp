@@ -134,22 +134,16 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 		}
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
+		httpreq.parseHeader();
 	}
 	if (!httpreq.isEndOfReq()) {
-		client.set_httpReq(httpreq);
+		client.setHttpReq(httpreq);
 		return;
     }
 
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
 
-	try {
-		httpreq.parseHeader();
-		std::cout << httpreq << std::endl;
-	} catch (const std::exception &e) {
-		std::cout << e.what() << std::endl;
-		// Clientをクリアする
-	}
 	client.setFd(fd);
     client.setHttpReq(httpreq);
     assignServer(server_confs, client);

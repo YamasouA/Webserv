@@ -31,7 +31,7 @@ Kqueue::~Kqueue() {
 }
 
 
-int Kqueue::set_event(int fd, short ev_filter) {
+int Kqueue::setEvent(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	changes.push_back(register_event);
@@ -43,7 +43,7 @@ int Kqueue::set_event(int fd, short ev_filter) {
     return 0;
 }
 
-int Kqueue::disable_event(int fd, short ev_filter) {
+int Kqueue::disableEvent(int fd, short ev_filter) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, EV_DELETE, 0, 0, NULL);
 	changes.push_back(register_event);

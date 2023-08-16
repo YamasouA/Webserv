@@ -96,15 +96,6 @@ class httpReq {
 		std::string percentEncode();
 		void appendHeader(std::string str);
 		void appendBody(std::string str);
-
-		class SyntaxException: public std::exception {
-			public:
-				explicit SyntaxException(const std::string& what_arg);
-				~SyntaxException() throw();
-				virtual const char* what() const throw(); // throw() = noexcept
-			private:
-				std::string msg;
-		};
 };
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj);

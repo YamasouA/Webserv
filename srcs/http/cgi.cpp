@@ -48,7 +48,7 @@ std::string Cgi::joinPath() {
     std::cerr << "===== joinPath(cgi) =====" << std::endl;
 	std::string path_root = target.getRoot();
 
-	std::string config_path  = target.get_uri();
+	std::string config_path  = target.getUri();
     std::string script_name = envs["SCRIPT_NAME"];
 	std::string alias;
 	if ((alias = target.getAlias()) != "") {

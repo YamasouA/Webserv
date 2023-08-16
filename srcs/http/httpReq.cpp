@@ -679,7 +679,7 @@ void httpReq::parseHeader() {
 			return;
 		}
 		skipSpace();
-		std::string field_value = getToken_to_eol();
+		std::string field_value = getTokenToEOL();
 		trim(field_value);
 		setHeaderField(toLower(field_name), field_value);
 	}
@@ -689,7 +689,9 @@ void httpReq::parseHeader() {
             return;
         }
     }
-	fix_up();
+	fixUp();
+	if (content_length == 0)
+		is_req_end= true;
 }
 
 /*
@@ -804,14 +806,3 @@ std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {
     return stream;
 }
 
-httpReq::SyntaxException::SyntaxException(const std::string& what_arg)
-:msg(what_arg)
-{}
-
-httpReq::SyntaxException::~SyntaxException() throw()
-{}
-
-const char* httpReq::SyntaxException::what(void) const throw() //noexcept c++11~
-{
-	return msg.c_str();
-}

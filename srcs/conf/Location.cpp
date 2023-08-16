@@ -136,7 +136,7 @@ void Location::setErrorPages(std::map<int, std::string> error_pages) {
 void Location::setWhichOneExist(int which_one_exist) {
     this->which_one_exist = which_one_exist;
 }
-std::string Location::get_uri() const{
+std::string Location::getUri() const{
 	return uri;
 }
 std::vector<std::string> Location::get_methods() const{
@@ -209,7 +209,7 @@ std::ostream& operator <<(std::ostream& stream, const Location& obj) {
 			const std::vector<std::string> tmp = obj.get_methods();
             const std::vector<std::string> tmp4 = obj.getIndex();
 			stream << "====== Location data =====" << std::endl
-			<< "uri: " << obj.get_uri() << std::endl
+			<< "uri: " << obj.getUri() << std::endl
 			<< "methods: ";
 			for (std::vector<std::string>::const_iterator it = tmp.begin(); it != tmp.end(); ++it) {
 				stream << *it << " ";

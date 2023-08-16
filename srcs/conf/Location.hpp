@@ -27,7 +27,7 @@ class Location {
         void setWhichOneExist(int whichOneExist);
 
 		std::vector<Location> getLocations() const;
-		std::string get_uri() const;
+		std::string getUri() const;
 		std::vector<std::string> get_methods() const;
 		std::string getRoot() const;
 		bool getIsAutoindex() const;
