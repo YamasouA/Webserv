@@ -483,8 +483,11 @@ void httpReq::fixUp() {
 			keep_alive = 1;
 		else
 			keep_alive = 0;
+	} else {
+		keep_alive = 1;
 	}
 
+	std::cout << "keep_alive: " << keep_alive << std::endl;
 	if (header_fields.count("content-length") != 1 && header_fields.count("transfer-encoding") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;

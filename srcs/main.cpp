@@ -129,7 +129,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 	if (recv_cnt < 0) {
-		// error handling
+		return;
 	} else {
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
@@ -139,13 +139,11 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 		}
 	}
 	if (!httpreq.isEndOfReq()) {
-		std::cout << "hgoe" << std::endl;
 		client.setHttpReq(httpreq);
 		return;
     }
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
-	std::cout << "hoge" << std::endl;
 
 	client.setFd(fd);
     client.setHttpReq(httpreq);
@@ -234,10 +232,7 @@ int main(int argc, char *argv[]) {
                 socklen_t addrlen = sizeof(sin);
                 getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
                 int port_num = ntohs(sin.sin_port);
-
-				std::cout << port_num << std::endl;
                 client.setPort(port_num);
-
 				fd_client_map[acceptfd] =  client;
 				kqueue.setEvent(acceptfd, EVFILT_READ);
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
@@ -245,7 +240,6 @@ int main(int argc, char *argv[]) {
 				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
-				std::cout << acceptfd << std::endl;
 				readRequest(acceptfd, fd_client_map[acceptfd], acceptfd_to_config[acceptfd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
