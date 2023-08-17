@@ -36,8 +36,8 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		return;
 	res.setIsSendedBody(true);
 	client.setHttpRes(res);
-	kq.disableEvent(acceptfd, EVFILT_WRITE);
 	fd_client_map.erase(acceptfd);
+	kq.disableEvent(acceptfd, EVFILT_WRITE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
 }
