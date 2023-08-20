@@ -50,8 +50,8 @@ class httpReq {
 		void incrementRedirectCnt();
 		void appendReq(char *str);
 		void parseHeader();
-		bool isEndOfHeader();
-		bool isEndOfReq();
+		bool isEndOfHeader() const;
+		bool isEndOfReq() const;
     private:
         std::string body_buf;
         std::string buf;

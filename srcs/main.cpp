@@ -24,6 +24,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 
 	if (!res.getIsSendedHeader()) {
 		std::cout << "=== send header ===" << std::endl;
+		fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
 		if (send_cnt < 0)
 			return;
@@ -31,6 +32,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	    client.setHttpRes(res);
 	}
 	std::cout << "=== send body ===" << std::endl;
+	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
 	if (send_cnt < 0)
 		return;
@@ -129,6 +131,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 	if (recv_cnt < 0) {
+		std::cout << "ko" << std::endl;
 		return;
 	} else {
 		buf[recv_cnt] = '\0';

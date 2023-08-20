@@ -3,6 +3,9 @@
 httpReq::httpReq()
 :idx(0),
     redirect_cnt(0),
+	is_header_end(false),
+	is_req_end(false),
+	parse_error(false),
     keep_alive(0),
     content_length(-1),
     err_status(0)
@@ -12,6 +15,9 @@ httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
     redirect_cnt(0),
+	is_header_end(false),
+	is_req_end(false),
+	parse_error(false),
     keep_alive(0),
     content_length(-1),
     err_status(0)
@@ -24,6 +30,8 @@ httpReq::httpReq(const httpReq& src)
 	client_ip(src.getClientIP()),
     port(src.getPort()),
     redirect_cnt(src.getRedirectCnt()),
+	is_header_end(src.isEndOfHeader()),
+	is_req_end(src.isEndOfReq()),
     method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
@@ -61,6 +69,8 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->query_string = rhs.getQueryString();
     this->content_length = rhs.getContentLength();
     this->err_status = rhs.getErrStatus();
+	this->is_header_end = rhs.isEndOfHeader();
+	this->is_req_end = rhs.isEndOfReq();
     return *this;
 }
 
@@ -97,11 +107,11 @@ void httpReq::appendBody(std::string str) {
 	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
 }
 
-bool httpReq::isEndOfHeader() {
+bool httpReq::isEndOfHeader() const {
 	return is_header_end;
 }
 
-bool httpReq::isEndOfReq() {
+bool httpReq::isEndOfReq() const {
 	return is_req_end;
 }
 
@@ -320,7 +330,7 @@ void httpReq::parseChunk() {
         }
 		content_length += chunkSize;
         tmp = getTokenToEOL();
-        if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
+        if (tmp == "" || tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
             std::cerr << "400 Bad request" << std::endl;
             setErrStatus(400);
             return;
@@ -334,6 +344,7 @@ void httpReq::parseChunk() {
         setErrStatus(400);
         return;
     }
+	std::cout << "parsed body: " << content_body << std::endl;
 	// discard trailer fields
 	getTokenToEOF();
 	header_fields["Transfer-Encoding"].erase();
@@ -527,7 +538,7 @@ void httpReq::fixUp() {
 		header_fields["transfer-encoding"] = "chunked";
     }
 
-	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST")) {
+	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST" || method == "PUT")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
         setErrStatus(501);
         return;

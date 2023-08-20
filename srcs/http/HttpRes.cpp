@@ -128,8 +128,12 @@ std::string HttpRes::getLocationField() const {
 
 Location HttpRes::getUri2Location(std::string uri) const
 {
+	std::string tmp_uri = uri;
+	if (tmp_uri != "" && tmp_uri[tmp_uri.length() - 1] != '/') {
+		tmp_uri = tmp_uri + '/';
+	}
 	std::map<std::string, Location> uri2location = vServer.getUri2Location();
-	std::map<std::string, Location>::const_iterator loc = uri2location.find(uri);
+	std::map<std::string, Location>::const_iterator loc = uri2location.find(tmp_uri);
 	if (loc != uri2location.end()) {
 		return loc->second;
 	}
@@ -142,11 +146,14 @@ Location HttpRes::getUri2Location(std::string uri) const
 		if (i == 0) {
 			path = path.substr(0, 1);
         } else {
-		    path = path.substr(0, i);
+		    path = path.substr(0, i + 1);
         }
 		loc = uri2location.find(path);
 		if (loc != uri2location.end()) {
 			return loc->second;
+		} else {
+//		} else if (path != "" && path[path.length() - 1]) {
+			path = path.substr(0, i);
 		}
         if (path == "/") {
             break;
@@ -191,7 +198,19 @@ std::string HttpRes::joinPath() {
 	std::string path_root = target.getRoot();
 	std::string config_path  = target.getUri();
     std::string upload_path = target.getUploadPath();
-	std::string file_path = httpreq.getUri().substr(config_path.length());
+	std::string file_path = httpreq.getUri();
+	std::cout << file_path << std::endl;
+	if (config_path.length() < file_path.length()) {
+		file_path = file_path.substr(config_path.length());
+	} else {
+		file_path = "";
+	}
+
+	std::cout << path_root << std::endl;
+	std::cout << config_path << std::endl;
+    std::cout << upload_path << std::endl;
+	std::cout << file_path << std::endl;
+
 
     std::string method = httpreq.getMethod();
     if (method != "POST") {
@@ -686,8 +705,9 @@ int HttpRes::staticHandler() {
         status_code = 404;
         return status_code;
     }
+	std::cout << target << std::endl;
 	std::string method = httpreq.getMethod();
-	if (method != "GET" && method != "HEAD" && method != "POST") {
+	if (method != "GET" && method != "HEAD" && method != "POST" && method != "PUT") {
         std::cerr << "not allow method in static handler" << std::endl;
 		return DECLINED;
 	}
@@ -697,11 +717,9 @@ int HttpRes::staticHandler() {
 		return status_code;
 	}
 
-    if (method == "HEAD") {
-        header_only = 1;
-    }
+
 	std::string file_name = joinPath();
-  
+
     struct stat sb;
     status_code = 200;
     if (method == "GET" || method == "HEAD") {
@@ -747,11 +765,17 @@ int HttpRes::staticHandler() {
         }
 	    content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
-    } else if (method == "POST") {
+    } else if (method == "POST" || method == "PUT") {
         if (stat(file_name.c_str(), &sb) == -1) {
 			if (errno == ENOENT) {
 		        status_code = CREATED;
                 setLocationField(file_name);
+				std::ofstream tmp_ofs(file_name);
+				if (tmp_ofs.bad()) {
+					status_code = INTERNAL_SERVER_ERROR;
+					return INTERNAL_SERVER_ERROR;
+				}
+				tmp_ofs.close();
 			} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
                 status_code = NOT_FOUND;
                 return status_code;
@@ -801,6 +825,7 @@ int HttpRes::staticHandler() {
         	return INTERNAL_SERVER_ERROR;
         } else {
             if (access(file_name.c_str(), W_OK) < 0) {
+				std::cout << file_name << std::endl;
                 std::cerr << "reg file open Error" << std::endl;
                 if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
                     std::cout << "NOT FOUND" << std::endl;
@@ -843,6 +868,7 @@ int HttpRes::staticHandler() {
         oss << ifs.rdbuf();
         out_buf = oss.str();
         body_size = content_length_n;
+//		body_size = out_buf.length();
     }
     return OK;
 }
@@ -949,8 +975,10 @@ int HttpRes::redirectHandle() {
 //        return
 //    if content_length == 0
         // something
-    out_buf = err_page_buf;
-    body_size = content_length_n;
+	if (!header_only) {
+		out_buf = err_page_buf;
+		body_size = content_length_n;
+	}
     return OK;
 }
 
@@ -1122,12 +1150,15 @@ int HttpRes::autoindexHandler() {
     if (dir_info.dir == NULL) {
        if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
            std::cout << "NOT_FOUND" << std::endl;
+			status_code = NOT_FOUND;
            return NOT_FOUND;
        } else if (errno == EACCES) {
            std::cout << "FORBIDDEN" << std::endl;
+			status_code = FORBIDDEN;
            return FORBIDDEN;
        }
        std::cout << "INTERNAL_SERVER_ERROR" << std::endl;
+        status_code = INTERNAL_SERVER_ERROR;
        return INTERNAL_SERVER_ERROR;
     }
     status_code = HTTP_OK;
@@ -1284,6 +1315,10 @@ void HttpRes::httpHandler() {
 
 void HttpRes::runHandlers() {
 //	int handler_status = 0;
+	std::string method = httpreq.getMethod();
+    if (method == "HEAD") {
+        header_only = 1;
+    }
     if (checkClientBodySize() != OK) {
         return finalizeRes(status_code);
     }
