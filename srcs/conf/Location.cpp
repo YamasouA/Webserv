@@ -1,7 +1,11 @@
 #include "Location.hpp"
 
-Location::Location(): depth(-1), max_body_size(-1), which_one_exist(0) {
-}
+Location::Location()
+: depth(-1),
+	autoindex(false),
+	max_body_size(-1),
+	which_one_exist(0)
+{}
 
 Location::Location(const Location& src) {
 	this->uri = src.uri;

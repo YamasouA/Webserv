@@ -729,15 +729,17 @@ int HttpRes::staticHandler() {
                 if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
                     return DECLINED;
                 } else if (target.getIndex().size() > 0 && uri[uri.length() - 1] == '/') {
-                    std::cout << "FORBIDDEN" << std::endl;
+                    std::cout << "FORBIDDEN1" << std::endl;
+					std::cout << location << std::endl;
+                    std::cout << uri << std::endl;
                     status_code = FORBIDDEN;
                     return FORBIDDEN;
                 }
                 std::cout << "NOT FOUND" << std::endl;
                 status_code = NOT_FOUND;
                 return NOT_FOUND;
-            } else if (EACCES){
-                std::cout << "FORBIDDEN" << std::endl;
+            } else if (errno == EACCES){
+                std::cout << "FORBIDDEN2" << std::endl;
                 status_code = FORBIDDEN;
                 return FORBIDDEN;
             }
