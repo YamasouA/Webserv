@@ -732,7 +732,8 @@ int HttpRes::staticHandler() {
                     std::cout << "FORBIDDEN1" << std::endl;
 					std::cout << location << std::endl;
                     std::cout << uri << std::endl;
-                    status_code = FORBIDDEN;
+//                    status_code = FORBIDDEN;
+					status_code = NOT_FOUND;
                     return FORBIDDEN;
                 }
                 std::cout << "NOT FOUND" << std::endl;
@@ -740,7 +741,8 @@ int HttpRes::staticHandler() {
                 return NOT_FOUND;
             } else if (errno == EACCES){
                 std::cout << "FORBIDDEN2" << std::endl;
-                status_code = FORBIDDEN;
+//                status_code = FORBIDDEN;
+				status_code = NOT_FOUND;
                 return FORBIDDEN;
             }
             status_code = INTERNAL_SERVER_ERROR;
@@ -811,7 +813,8 @@ int HttpRes::staticHandler() {
                     return NOT_FOUND;
                 } else if (EACCES){
                     std::cout << "FORBIDDEN" << std::endl;
-                    status_code = FORBIDDEN;
+//                    status_code = FORBIDDEN;
+                    status_code = NOT_FOUND;
                     return FORBIDDEN;
                 }
                 status_code = INTERNAL_SERVER_ERROR;
@@ -835,7 +838,8 @@ int HttpRes::staticHandler() {
                     return NOT_FOUND;
                 } else if (EACCES){
                     std::cout << "FORBIDDEN" << std::endl;
-                    status_code = FORBIDDEN;
+//                    status_code = FORBIDDEN;
+                    status_code = NOT_FOUND;
                     return FORBIDDEN;
                 }
                 status_code = INTERNAL_SERVER_ERROR;
@@ -1156,7 +1160,8 @@ int HttpRes::autoindexHandler() {
            return NOT_FOUND;
        } else if (errno == EACCES) {
            std::cout << "FORBIDDEN" << std::endl;
-			status_code = FORBIDDEN;
+//			status_code = FORBIDDEN;
+            status_code = NOT_FOUND;
            return FORBIDDEN;
        }
        std::cout << "INTERNAL_SERVER_ERROR" << std::endl;

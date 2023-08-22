@@ -50,6 +50,7 @@ class httpReq {
 		void incrementRedirectCnt();
 		void appendReq(char *str);
 		void parseHeader();
+		void parseBody();
 		bool isEndOfHeader() const;
 		bool isEndOfReq() const;
     private:
@@ -75,6 +76,8 @@ class httpReq {
 		std::string query_string;
         int content_length;
         int err_status;
+		size_t chunk_size;
+		bool is_in_chunk_data;
 
         void skipEmptyLines();
 		void skipSpace();
@@ -96,6 +99,11 @@ class httpReq {
 		std::string percentEncode();
 		void appendHeader(std::string str);
 		void appendBody(std::string str);
+		int getChunkSize();
+		int getChunkData();
+		void skipTokenToEOF();
+		size_t getChunkedSize() const;
+		bool isInChunkData() const;
 };
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj);

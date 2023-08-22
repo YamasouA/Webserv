@@ -140,6 +140,9 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 			httpreq.parseHeader();
 			std::cout << httpreq << std::endl;
 		}
+		if ((httpreq.isEndOfHeader() && httpreq.getHeaderFields().size() != 0)) {
+			httpreq.parseBody();
+		}
 	}
 	if (!httpreq.isEndOfReq()) {
 		client.setHttpReq(httpreq);
