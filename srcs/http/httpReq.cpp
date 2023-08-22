@@ -324,9 +324,7 @@ static const int ERROR = -1;
 
 
 int httpReq::getChunkSize() {
-	std::cout << "===getChunkSize===" << std::endl;
 	if (isInChunkData()) {
-		std::cout << "skip chunk size" << std::endl;
 		return OK;
 	}
 	chunk_size = 0;
@@ -342,13 +340,10 @@ int httpReq::getChunkSize() {
 					is_req_end = true;
 					return ERROR;
 				}
-				std::cout << "tmp: " << tmp << std::endl;
 				std::stringstream(tmp) >> std::hex >> chunk_size;
-				std::cout << "ok chunk size: " << chunk_size << std::endl;
 				return OK;
 			} else if (body_buf[idx + 1] == '\0') {
 				idx = tmp_idx;
-				std::cout << "re recv" << std::endl;
 				return RE_RECV;
 			} else {
 				std::cerr << "400 Bad request" << std::endl;
@@ -364,7 +359,6 @@ int httpReq::getChunkSize() {
 		tmp += body_buf[idx++];
 	}
 	idx = tmp_idx;
-	std::cout << "re recv" << std::endl;
 	return RE_RECV;
 }
 
@@ -374,24 +368,19 @@ int httpReq::getChunkData() {
 	tmp = body_buf.substr(idx);
 	if (tmp.length() < chunk_size) {
 		is_in_chunk_data = true;
-		std::cout << "re recv data" << std::endl;
 		return RE_RECV;
 	}
 	if (tmp.substr(chunk_size).find("\r\n") == std::string::npos) {
 		is_in_chunk_data = true;
-		std::cout << "re recv data" << std::endl;
 		return RE_RECV;
 	}
-	std::cout << "chunk size" << chunk_size << std::endl;
 	content_body += tmp.substr(0, chunk_size);
-	std::cout << "chunk size" << content_body.length() << std::endl;
 	idx += chunk_size; // It would be better to trim the body_buf than to proceed with the idx
 	while (1) { // Skip to newline
 		if (body_buf[idx] == '\015') {
 			if (body_buf[idx + 1] == '\012') {
 				idx += 2;
 				is_in_chunk_data = false;
-				std::cout << "ok data" << std::endl;
 				return OK;
 			}
 		}
@@ -407,8 +396,6 @@ void httpReq::skipTokenToEOF() {
 }
 
 void httpReq::parseChunk() {
-//	chunk_size = 0;
-
     std::cout << "==================parse chunk==================" << body_buf << std::endl;
 	if (getChunkSize()) {
 		return;
