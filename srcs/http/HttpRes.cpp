@@ -867,7 +867,9 @@ int HttpRes::staticHandler() {
                 status_code = INTERNAL_SERVER_ERROR;
                 return INTERNAL_SERVER_ERROR;
 			}
+			std::cout << "set body done" << std::endl;
 			std::string body = httpreq.getContentBody();
+			std::cout << body << std::endl;
             ofs << body;
             ofs.close();
             //content_length_n = body.size();
@@ -876,22 +878,25 @@ int HttpRes::staticHandler() {
     //discoard request body here ?
 	setContentType();
     //set_etag(); //necessary?
-    sendHeader();
 
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
     if (!ifs) {
-        std::cerr << "ifstream ko" << std::endl;
         status_code = INTERNAL_SERVER_ERROR;
         return status_code;
     }
 //    if (!(method == "HEAD")) {
     if (!header_only) {
+		std::cout << "set body2" << std::endl;
         std::ostringstream oss;
         oss << ifs.rdbuf();
         out_buf = oss.str();
-        body_size = content_length_n;
-//		body_size = out_buf.length();
+		std::cout << out_buf << std::endl;
+		content_length_n = out_buf.length();
+		std::cout << content_length_n << std::endl;
+//        body_size = content_length_n;
+		body_size = out_buf.length();
     }
+    sendHeader();
     return OK;
 }
 

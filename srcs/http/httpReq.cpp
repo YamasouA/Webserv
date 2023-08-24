@@ -191,7 +191,7 @@ std::string httpReq::getVersion() const
 
 std::string httpReq::getContentBody() const
 {
-    return this->content_body;
+    return this->body_buf;
 }
 
 std::map<std::string, std::string> httpReq::getHeaderFields() const
@@ -783,8 +783,9 @@ void httpReq::parseBody() {
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
 	} else if (header_fields.count("content-length") == 1) {
-		if (header_fields.size() > 0 && content_length <= (int)body_buf.size()) {
-			body_buf = body_buf.substr(0, content_length);
+		if (header_fields.size() > 0 && content_length <= (int)content_body.size()) {
+			content_body += body_buf.substr(0, content_length);
+			std::cout << "body_buf: " << body_buf << std::endl;
 			is_req_end = true;
 		} else {
 			return;
