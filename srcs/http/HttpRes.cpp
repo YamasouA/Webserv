@@ -650,7 +650,10 @@ void HttpRes::headerFilter() {
         ss << content_length_n;
         buf += "Content-Length: " + ss.str();
 	    buf += "\r\n";
-    }
+    } else {
+		buf += "Content-Length: 0";
+	    buf += "\r\n";
+	}
 	if (last_modified_time != -1) {
 		//buf += "Last-Modified: " + http_time();
 //		buf += "\r\n";
