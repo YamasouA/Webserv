@@ -3,18 +3,26 @@
 httpReq::httpReq()
 :idx(0),
     redirect_cnt(0),
+	is_header_end(false),
+	is_req_end(false),
+	parse_error(false),
     keep_alive(0),
     content_length(-1),
-    err_status(0)
+    err_status(0),
+	is_in_chunk_data(false)
 {}
 
 httpReq::httpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
     redirect_cnt(0),
+	is_header_end(false),
+	is_req_end(false),
+	parse_error(false),
     keep_alive(0),
     content_length(-1),
-    err_status(0)
+    err_status(0),
+	is_in_chunk_data(false)
 {}
 
 httpReq::httpReq(const httpReq& src)
@@ -24,6 +32,8 @@ httpReq::httpReq(const httpReq& src)
 	client_ip(src.getClientIP()),
     port(src.getPort()),
     redirect_cnt(src.getRedirectCnt()),
+	is_header_end(src.isEndOfHeader()),
+	is_req_end(src.isEndOfReq()),
     method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
@@ -34,7 +44,9 @@ httpReq::httpReq(const httpReq& src)
     keep_alive(src.getKeepAlive()),
 	query_string(src.getQueryString()),
     content_length(src.getContentLength()),
-    err_status(src.getErrStatus())
+    err_status(src.getErrStatus()),
+	chunk_size(src.getChunkedSize()),
+	is_in_chunk_data(src.isInChunkData())
 {
     (void)src;
 }
@@ -61,6 +73,10 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     this->query_string = rhs.getQueryString();
     this->content_length = rhs.getContentLength();
     this->err_status = rhs.getErrStatus();
+	this->is_header_end = rhs.isEndOfHeader();
+	this->is_req_end = rhs.isEndOfReq();
+	this->chunk_size = rhs.getChunkedSize();
+	this->is_in_chunk_data = rhs.isInChunkData();
     return *this;
 }
 
@@ -86,22 +102,23 @@ void httpReq::appendHeader(std::string str) {
 	size_t nl_idx = buf.find("\r\n\r\n");
 	if (nl_idx != std::string::npos) {
 		is_header_end = true;
-		appendBody(buf.substr(nl_idx));
-		buf = buf.substr(0, nl_idx);
+		appendBody(buf.substr(nl_idx + 4));
+		buf = buf.substr(0, nl_idx + 4);
 	}
 }
 
 void httpReq::appendBody(std::string str) {
-	if (content_length - body_buf.size() <= str.size())
-		is_req_end = true;
-	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
+//	if (header_fields.size() > 0 && (content_length - body_buf.size() <= str.size()))
+//		is_req_end = true;
+//	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
+	body_buf += str;
 }
 
-bool httpReq::isEndOfHeader() {
+bool httpReq::isEndOfHeader() const {
 	return is_header_end;
 }
 
-bool httpReq::isEndOfReq() {
+bool httpReq::isEndOfReq() const {
 	return is_req_end;
 }
 
@@ -212,6 +229,14 @@ void httpReq::incrementRedirectCnt() {
 	redirect_cnt++;
 }
 
+size_t httpReq::getChunkedSize() const {
+	return chunk_size;
+}
+
+bool httpReq::isInChunkData() const {
+	return is_in_chunk_data;
+}
+
 void httpReq::skipSpace()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t') {
@@ -293,51 +318,107 @@ std::string httpReq::getTokenToEOL() {
 	return line;
 }
 
-void httpReq::parseChunk() {
-	int chunkSize = 0;
+static const int RE_RECV = 1;
+static const int OK = 0;
+static const int ERROR = -1;
 
-    std::cout << "==================parse chunk==================" << buf << std::endl;
-    std::string tmp = getTokenToEOL();
-    if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
-        std::cerr << "400 Bad request" << std::endl;
-        setErrStatus(400);
-        return;
-    }
-	std::stringstream(tmp) >> std::hex >> chunkSize;
-    std::cout << "size: " << chunkSize << std::endl;
-	while (chunkSize > 0) {
-        if (idx + chunkSize >= buf.length()) {
-            std::cerr << "400 Bad request" << std::endl;
-            setErrStatus(400);
-            return;
-        }
-		content_body += buf.substr(idx, chunkSize);
-		idx += chunkSize;
-        if (!checkHeaderEnd()) {
-            std::cerr << "400 Bad request" << std::endl;
-            setErrStatus(400);
-            return;
-        }
-		content_length += chunkSize;
-        tmp = getTokenToEOL();
-        if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
-            std::cerr << "400 Bad request" << std::endl;
-            setErrStatus(400);
-            return;
-        }
-	    std::stringstream(tmp) >> std::hex >> chunkSize;
+
+int httpReq::getChunkSize() {
+	std::cout << "===getChunkSize===" << std::endl;
+	if (isInChunkData()) {
+		return OK;
 	}
+	chunk_size = 0;
+	size_t tmp_idx = idx;
+	std::string tmp = "";
+	while (idx < body_buf.length()) {
+		if (body_buf[idx] == '\015') {
+			std::cout << "body_buf: " << body_buf.substr(idx) << std::endl;
+			if (body_buf[idx + 1] == '\012') {
+				if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
+					std::cerr << "400 Bad request" << std::endl;
+					setErrStatus(400);
+					is_req_end = true;
+					return ERROR;
+				}
+				std::stringstream(tmp) >> std::hex >> chunk_size;
+				std::cout << "chunk_size: " << chunk_size << std::endl;
+				return OK;
+			} else if (body_buf[idx + 1] == '\0') {
+				idx = tmp_idx;
+				return RE_RECV;
+			} else {
+				std::cerr << "400 Bad request" << std::endl;
+				setErrStatus(400);
+				is_req_end = true;
+				return ERROR;
+			}
+		}
+//		} else if (buf[idx] == '\012') {
+//			++idx;
 
-    // probably
-    if (chunkSize != 0) {
-        std::cerr << "400 Bad request" << std::endl;
-        setErrStatus(400);
-        return;
+//		}
+		tmp += body_buf[idx++];
+	}
+	idx = tmp_idx;
+	return RE_RECV;
+}
+
+int httpReq::getChunkData() {
+	std::cout << "===getChunkData===" << std::endl;
+	std::string tmp;
+	tmp = body_buf.substr(idx);
+	if (tmp.length() < chunk_size) {
+		is_in_chunk_data = true;
+		return RE_RECV;
+	}
+	if (tmp.substr(chunk_size).find("\r\n") == std::string::npos) {
+		is_in_chunk_data = true;
+		return RE_RECV;
+	}
+	std::cout << "chunk_data: " << tmp.substr(0, chunk_size) << std::endl;
+	content_body += tmp.substr(0, chunk_size);
+	idx += chunk_size; // It would be better to trim the body_buf than to proceed with the idx
+	while (1) { // Skip to newline
+		if (body_buf[idx] == '\015') {
+			if (body_buf[idx + 1] == '\012') {
+				idx += 2;
+				is_in_chunk_data = false;
+				return OK;
+			}
+		}
+		++idx;
+	}
+}
+
+void httpReq::skipTokenToEOF() {
+	while (idx < body_buf.length()) {
+		++idx;
+	}
+	return;
+}
+
+void httpReq::parseChunk() {
+    std::cout << "==================parse chunk==================" << body_buf << std::endl;
+	if (getChunkSize()) {
+		return;
+	}
+	while (chunk_size > 0) {
+		if (getChunkData()) {
+			return;
+		}
+		if (getChunkSize()) {
+			return;
+		}
+	}
+    if (chunk_size == 0) {
+		std::cout << "parsed body: " << content_body << std::endl;
+		// discard trailer fields
+		skipTokenToEOF();
+		header_fields["Transfer-Encoding"].erase();
+		is_req_end = true;
+		return;
     }
-	// discard trailer fields
-	getTokenToEOF();
-	header_fields["Transfer-Encoding"].erase();
-    return;
 }
 
 std::string httpReq::getTokenToEOF() {
@@ -483,8 +564,11 @@ void httpReq::fixUp() {
 			keep_alive = 1;
 		else
 			keep_alive = 0;
+	} else {
+		keep_alive = 1;
 	}
 
+	std::cout << "keep_alive: " << keep_alive << std::endl;
 	if (header_fields.count("content-length") != 1 && header_fields.count("transfer-encoding") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
@@ -506,9 +590,6 @@ void httpReq::fixUp() {
         ss >> content_length;
     }
 
-	std::string content_length_s = header_fields["content-length"];
-    std::stringstream ss(content_length_s);
-    ss >> content_length;
     std::cout << "cl: " << content_length << std::endl;;
 
     if (content_body != "" && header_fields.count("content-type") != 1) {
@@ -527,7 +608,7 @@ void httpReq::fixUp() {
 		header_fields["transfer-encoding"] = "chunked";
     }
 
-	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST")) {
+	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST" || method == "PUT")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
         setErrStatus(501);
         return;
@@ -659,6 +740,10 @@ void httpReq::skipEmptyLines() {
     }
 }
 
+//void httpReq::setIsReqEnd() {
+//	is_req_end = true;
+//}
+
 void httpReq::parseHeader() {
 	if (!is_header_end) {
 		return;
@@ -672,8 +757,6 @@ void httpReq::parseHeader() {
 		if (checkHeaderEnd()) {
 			break;
 		}
-		std::cout << buf << std::endl;
-		std::cout << buf[idx] << std::endl;
 		std::string field_name = getToken(':');
 		if (getErrStatus() > 0) {
 			return;
@@ -683,53 +766,34 @@ void httpReq::parseHeader() {
 		trim(field_value);
 		setHeaderField(toLower(field_name), field_value);
 	}
-	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
-		parseChunk();
-        if (getErrStatus() > 0) {
-            return;
-        }
-    }
+//	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
+//		parseChunk();
+//        if (getErrStatus() > 0) {
+//            return;
+//        }
+//    }
 	fixUp();
-	if (content_length == 0)
+	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
+	if (content_length != -1 && content_length <= (int)body_buf.size())
 		is_req_end= true;
+	idx = 0;
 }
 
-/*
-void httpReq::parseRequest()
-{
-	std::cout << buf << std::endl;
-    skipEmptyLines();
-    if (getErrStatus() > 0) {
-        return;
-    }
-    parseReqLine();
-    if (getErrStatus() > 0) {
-        return;
-    }
-    while (idx < buf.size()) {
-        if (checkHeaderEnd()) {
-            break;
-        }
-        std::string field_name = getToken(':');
-        if (getErrStatus() > 0) { // or field_name == ""
-            return;
-        }
-        skipSpace(); //
-		std::string field_value = getTokenToEOL();
-		trim(field_value);
-        setHeaderField(toLower(field_name), field_value);
-    }
+void httpReq::parseBody() {
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
-        if (getErrStatus() > 0) {
-            return;
-        }
-    } else {
-		content_body = getTokenToEOF();
-    }
-    fixUp();
+	} else if (header_fields.count("content-length") == 1) {
+		if (header_fields.size() > 0 && content_length <= (int)body_buf.size()) {
+			body_buf = body_buf.substr(0, content_length);
+			is_req_end = true;
+		} else {
+			return;
+		}
+	} else {
+		is_req_end = true;
+		return;
+	}
 }
-*/
 
 std::map<std::string, std::string> httpReq::get_meta_variables() const {
     return cgi_envs;

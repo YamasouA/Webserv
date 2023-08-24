@@ -7,11 +7,12 @@ touch youpi.bla
 mkdir nop
 cd nop
 touch youpi.bad_extension
-touch other.public
+touch other.pouic
 cd ..
 mkdir Yeah
-touch Yeah/not_happy.bad_extension
-cd ..
+cd Yeah
+touch not_happy.bad_extension
+cd ../..
 
 ./tester http://localhost:8000
 rm -rf YoupiBanane

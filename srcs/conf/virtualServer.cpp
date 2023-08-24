@@ -1,7 +1,9 @@
 #include "virtualServer.hpp"
 
 virtualServer::virtualServer()
-:whichOneExist(0)
+:whichOneExist(0),
+	autoindex(false),
+	max_body_size(-1)
 {}
 
 virtualServer::virtualServer(const virtualServer& src)
