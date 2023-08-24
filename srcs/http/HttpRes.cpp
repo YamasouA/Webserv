@@ -79,6 +79,19 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->is_sended_body = src.getIsSendedBody();
 }
 
+HttpRes& HttpRes::operator=(const HttpRes& rhs) {
+	if (this == &rhs) {
+		return *this;
+	}
+    this->buf = rhs.buf;
+    this->header_size = rhs.header_size;
+    this->out_buf = rhs.out_buf;
+    this->body_size = rhs.body_size;
+    this->is_sended_header = rhs.getIsSendedHeader();
+    this->is_sended_body = rhs.getIsSendedBody();
+	return *this;
+}
+
 HttpRes::~HttpRes() {
 }
 
@@ -341,7 +354,7 @@ void HttpRes::setContentType() {
 }
 
 void HttpRes::evQueueInsert() {
-	connection->setEvent(fd, EVFILT_WRITE);
+	connection->setEvent(fd, EVFILT_WRITE, EV_ENABLE);
     std::cout << "==================send write event==================" << std::endl;
 }
 

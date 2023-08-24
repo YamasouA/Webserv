@@ -149,6 +149,7 @@ class HttpRes {
         HttpRes();
         HttpRes(const HttpRes& src);
 		HttpRes(const Client& source, Kqueue &kq);
+		HttpRes& operator=(const HttpRes& rhs);
 		~HttpRes();
 		Location longestMatchLocation(std::string request_path, std::vector<Location> locations);
         bool isAllowMethod(std::string method);

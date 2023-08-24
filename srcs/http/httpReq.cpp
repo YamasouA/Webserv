@@ -324,6 +324,7 @@ static const int ERROR = -1;
 
 
 int httpReq::getChunkSize() {
+	std::cout << "===getChunkSize===" << std::endl;
 	if (isInChunkData()) {
 		return OK;
 	}
@@ -341,6 +342,7 @@ int httpReq::getChunkSize() {
 					return ERROR;
 				}
 				std::stringstream(tmp) >> std::hex >> chunk_size;
+				std::cout << "chunk_size: " << chunk_size << std::endl;
 				return OK;
 			} else if (body_buf[idx + 1] == '\0') {
 				idx = tmp_idx;
@@ -374,6 +376,7 @@ int httpReq::getChunkData() {
 		is_in_chunk_data = true;
 		return RE_RECV;
 	}
+	std::cout << "chunk_data: " << tmp.substr(0, chunk_size) << std::endl;
 	content_body += tmp.substr(0, chunk_size);
 	idx += chunk_size; // It would be better to trim the body_buf than to proceed with the idx
 	while (1) { // Skip to newline
@@ -736,6 +739,10 @@ void httpReq::skipEmptyLines() {
         }
     }
 }
+
+//void httpReq::setIsReqEnd() {
+//	is_req_end = true;
+//}
 
 void httpReq::parseHeader() {
 	if (!is_header_end) {

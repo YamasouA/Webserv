@@ -19,12 +19,12 @@ class Kqueue {
         Kqueue(const Kqueue& src);
         Kqueue& operator=(const Kqueue& rhs);
 		~Kqueue();
-  
+
 		struct kevent* getReciverEvent();
 		int getEventsNum();
 		int getKq();
-		int setEvent(int fd, short ev_filter);
-    int disableEvent(int fd, short ev_filter);
+		int setEvent(int fd, short ev_filter, u_int fflags);
+		int disableEvent(int fd, short ev_filter);
 };
 
 #endif

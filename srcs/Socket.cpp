@@ -20,6 +20,7 @@ Socket& Socket::operator =(const Socket& source) {
 
 void Socket::setListenFd() {
 	this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
+	fcntl(listenfd, F_SETFL, O_NONBLOCK);
 	if (this->listenfd == -1) {
 		std::cout << "socket() failed Error" << std::endl;
         std::exit(1);

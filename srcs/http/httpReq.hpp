@@ -53,6 +53,7 @@ class httpReq {
 		void parseBody();
 		bool isEndOfHeader() const;
 		bool isEndOfReq() const;
+//		void setIsReqEnd();
     private:
         std::string body_buf;
         std::string buf;

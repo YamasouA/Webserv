@@ -31,9 +31,9 @@ Kqueue::~Kqueue() {
 }
 
 
-int Kqueue::setEvent(int fd, short ev_filter) {
+int Kqueue::setEvent(int fd, short ev_filter, u_int fflags) {
 	struct kevent register_event;
-	EV_SET(&register_event, fd, ev_filter, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	EV_SET(&register_event, fd, ev_filter, fflags, 0, 0, NULL);
 	changes.push_back(register_event);
 	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
 		std::cout << errno << std::endl;
@@ -53,7 +53,7 @@ int Kqueue::disableEvent(int fd, short ev_filter) {
     }
 	if (ev_filter == EVFILT_WRITE) {
 		std::cout << "close in disableEvent" << std::endl;
-		close(fd);
+//		close(fd);
 	}
     return 0;
 }
