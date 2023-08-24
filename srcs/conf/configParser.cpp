@@ -380,12 +380,6 @@ virtualServer configParser::parseServe() {
                 throw SyntaxException("v_serv: invalid value: " + directive);
 			}
 			v_serv.setMaxBodySize(result);
-		} else if (directive == "alias") {
-            if (v_serv.getAlias() != "" || v_serv.getRoot() != "") {
-                throw SyntaxException("v_serv: duplicate directive: " + directive);
-            }
-            which_one_exist |= kAliasExist;
-			v_serv.setAlias(getToken(';'));
 		} else if (directive == "error_page") {
 			const std::string pages = getToken(';');
 			v_serv.setErrorPages(methodsSplit(pages, ' '));
