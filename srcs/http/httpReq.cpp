@@ -766,12 +766,12 @@ void httpReq::parseHeader() {
 		trim(field_value);
 		setHeaderField(toLower(field_name), field_value);
 	}
-	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
-		parseChunk();
-        if (getErrStatus() > 0) {
-            return;
-        }
-    }
+//	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
+//		parseChunk();
+//        if (getErrStatus() > 0) {
+//            return;
+//        }
+//    }
 	fixUp();
 	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
 	if (content_length != -1 && content_length <= (int)body_buf.size())
