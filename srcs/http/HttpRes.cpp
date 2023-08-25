@@ -732,7 +732,7 @@ int HttpRes::staticHandler() {
 	std::string file_name = joinPath();
 
     struct stat sb;
-    status_code = OK;
+    status_code = HTTP_OK;
     if (method == "GET" || method == "HEAD") {
         if (access(file_name.c_str(), R_OK) < 0) {
             std::cerr << "open Error" << std::endl;
@@ -798,7 +798,7 @@ int HttpRes::staticHandler() {
 //                std::cout << "POST errno: " << errno << std::endl;
             }
         } else {
-            status_code = OK;
+            status_code = HTTP_OK;
         }
         if (S_ISDIR(sb.st_mode)) {
             time_t tm = std::time(NULL);
