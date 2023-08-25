@@ -502,10 +502,13 @@ void HttpRes::divingThroughDir(const std::string& path) {
 
 int HttpRes::deleteError() {
     if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+		status_code = NOT_FOUND;
         return NOT_FOUND;
     } else if (errno == EACCES || errno == EPERM) {
+		status_code = FORBIDDEN;
         return FORBIDDEN;
     } else {
+		status_code = INTERNAL_SERVER_ERROR;
         return INTERNAL_SERVER_ERROR;
     }
 }
