@@ -496,7 +496,7 @@ void httpReq::parseHostPort() {
     }
     if (uri[i] != '/') {
         std::cerr << "path not found" << std::endl;
-//        setErrStatus(XXX);
+        setErrStatus(400);
         return;
     }
     header_fields["host"] = host;
@@ -742,10 +742,6 @@ void httpReq::skipEmptyLines() {
         }
     }
 }
-
-//void httpReq::setIsReqEnd() {
-//	is_req_end = true;
-//}
 
 void httpReq::parseHeader() {
 	if (!is_header_end) {
