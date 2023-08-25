@@ -209,6 +209,9 @@ bool HttpRes::isAllowMethod(std::string method) {
 std::string HttpRes::joinPath() {
 //    std::cout << "===== joinPath =====" << std::endl;
 	std::string path_root = target.getRoot();
+	if (path_root == "" || path_root[0] != '/') {
+		path_root = "./" + path_root;
+	}
 	std::string config_path  = target.getUri();
     std::string upload_path = target.getUploadPath();
 	std::string file_path = httpreq.getUri();
