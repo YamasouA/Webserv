@@ -1,6 +1,7 @@
 #!/bin/bash
 
 mkdir YoupiBanane
+mkdir put_test
 cd YoupiBanane
 touch youpi.bad_extension
 touch youpi.bla
@@ -16,3 +17,4 @@ cd ../..
 
 ./tester http://localhost:8000
 rm -rf YoupiBanane
+rm -r put_test
