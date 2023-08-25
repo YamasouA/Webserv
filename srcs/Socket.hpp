@@ -12,6 +12,7 @@ class Socket {
 		int port;
 		struct sockaddr_in serv_addr;
 	public:
+		Socket();
 		Socket(int port);
 		~Socket();
 		Socket(const Socket& source);

@@ -88,16 +88,16 @@ void initializeFd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<v
         std::vector<int> listen = it->getListen();
         for (std::vector<int>::iterator it_listen = listen.begin(); it_listen != listen.end(); ++it_listen) {
 
-            Socket *socket;
+            Socket socket;
             if (m.find(*it_listen) == m.end()) {
                 std::cout << "listen: " << *it_listen << std::endl;
-                socket = new Socket(*it_listen);
+                socket = Socket(*it_listen);
 
-                if (socket->setSocket() != 0) {
+                if (socket.setSocket() != 0) {
                     std::exit(1);
                 }
-                m[*it_listen] = socket->getListenFd();
-                if (kqueue.setEvent(socket->getListenFd(), EVFILT_READ, EV_ADD | EV_ENABLE) != 0) {
+                m[*it_listen] = socket.getListenFd();
+                if (kqueue.setEvent(socket.getListenFd(), EVFILT_READ, EV_ADD | EV_ENABLE) != 0) {
                     std::exit(1);
                 }
 
@@ -232,6 +232,9 @@ int main(int argc, char *argv[]) {
 			std::cout << "event_fd(): " << event_fd << std::endl;
 			if (reciver_event[i].flags & EV_EOF) {
 				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
+				kqueue.setEvent(event_fd, EVFILT_WRITE, EV_DELETE);
+				kqueue.setEvent(event_fd, EVFILT_READ, EV_DELETE);
+				fd_client_map.erase(acceptfd);
 				close(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
 				Client client;
