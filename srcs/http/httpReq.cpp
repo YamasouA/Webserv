@@ -191,7 +191,8 @@ std::string httpReq::getVersion() const
 
 std::string httpReq::getContentBody() const
 {
-    return this->body_buf;
+	return this->content_body;
+//    return this->body_buf;
 }
 
 std::map<std::string, std::string> httpReq::getHeaderFields() const
@@ -377,7 +378,9 @@ int httpReq::getChunkData() {
 		return RE_RECV;
 	}
 	std::cout << "chunk_data: " << tmp.substr(0, chunk_size) << std::endl;
+//	std::cout << "prev content_body: " << content_body << std::endl;
 	content_body += tmp.substr(0, chunk_size);
+//	std::cout << "after content_body: " << content_body << std::endl;
 	idx += chunk_size; // It would be better to trim the body_buf than to proceed with the idx
 	while (1) { // Skip to newline
 		if (body_buf[idx] == '\015') {
@@ -783,9 +786,11 @@ void httpReq::parseBody() {
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
 	} else if (header_fields.count("content-length") == 1) {
-		if (header_fields.size() > 0 && content_length <= (int)content_body.size()) {
+		if (header_fields.size() > 0 && content_length <= (int)body_buf.size()) {
+//		if (header_fields.size() > 0 && content_length <= (int)content_body.size()) {
+//			body_buf += body_buf.substr(0, content_length);
 			content_body += body_buf.substr(0, content_length);
-			std::cout << "body_buf: " << body_buf << std::endl;
+			std::cout << "content_body_buf: " << body_buf << std::endl;
 			is_req_end = true;
 		} else {
 			return;
