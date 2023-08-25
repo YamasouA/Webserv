@@ -426,6 +426,8 @@ void HttpRes::divingThroughDir(const std::string& path) {
     dir_info.dir = opendir(path.c_str());
     if (dir_info.dir == NULL) {
         std::cerr << "opendir Error" << std::endl;
+		status_code = INTERNAL_SERVER_ERROR;
+		return;
     }
     dir_info.valid_info = 0;
     for (;;) {
@@ -433,7 +435,8 @@ void HttpRes::divingThroughDir(const std::string& path) {
         dir_info.d_ent = readdir(dir_info.dir);
         if (!dir_info.d_ent) {
             if (errno != 0) {
-              std::cerr << "readdir Error" << std::endl;
+				std::cerr << "readdir Error" << std::endl;
+				status_code = INTERNAL_SERVER_ERROR;
             } else {
             // read directory end
             }
