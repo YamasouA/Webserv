@@ -68,6 +68,7 @@ HttpRes::HttpRes(const Client& source, Kqueue &kq)
 	this->vServer = source.getVserver();
     this->connection = &kq;
 	this->fd = source.getFd();
+	this->keep_alive = httpreq.getKeepAlive();
 }
 
 HttpRes::HttpRes(const HttpRes& src) {
@@ -77,6 +78,7 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->body_size = src.body_size;
     this->is_sended_header = src.getIsSendedHeader();
     this->is_sended_body = src.getIsSendedBody();
+	this->keep_alive = src.keep_alive;
 }
 
 HttpRes& HttpRes::operator=(const HttpRes& rhs) {
@@ -89,6 +91,7 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->body_size = rhs.body_size;
     this->is_sended_header = rhs.getIsSendedHeader();
     this->is_sended_body = rhs.getIsSendedBody();
+	this->keep_alive = rhs.keep_alive;
 	return *this;
 }
 
@@ -138,6 +141,13 @@ std::string HttpRes::getLocationField() const {
     return location_field;
 }
 
+int HttpRes::getKeepAlive() const {
+	return keep_alive;
+}
+
+bool HttpRes::isHeaderOnly() const {
+	return header_only;
+}
 
 Location HttpRes::getUri2Location(std::string uri) const
 {
@@ -681,7 +691,9 @@ void HttpRes::headerFilter() {
 		buf += "\r\n";
 	}
 
-    if (httpreq.getKeepAlive()) {
+//    if (httpreq.getKeepAlive()) {
+	std::cout << "keep-alive in header: " << keep_alive << std::endl;
+    if (this->keep_alive) {
         buf += "Connection: keep-alive";
     } else {
 	    buf += "Connection: close";
