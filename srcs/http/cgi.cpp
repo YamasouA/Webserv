@@ -209,7 +209,14 @@ void Cgi::forkProcess() {
         return;
     }
 	sendBodyToChild();
-
+	pid_t pid2 = 0;
+	int st = 0;
+	while (pid2 != -1) {
+		pid2 = waitpid(-1, &st, 0);
+		if (!WIFEXITED(st)) {
+			status = 502;
+		}
+	}
 	close(fd[1]);
     char tmp_buf;
     while (read(0, &tmp_buf, 1) > 0) {
