@@ -18,6 +18,7 @@ class Client {
 //		std::map<std::string, Location> uritolocation;
         std::string client_ip;
         int port;
+		time_t last_recv_time;
 	public:
 		Client();
 		~Client();
@@ -33,12 +34,14 @@ class Client {
 //		void setUritolocation(const std::map<std::string, Location> map);
         void setClientIp(std::string client_ip);
         void setPort(int port);
+		void setLastRecvTime(time_t now);
 
 		int getFd() const;
 		httpReq getHttpReq() const;
 		HttpRes getHttpRes() const;
         HttpRes* getHttpResp() const;
 		virtualServer getVserver() const;
+		time_t getLastRecvTime() const;
 //		std::map<std::string, Location> getUriToLocation() const;
         std::string getClientIp() const;
         int getPort() const;
