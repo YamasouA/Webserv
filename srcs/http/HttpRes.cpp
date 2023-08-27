@@ -322,18 +322,18 @@ void HttpRes::createContentLength() {
 	header += ss.str();
 }
 
-void HttpRes::setContentType() {
+int HttpRes::setContentType() {
 	std::string ext;
 	std::string type;
 	std::string uri = httpreq.getUri();
-	std::string::size_type dot_pos = uri.find('.');
+	std::string::size_type dot_pos = uri.rfind('.');
 
 	if (dot_pos != std::string::npos) {
 		ext = uri.substr(dot_pos + 1);
 		if (ext.length() == 0) {
 			std::cerr << "Error dot" << std::endl;
-			status_code = INTERNAL_SERVER_ERROR;
-			return;
+			status_code = BAD_REQUEST;
+			return status_code;
 		}
 	}
 	for (size_t i = 0; i < ext.length(); i++) {
@@ -349,6 +349,7 @@ void HttpRes::setContentType() {
     if (content_type.length() == 0) {
 	    content_type = default_type;
     }
+	return status_code;
 }
 
 void HttpRes::evQueueInsert() {
@@ -871,7 +872,10 @@ int HttpRes::staticHandler() {
 		}
     }
     //discoard request body here ?
-	setContentType();
+	int handler_status = setContentType();
+	if (handler_status == BAD_REQUEST) {
+		return status_code;
+	}
     //set_etag(); //necessary?
 
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
@@ -1227,7 +1231,6 @@ int HttpRes::autoindexHandler() {
     }
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
-		status_code = INTERNAL_SERVER_ERROR;
 		return status_code;
     }
 
@@ -1279,8 +1282,7 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
-		// ここってreturnいらない？
-		finalizeRes(status_code);
+		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
   	if (cgi.getResType() == DOCUMENT) {
