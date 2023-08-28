@@ -40,6 +40,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 			fd_client_map.erase(acceptfd);
 			close(acceptfd);
+			return;
 		}
 //		kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 		return;
@@ -61,6 +62,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 		fd_client_map.erase(acceptfd);
 		close(acceptfd);
+		return;
 	}
 	fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
