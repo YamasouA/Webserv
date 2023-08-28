@@ -238,14 +238,16 @@ int main(int argc, char *argv[]) {
 		if (now - last_check > time_check_span) {
 			std::map<int, Client>::iterator it = fd_client_map.begin();
 			while(it != fd_client_map.end()) {
+				std::cout << "hoge" << std::endl;
+				std::cout << "fd: " << it->second.getFd() << std::endl;
 				if (now - it->second.getLastRecvTime() > time_out) {
 					int fd = it->second.getFd();
 					it++;
 					sendTimeOutResponse(fd, kqueue, fd_client_map);
 					//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
 					//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
-					//close(fd);
-					//fd_client_map.erase(it++);
+					fd_client_map.erase(fd);
+					close(fd);
 				} else {
 					it++;
 				}
