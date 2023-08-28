@@ -322,18 +322,18 @@ void HttpRes::createContentLength() {
 	header += ss.str();
 }
 
-void HttpRes::setContentType() {
+int HttpRes::setContentType() {
 	std::string ext;
 	std::string type;
 	std::string uri = httpreq.getUri();
-	std::string::size_type dot_pos = uri.find('.');
+	std::string::size_type dot_pos = uri.rfind('.');
 
-	// .のみのケースに対応できるか？
 	if (dot_pos != std::string::npos) {
 		ext = uri.substr(dot_pos + 1);
 		if (ext.length() == 0) {
 			std::cerr << "Error dot" << std::endl;
-            abort(); // status_codeに置き換え
+			status_code = BAD_REQUEST;
+			return status_code;
 		}
 	}
 	for (size_t i = 0; i < ext.length(); i++) {
@@ -344,16 +344,12 @@ void HttpRes::setContentType() {
 		}
 	}
 
-	// content-typeが受けられるか
-	/*
-	if (types.count(type) != 0) {
-		content_type = types[type];
-	}*/
 	content_type = getContentType(type);
 
     if (content_type.length() == 0) {
 	    content_type = default_type;
     }
+	return status_code;
 }
 
 void HttpRes::evQueueInsert() {
@@ -440,8 +436,6 @@ void HttpRes::divingThroughDir(const std::string& path) {
             if (errno != 0) {
 				std::cerr << "readdir Error" << std::endl;
 				status_code = INTERNAL_SERVER_ERROR;
-            } else {
-            // read directory end
             }
             if (closedir(dir_info.dir) == -1) {
                 std::cerr << "closedir Error" << std::endl;
@@ -566,10 +560,6 @@ int HttpRes::deleteHandler() {
 	}
 	if (S_ISDIR(sb.st_mode)) {
 		std::string uri = httpreq.getUri();
-//		if (uri[uri.length() - 1] != '/') {
-//			status_code = BAD_REQUEST;
-//			return;
-//		}
 		depth = dav_depth();
 		if (depth != -1) {
 			status_code = BAD_REQUEST;
@@ -727,7 +717,7 @@ int HttpRes::staticHandler() {
     std::cout << "uri: " << uri << std::endl;
 	target = getUri2Location(uri);
     if (target.getUri() == "") {
-        status_code = 404;
+        status_code = NOT_FOUND;
         return status_code;
     }
 	std::cout << target << std::endl;
@@ -746,7 +736,7 @@ int HttpRes::staticHandler() {
 	std::string file_name = joinPath();
 
     struct stat sb;
-    status_code = 200;
+    status_code = HTTP_OK;
     if (method == "GET" || method == "HEAD") {
         if (access(file_name.c_str(), R_OK) < 0) {
             std::cerr << "open Error" << std::endl;
@@ -812,7 +802,7 @@ int HttpRes::staticHandler() {
 //                std::cout << "POST errno: " << errno << std::endl;
             }
         } else {
-            status_code = 200;
+            status_code = HTTP_OK;
         }
         if (S_ISDIR(sb.st_mode)) {
             time_t tm = std::time(NULL);
@@ -885,7 +875,10 @@ int HttpRes::staticHandler() {
 		}
     }
     //discoard request body here ?
-	setContentType();
+	int handler_status = setContentType();
+	if (handler_status == BAD_REQUEST) {
+		return status_code;
+	}
     //set_etag(); //necessary?
 
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
@@ -1211,6 +1204,8 @@ int HttpRes::autoindexHandler() {
         if (!dir_info.d_ent) {
             if (errno != 0) {
                 std::cerr << "readdir Error" << std::endl;
+				status_code = INTERNAL_SERVER_ERROR;
+				return status_code;
                 // close dir and return error or INTERNAL_SERVER_ERROR
             } else {
                 //read directory end
@@ -1239,6 +1234,7 @@ int HttpRes::autoindexHandler() {
     }
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
+		return status_code;
     }
 
     if (!header_only) {
@@ -1289,7 +1285,7 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
-		finalizeRes(status_code);
+		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
   	if (cgi.getResType() == DOCUMENT) {
@@ -1311,14 +1307,14 @@ void HttpRes::cgiHandler() {
     	return finalizeRes(status_code);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
 		if (httpreq.isRedirectLimit()) {
-			status_code = 500;
+			status_code = INTERNAL_SERVER_ERROR;
 			return finalizeRes(status_code);
 		}
 		httpreq.setUri(cgi.getHeaderFields()["Location"]);
 		httpreq.incrementRedirectCnt();
 		return runHandlers();
     } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-		status_code = 302;
+		status_code = MOVED_TEMPORARILY;
 		redirect_path = cgi.getHeaderFields()["Location"];
 		body = cgi.getCgiBody();
 		headerFilter();
