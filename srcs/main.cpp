@@ -34,6 +34,13 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		res.setIsSendedHeader(true);
 	    client.setHttpRes(res);
 		fd_client_map[acceptfd] = client;
+		if (res.isHeaderOnly() && !res.getKeepAlive()) {
+			std::cout << "Disconnect client fd: " << acceptfd << std::endl;
+			kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
+			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+			fd_client_map.erase(acceptfd);
+			close(acceptfd);
+		}
 //		kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 		return;
 	}
@@ -46,8 +53,18 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 //	}
 	res.setIsSendedBody(true);
 	client.setHttpRes(res);
-	fd_client_map.erase(acceptfd);
 	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
+	std::cout << "keep-alive: " << res.getKeepAlive() << std::endl;
+	if (!res.getKeepAlive()) {
+		std::cout << "Disconnect client fd: " << acceptfd << std::endl;
+		kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
+		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+		fd_client_map.erase(acceptfd);
+		close(acceptfd);
+	}
+	fd_client_map.erase(acceptfd);
+//	httpReq tmp = httpReq();
+//	client.setHttpReq(tmp);
 //	kq.disableEvent(acceptfd, EVFILT_WRITE);
 //	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;

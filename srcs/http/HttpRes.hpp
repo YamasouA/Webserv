@@ -118,7 +118,7 @@ class HttpRes {
 		void createControlData();
         std::string createDate(time_t now, std::string fieldName);
 		void createContentLength();
-		void setContentType();
+		int setContentType();
 		void postEvent();
 		void evQueueInsert();
 		void headerFilter();
@@ -174,6 +174,8 @@ class HttpRes {
 		void createErrorResponse(int status);
 		void setLocationField(std::string loc);
     std::string getLocationField() const;
+		int getKeepAlive() const;
+		bool isHeaderOnly() const;
 };
 
 #endif
