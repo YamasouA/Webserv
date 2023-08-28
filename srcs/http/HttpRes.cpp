@@ -77,6 +77,7 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->body_size = src.body_size;
     this->is_sended_header = src.getIsSendedHeader();
     this->is_sended_body = src.getIsSendedBody();
+    this->connection = src.getConnection();
 }
 
 HttpRes& HttpRes::operator=(const HttpRes& rhs) {
@@ -89,6 +90,7 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->body_size = rhs.body_size;
     this->is_sended_header = rhs.getIsSendedHeader();
     this->is_sended_body = rhs.getIsSendedBody();
+    this->connection = rhs.getConnection();
 	return *this;
 }
 
@@ -139,6 +141,10 @@ std::string HttpRes::getLocationField() const {
 }
 
 
+Kqueue* HttpRes::getConnection() const {
+    return connection;
+}
+
 Location HttpRes::getUri2Location(std::string uri) const
 {
 	std::string tmp_uri = uri;
@@ -176,7 +182,11 @@ Location HttpRes::getUri2Location(std::string uri) const
     return no_match_loc;
 }
 
-
+void HttpRes::createErrorResponse(int status) {
+	status_code = status;
+	headerFilter();
+	out_buf = "";
+}
 
 Location HttpRes::longestMatchLocation(std::string request_path, std::vector<Location> locations) {
 	Location location;
@@ -356,7 +366,9 @@ void HttpRes::setContentType() {
     }
 }
 
+/*
 void HttpRes::evQueueInsert() {
+	std::cout << "connection: " << connection << std::endl;
 	connection->setEvent(fd, EVFILT_WRITE, EV_ENABLE);
     std::cout << "==================send write event==================" << std::endl;
 }
@@ -367,6 +379,7 @@ void HttpRes::postEvent() {
         evQueueInsert();
     }
 }
+*/
 
 std::map<int, std::string> create_status_msg(){
     std::map<int, std::string> m;
@@ -710,7 +723,7 @@ void HttpRes::headerFilter() {
 	//
     std::cout << "response Header: " << std::endl;
 	std::cout << buf << std::endl;
-    postEvent();
+    //postEvent();
 }
 
 void HttpRes::sendHeader() {

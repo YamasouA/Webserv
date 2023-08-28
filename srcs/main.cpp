@@ -54,6 +54,18 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	// fdのクローズは多分ここ
 }
 
+void sendTimeOutResponse(int fd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
+	Client client = fd_client_map[fd];
+	HttpRes res = client.getHttpRes();
+	res.createErrorResponse(408);
+	// なぜかtrueが入っている
+	res.setIsSendedHeader(false);
+	client.setHttpRes(res);
+	fd_client_map[fd] = client;
+	std::cout << res.getIsSendedHeader() << std::endl;
+	sendResponse(fd, kq, fd_client_map);
+}
+
 std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
 	std::string ip;
 	(void) buf;
@@ -216,8 +228,8 @@ int main(int argc, char *argv[]) {
 	time_over.tv_sec = 10;
 	time_over.tv_nsec = 0;
 
-	const int time_out = 5;
-	const int time_check_span = 10;
+	const int time_out = 1;
+	const int time_check_span = 3;
 	time_t last_check = std::time(0);
 	time_t now;
 
@@ -228,19 +240,19 @@ int main(int argc, char *argv[]) {
 			while(it != fd_client_map.end()) {
 				if (now - it->second.getLastRecvTime() > time_out) {
 					int fd = it->second.getFd();
-					kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
-					kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
-					close(fd);
-					fd_client_map.erase(it++);
+					it++;
+					sendTimeOutResponse(fd, kqueue, fd_client_map);
+					//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
+					//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
+					//close(fd);
+					//fd_client_map.erase(it++);
 				} else {
 					it++;
 				}
 			}
 			last_check = now;
 		}
-		std::cout << "3" << std::endl;
 		int events_num = kqueue.getEventsNum();
-		std::cout << "4" << std::endl;
 		if (events_num == -1) {
 			perror("kevent");
 			std::exit(1);
