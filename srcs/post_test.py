@@ -1,31 +1,94 @@
 import requests
 import traceback
+import os
 
 SCHEME = "http"
 HOST_NAME = "localhost:8000"
 
-SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
 REQUEST_BODY = "HELLO WORLD"
 
+m = {
+    200: "OK",
+    201: "Created",
+    202: "Accepted",
+    203: "",
+    204: "No Content",
+    205: "",
+    206: "Partial Content",
+    301: "Moved Permanently",
+    302: "Moved Temporarily",
+    303: "See Other",
+    304: "Not Modified",
+    307: "Temporary Redirect",
+    308: "Permanent Redirect",
+
+    400: "Bad Request",
+    401: "Unauthorized",
+    402: "Payment Required",
+    403: "Forbidden",
+    404: "Not Found",
+    405: "Not Allowed",
+    406: "Not Acceptable",
+    408: "Request Time-out",
+    409: "Conflict",
+    410: "Gone",
+    411: "Length Required",
+    412: "Precondition Failed",
+    413: "Request Entity Too Large" ,
+    414: "Request-URI Too Large",
+    415: "Unsupported Media Type",
+    416: "Requested Range Not Satisfiable",
+    421: "Misdirected Request",
+    429: "Too Many Requests",
+
+    500: "Internal Server Error",
+    501: "Not Implemented",
+    502: "Bad Gateway",
+    503: "Service Temporarily Unavailable",
+    504: "Gateway Time-out",
+    505: "HTTP Version Not Supported",
+    507: "Insufficient Storage",
+}
 def error_text(str1, str2):
 	return "expect:\n{}\nbut:{}".format(str1, str2)
 
 def create_path(path):
 	return SCHEME + "://" + HOST_NAME + path
 
+def get_body_from_status(status_code, path):
+	# それぞれのstatus_codeにデフォルトの内容が存在する
+	if status_code != 200 and status_code != 201:
+		return "<html>\r\n<head><title>" + str(status_code)\
+			+ " Not Found</title></head>\r\n<body>\r\n<center><h1>"\
+			+ str(status_code) + " " + m[status_code]\
+			+ "</h1></center>\r\n<hr><center>WebServe</center>\r\n</body>\r\n</html>"
+	else:
+		try:
+			with open(path, 'r') as f:
+				return f.read()
+		except FileNotFoundError:
+			return ""
+	return ""
 # レスポンスのヘッダーが正しいかを確認する
-def header_checker(expect_header, res_header, expect_body):
-	if len(expect_header) != len(res_header):
-		return False
+def header_checker(status_code, expect_header, res_header, file_path, expect_body):
+	root = os.getcwd() + '/'
 
 	for header_field in expect_header:
 		# 'Date'は存在だけ確認できればいい
+		print(header_field)
 		if header_field == 'Date':
 			continue
-		
+		elif header_field == 'Location' and status_code != 201:
+			continue
 		# 'Content-Length'はgetしたファイルのサイズと比較する
-		if header_field == 'Content-Length':
+		elif header_field == 'Content-Length':
+			print('len: ', len(expect_body))
 			if res_header['Content-Length'] != str(len(expect_body)):
+				return False
+		elif header_field == 'Location':
+			print(res_header['Location'], " " , root + file_path)
+			if res_header['Location'] != root + file_path:
 				return False
 
 		# その他のヘッダーは値が一致する必要ある
@@ -36,36 +99,42 @@ def header_checker(expect_header, res_header, expect_body):
 	return True
 
 def response_test(url, expected_status, expected_headers, request_body, file_path):
-	try:
-		with open(file_path, 'r', encoding='utf-8') as f:
-			bef_data = f.read()
-	except FileNotFoundError:
-		bef_data = ""
+	bef_data = get_body_from_status(expected_status, file_path)
 	
 	res = requests.post(url, request_body)
 	expect_data = bef_data + request_body
+	print(expect_data)
 
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
-	try:
-		with open(file_path, 'r', encoding='utf-8') as f:
-			aft_data = f.read()
-	except FileNotFoundError:
-		aft_data = ""
+	aft_data = get_body_from_status(expected_status, file_path)
 
-	assert header_checker(expected_headers, res.headers, expect_data),\
+	assert header_checker(res.status_code, expected_headers, res.headers, file_path, expect_data),\
 		"Header Error" + error_text(expected_headers, res.headers)
 
-	assert  expect_data == aft_data,\
-		"Body Error" + error_text(expect_data, aft_data)
+	if res.status_code == 200 or res.status_code == 201:
+		assert  expect_data == aft_data,\
+			"Body Error" + error_text(expect_data, aft_data)
 
 	print(url + " test done")
 
+def clean_up(upload_path, target_file):
+	if os.path.exists(upload_path + target_file):
+		os.remove(upload_path + target_file)
+
 def POST_test():
+	upload_path = "upload/"
+	clean_up(upload_path, "post.html")
 	try:
-		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, REQUEST_BODY, "post.html")
-		#response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+		# 新規作成
+		response_test(create_path("/post.html"), 201, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
+		# 追記
+		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
+		# POSTを禁止している場所
+		response_test(create_path("/POST_DENIED/post.html"), 403, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
+		# ディレクトリを指定して作成
+
 	except:
 		traceback.print_exc()
 		
