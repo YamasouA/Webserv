@@ -40,6 +40,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 			fd_client_map.erase(acceptfd);
 			close(acceptfd);
+			return;
 		}
 //		kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 		return;
@@ -61,11 +62,12 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 		fd_client_map.erase(acceptfd);
 		close(acceptfd);
+		return;
 	}
 	fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
 //	client.setHttpReq(tmp);
-//	kq.disableEvent(acceptfd, EVFILT_WRITE);
+	kq.disableEvent(acceptfd, EVFILT_WRITE);
 //	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
@@ -73,14 +75,24 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 
 void sendTimeOutResponse(int fd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
 	Client client = fd_client_map[fd];
-	HttpRes res = client.getHttpRes();
-	res.createErrorResponse(408);
-	// なぜかtrueが入っている
-	res.setIsSendedHeader(false);
+	httpReq req;
+    req.setClientIP(client.getClientIp());
+    req.setPort(client.getPort());
+	client.setHttpReq(req);
+//	HttpRes res = client.getHttpRes();
+	HttpRes res(client, kq);
+	res.handleReqErr(408);
 	client.setHttpRes(res);
 	fd_client_map[fd] = client;
-	std::cout << res.getIsSendedHeader() << std::endl;
-	sendResponse(fd, kq, fd_client_map);
+	kq.setEvent(fd, EVFILT_WRITE, EV_ADD | EV_ENABLE);
+//	sendResponse(fd, kq, fd_client_map);
+//	res.createErrorResponse(408);
+	// なぜかtrueが入っている
+//	res.setIsSendedHeader(false);
+//	client.setHttpRes(res);
+//	fd_client_map[fd] = client;
+//	std::cout << res.getIsSendedHeader() << std::endl;
+//	sendResponse(fd, kq, fd_client_map);
 }
 
 std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
@@ -263,8 +275,8 @@ int main(int argc, char *argv[]) {
 					sendTimeOutResponse(fd, kqueue, fd_client_map);
 					//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
 					//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
-					fd_client_map.erase(fd);
-					close(fd);
+//					fd_client_map.erase(fd);
+//					close(fd);
 				} else {
 					it++;
 				}
