@@ -526,6 +526,7 @@ int HttpRes::deletePath(bool is_dir) {
         }
         if (rmdir(dir_path.c_str()) >= 0) {
             status_code = NO_CONTENT;
+			header_only = 1;
             return status_code;
         }
 
@@ -533,6 +534,7 @@ int HttpRes::deletePath(bool is_dir) {
 		std::string file_name = joinPath();
 		if (remove(file_name.c_str()) >= 0) {
 		    status_code = NO_CONTENT;
+			header_only = 1;
 			return status_code;
 		}
 	}
@@ -619,7 +621,7 @@ void HttpRes::headerFilter() {
                 header_only = 1;
             }
             if (status_code == NO_CONTENT) {
-                header_only = 1;
+//                header_only = 1;
                 content_type = "";
                 last_modified_time = NULL;
             }
@@ -851,6 +853,10 @@ int HttpRes::staticHandler() {
             setLocationField(file_name);
         }
         content_length_n = sb.st_size;
+		if (content_length_n == 0) {
+			status_code = NO_CONTENT;
+			header_only = 1;
+		}
 	    last_modified_time = sb.st_mtime;
         if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
 			std::cerr << "stat Error" << std::endl;
@@ -880,6 +886,10 @@ int HttpRes::staticHandler() {
 			}
 			std::cout << "set body done" << std::endl;
 			std::string body = httpreq.getContentBody();
+			if (body.length() == 0 && status_code != CREATED) {
+				status_code = NO_CONTENT;
+				header_only = 1;
+			}
 			std::cout << body << std::endl;
             ofs << body;
             ofs.close();
@@ -1035,11 +1045,11 @@ void HttpRes::finalizeRes(int handler_status)
     if (handler_status == DECLINED || handler_status == OK) {
         return;
     }
-    if ((200 <= status_code && status_code < 207) && status_code != 204) {
+    if ((200 <= status_code && status_code < 207)) {// && status_code != 204) {
         // handle connection
         return;
     }
-    if (status_code >= 300 || status_code == 204) {
+    if (status_code >= 300) {// || status_code == 204) {
         // handle around timeer
         redirectHandle();
         return;
