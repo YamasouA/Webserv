@@ -76,24 +76,23 @@ def header_checker(status_code, expect_header, res_header, file_path, expect_bod
 
 	for header_field in expect_header:
 		# 'Date'は存在だけ確認できればいい
-		print(header_field)
 		if header_field == 'Date':
 			continue
 		elif header_field == 'Location' and status_code != 201:
 			continue
 		# 'Content-Length'はgetしたファイルのサイズと比較する
 		elif header_field == 'Content-Length':
-			print('len: ', len(expect_body))
 			if res_header['Content-Length'] != str(len(expect_body)):
+				print("here")
 				return False
 		elif header_field == 'Location':
-			print(res_header['Location'], " " , root + file_path)
 			if res_header['Location'] != root + file_path:
+				print("here2")
 				return False
 
 		# その他のヘッダーは値が一致する必要ある
 		elif res_header[header_field] != expect_header[header_field]:
-			print(res_header[header_field])
+			print("here2")
 			return False
 
 	return True
@@ -103,7 +102,6 @@ def response_test(url, expected_status, expected_headers, request_body, file_pat
 	
 	res = requests.post(url, request_body)
 	expect_data = bef_data + request_body
-	print(expect_data)
 
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
@@ -133,7 +131,14 @@ def POST_test():
 		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
 		# POSTを禁止している場所
 		response_test(create_path("/POST_DENIED/post.html"), 403, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
-		# ディレクトリを指定して作成
+		# ディレクトリを指定して作成(確認の仕方が思いついてない)
+		response_test(create_path("/POST"), 201, SIMPLE_HEADERS, REQUEST_BODY, "")
+		# CGI
+		response_test(create_path("/POST/cgi_post.py"), 200, SIMPLE_HEADERS, REQUEST_BODY, "")
+		# CGI設定されていない
+		response_test(create_path("/CGI_DENIED/cgi_post.py"), 405, SIMPLE_HEADERS, REQUEST_BODY, "")
+		# CGI自体がエラー
+		response_test(create_path("/CGI"), 404, SIMPLE_HEADERS, REQUEST_BODY, "")
 
 	except:
 		traceback.print_exc()
