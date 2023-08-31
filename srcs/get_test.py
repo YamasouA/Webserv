@@ -122,10 +122,16 @@ def GET_test():
 		response_test(create_path("/GET_DENIED"), 405, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# redirect
 		response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
+		# CGI
+		response_test(create_path("/CGI/cgi.py"), 200, SIMPLE_HEADERS, "")
+		# CGI設定されていない
+		response_test(create_path("/CGI_DENIED/cgi.py"), 405, SIMPLE_HEADERS, "")
+		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
+		response_test(create_path("/CGI/syntax_error_cgi.py"), 404, SIMPLE_HEADERS, "")
 	except:
 		traceback.print_exc()
 		
-
+	print("========= test done!!!!! ==========")
 
 if __name__ == "__main__":
 	GET_test()
