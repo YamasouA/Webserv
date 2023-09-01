@@ -10,7 +10,10 @@ Cgi::Cgi(const httpReq& request, Location location)
 {}
 
 Cgi::Cgi(const Cgi& src)
-:header_fields(src.getHeaderFields())
+:target(src.target),
+	status(src.status),
+	envs(src.envs),
+	header_fields(src.getHeaderFields())
 {
     (void)src;
 }

@@ -159,6 +159,11 @@ Location HttpRes::getUri2Location(std::string uri) const
 	std::map<std::string, Location>::const_iterator loc = uri2location.find(tmp_uri);
 	if (loc != uri2location.end()) {
 		return loc->second;
+	} else {
+		std::map<std::string, Location>::const_iterator it = uri2location.find(uri);
+		if (it != uri2location.end()) {
+			return it->second;
+		}
 	}
 	std::string path = uri;
 	while (1) {
@@ -177,6 +182,10 @@ Location HttpRes::getUri2Location(std::string uri) const
 		} else {
 //		} else if (path != "" && path[path.length() - 1]) {
 			path = path.substr(0, i);
+			loc = uri2location.find(path);
+			if (loc != uri2location.end()) {
+				return loc->second;
+			}
 		}
         if (path == "/") {
             break;
@@ -690,10 +699,15 @@ void HttpRes::headerFilter() {
     }
 	buf += "\r\n";
     if (status_code == 201 && getLocationField() != "") {
-        buf += "Location: " + getLocationField();
+		std::string loc_field_value = getLocationField();
+		if (loc_field_value[0] == '.') {
+			loc_field_value = loc_field_value.substr(1);
+		}
+        buf += "Location: " + loc_field_value;
+//        buf += "Location: " + getLocationField();
         buf += "\r\n";
     }
-	if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
+	else if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
 		buf += "Location: " + redirect_path;
 		buf += "\r\n";
 	}
@@ -797,7 +811,10 @@ int HttpRes::staticHandler() {
 	    content_length_n = sb.st_size;
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST" || method == "PUT") {
+		std::cout << "stat path: " << file_name.c_str() << std::endl;
         if (stat(file_name.c_str(), &sb) == -1) {
+//        if (stat("./upload/post.html", &sb) == -1) {
+			std::cout << "errno: " << errno << std::endl;
 			if (errno == ENOENT) {
 		        status_code = CREATED;
                 setLocationField(file_name);
@@ -1259,6 +1276,7 @@ int HttpRes::autoindexHandler() {
 
 bool HttpRes::isCgi() {
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
+	std::cout << "cgi_loc: " << location << std::endl;
     std::vector<std::string> vec = location.getCgiExt();
 	if (vec.size() == 0)
 		return false;
@@ -1297,10 +1315,12 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
+		std::cout << "status_code: " << status_code << std::endl;
 		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
   	if (cgi.getResType() == DOCUMENT) {
+		std::cout << "===DOCUMENT===" << std::endl;
 		status_code = handler_status;
     	cgi.getHeaderFields().erase("status");
     	setCgi(cgi);
@@ -1318,6 +1338,7 @@ void HttpRes::cgiHandler() {
     	}
     	return finalizeRes(status_code);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
+		std::cout << "===LOCAL_REDIRECT===" << std::endl;
 		if (httpreq.isRedirectLimit()) {
 			status_code = INTERNAL_SERVER_ERROR;
 			return finalizeRes(status_code);
@@ -1326,6 +1347,7 @@ void HttpRes::cgiHandler() {
 		httpreq.incrementRedirectCnt();
 		return runHandlers();
     } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
+		std::cout << "===OTHER===" << std::endl;
 		status_code = MOVED_TEMPORARILY;
 		redirect_path = cgi.getHeaderFields()["Location"];
 		body = cgi.getCgiBody();
@@ -1333,7 +1355,9 @@ void HttpRes::cgiHandler() {
 
 		return finalizeRes(status_code);
     } else {
-      body_size = out_buf.length();
+		std::cout << "===NONE===" << std::endl;
+		status_code = handler_status;
+		body_size = out_buf.length();
     }
     return finalizeRes(status_code);
 }
