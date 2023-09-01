@@ -1,20 +1,11 @@
 #!/bin/bash
 
-mkdir YoupiBanane
-mkdir put_test
-cd YoupiBanane
-touch youpi.bad_extension
-touch youpi.bla
-mkdir nop
-cd nop
-touch youpi.bad_extension
-touch other.pouic
-cd ..
-mkdir Yeah
-cd Yeah
-touch not_happy.bad_extension
-cd ../..
-
-./tester http://localhost:8000
-rm -rf YoupiBanane
-rm -r put_test
+mkdir GET_DENIED
+mkdir POST_DENIED
+mkdir CGI_DENIED
+mkdir CGI
+cp cgi.py ./CGI/
+cp syntax_error_cgi.py ./CGI/
+cp cgi.py ./CGI_DENIED/
+cp cgi_post.py ./CGI_DENIED/
+mkdir redirect
