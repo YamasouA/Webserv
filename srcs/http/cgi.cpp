@@ -50,9 +50,17 @@ int Cgi::getStatusCode() const {
 std::string Cgi::joinPath() {
     std::cerr << "===== joinPath(cgi) =====" << std::endl;
 	std::string path_root = target.getRoot();
+	if (path_root == "" || path_root[0] != '/') {
+		path_root = "./" + path_root;
+	}
 
 	std::string config_path  = target.getUri();
     std::string script_name = envs["SCRIPT_NAME"];
+	if (config_path.length() < script_name.length()) {
+		script_name = script_name.substr(config_path.length());
+	} else {
+		script_name = "";
+	}
 	std::string alias;
 	if ((alias = target.getAlias()) != "") {
 		config_path = alias;
@@ -60,11 +68,6 @@ std::string Cgi::joinPath() {
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
-	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (script_name.size() >= 1) {
-			script_name = script_name.substr(1);
-        }
 	}
 	std::cerr << "joinPath: " << path_root + config_path + script_name << std::endl;
     std::cerr << "===== End joinPath =====" << std::endl;
