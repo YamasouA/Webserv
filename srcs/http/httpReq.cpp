@@ -496,7 +496,7 @@ void httpReq::parseHostPort() {
     }
     if (uri[i] != '/') {
         std::cerr << "path not found" << std::endl;
-//        setErrStatus(XXX);
+        setErrStatus(400);
         return;
     }
     header_fields["host"] = host;
@@ -556,16 +556,20 @@ void httpReq::fixUp() {
 			setErrStatus(400);
 			return;
 		}
-		std::vector<std::string> connections = fieldValueSplit(toLower(header_fields["connetion"]), ',');
+//		std::cout << "Connection field raw value: " << header_fields["connection"] << std::endl;
+		std::vector<std::string> connections = fieldValueSplit(toLower(header_fields["connection"]), ',');
 		std::vector<std::string>::iterator c_it = connections.begin();
+//		std::cout << "====Connection field values====" << std::endl;
 		for (; c_it != connections.end(); c_it++) {
+//			std::cout << *c_it << std::endl;
 			if (*c_it == "close") {
 				break;
 			}
 		}
-		if (c_it == connections.end() || connections.size() == 0)
+		if (c_it == connections.end() || connections.size() == 0) {
+//			std::cout << "======================KO================" << std::endl;
 			keep_alive = 1;
-		else
+		} else
 			keep_alive = 0;
 	} else {
 		keep_alive = 1;
@@ -742,10 +746,6 @@ void httpReq::skipEmptyLines() {
         }
     }
 }
-
-//void httpReq::setIsReqEnd() {
-//	is_req_end = true;
-//}
 
 void httpReq::parseHeader() {
 	if (!is_header_end) {
