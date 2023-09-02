@@ -40,6 +40,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 			fd_client_map.erase(acceptfd);
 			close(acceptfd);
+			return;
 		}
 //		kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 		return;
@@ -61,14 +62,37 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
 		fd_client_map.erase(acceptfd);
 		close(acceptfd);
+		return;
 	}
 	fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
 //	client.setHttpReq(tmp);
-//	kq.disableEvent(acceptfd, EVFILT_WRITE);
+	kq.disableEvent(acceptfd, EVFILT_WRITE);
 //	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
+}
+
+void sendTimeOutResponse(int fd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
+	Client client = fd_client_map[fd];
+	httpReq req;
+    req.setClientIP(client.getClientIp());
+    req.setPort(client.getPort());
+	client.setHttpReq(req);
+//	HttpRes res = client.getHttpRes();
+	HttpRes res(client, kq);
+	res.handleReqErr(408);
+	client.setHttpRes(res);
+	fd_client_map[fd] = client;
+	kq.setEvent(fd, EVFILT_WRITE, EV_ADD | EV_ENABLE);
+//	sendResponse(fd, kq, fd_client_map);
+//	res.createErrorResponse(408);
+	// なぜかtrueが入っている
+//	res.setIsSendedHeader(false);
+//	client.setHttpRes(res);
+//	fd_client_map[fd] = client;
+//	std::cout << res.getIsSendedHeader() << std::endl;
+//	sendResponse(fd, kq, fd_client_map);
 }
 
 std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
@@ -159,6 +183,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 //	if (recv_cnt == 0) {
 //		httpreq.setIsReqEnd();
 //	}
+	client.setLastRecvTime(std::time(0));
 	if (recv_cnt < 0) {
 		std::cout << "ko" << std::endl;
 		return;
@@ -180,7 +205,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
 
-	client.setFd(fd);
+	//client.setFd(fd);
     client.setHttpReq(httpreq);
     assignServer(server_confs, client);
     HttpRes respons(client, kq);
@@ -232,7 +257,32 @@ int main(int argc, char *argv[]) {
 	time_over.tv_sec = 10;
 	time_over.tv_nsec = 0;
 
+	const int time_out = 1;
+	const int time_check_span = 3;
+	time_t last_check = std::time(0);
+	time_t now;
+
 	while (1) {
+		now = std::time(0);
+		if (now - last_check > time_check_span) {
+			std::map<int, Client>::iterator it = fd_client_map.begin();
+			while(it != fd_client_map.end()) {
+				std::cout << "hoge" << std::endl;
+				std::cout << "fd: " << it->second.getFd() << std::endl;
+				if (now - it->second.getLastRecvTime() > time_out) {
+					int fd = it->second.getFd();
+					it++;
+					sendTimeOutResponse(fd, kqueue, fd_client_map);
+					//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
+					//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
+//					fd_client_map.erase(fd);
+//					close(fd);
+				} else {
+					it++;
+				}
+			}
+			last_check = now;
+		}
 		int events_num = kqueue.getEventsNum();
 		if (events_num == -1) {
 			perror("kevent");
@@ -272,6 +322,7 @@ int main(int argc, char *argv[]) {
                 getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
                 int port_num = ntohs(sin.sin_port);
                 client.setPort(port_num);
+				client.setFd(acceptfd);
 				fd_client_map[acceptfd] =  client;
 				kqueue.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
 				kqueue.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
