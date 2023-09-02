@@ -174,6 +174,7 @@ Location HttpRes::getUri2Location(std::string uri) const
 	}
 	std::string path = uri;
 	while (1) {
+		/*
 		std::string::size_type i = path.rfind('/');
 		if (i == std::string::npos) {
 			break;
@@ -196,6 +197,23 @@ Location HttpRes::getUri2Location(std::string uri) const
 		}
         if (path == "/") {
             break;
+        }
+		*/
+		std::cout << "path: " << path << std::endl;
+		loc = uri2location.find(path);
+		if (loc != uri2location.end()) {
+			std::cout << "1" << std::endl;
+			return loc->second;
+		}
+		std::string::size_type i = path.rfind('/');
+		if (i == std::string::npos) {
+			std::cout << "2" << std::endl;
+			break;
+		}
+		if (i == 0) {
+			path = path.substr(0, 1);
+        } else {
+		    path = path.substr(0, i);
         }
 	}
     Location no_match_loc;
@@ -1092,6 +1110,8 @@ int HttpRes::returnRedirect() {
 	std::string uri = httpreq.getUri();
 	Location loc = getUri2Location(uri);
 	std::string ret = loc.getReturn();
+	std::cout << "loc: " << loc << std::endl;
+	std::cout << "ret: " << ret << std::endl;
 	if (ret == "")
 		return DECLINED;
 	std::vector<std::string> elms;
@@ -1128,6 +1148,7 @@ int HttpRes::returnRedirect() {
 		path = elms[1];
 	}
 	redirect_path = path;
+	std::cout << "redirect_path: " << redirect_path << std::endl;
     // needs path with support status_code
 	// compile_complex_valueは$の展開をしてそう
     return status_code;

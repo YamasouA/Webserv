@@ -120,7 +120,7 @@ def GET_test():
 		# GET禁止
 		response_test(create_path("/GET_DENIED"), 405, ALLOW_HEADERS, "wwwwwwwwwwwww.html")
 		# redirect
-		#response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
+		response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
 		# CGI
 		response_test(create_path("/CGI/cgi.py"), 200, SIMPLE_HEADERS, "")
 		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
