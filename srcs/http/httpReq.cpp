@@ -334,9 +334,9 @@ int httpReq::getChunkSize() {
 	std::string tmp = "";
 	while (idx < body_buf.length()) {
 		if (body_buf[idx] == '\015') {
-			std::cout << "body_buf: " << body_buf.substr(idx) << std::endl;
 			if (body_buf[idx + 1] == '\012') {
-				if (tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
+				idx += 2;
+				if (tmp == "" || tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
 					std::cerr << "400 Bad request" << std::endl;
 					setErrStatus(400);
 					is_req_end = true;
@@ -377,7 +377,6 @@ int httpReq::getChunkData() {
 		is_in_chunk_data = true;
 		return RE_RECV;
 	}
-	std::cout << "chunk_data: " << tmp.substr(0, chunk_size) << std::endl;
 //	std::cout << "prev content_body: " << content_body << std::endl;
 	content_body += tmp.substr(0, chunk_size);
 //	std::cout << "after content_body: " << content_body << std::endl;
