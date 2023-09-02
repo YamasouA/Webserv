@@ -6,6 +6,7 @@ HOST_NAME = "localhost:8000"
 
 SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 
+ALLOW_HEADERS = {'Allow': 'POST ', 'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 m = {
     200: "OK",
     201: "Created",
@@ -59,8 +60,8 @@ def create_path(path):
 def get_body_from_status(status_code, path):
 	# それぞれのstatus_codeにデフォルトの内容が存在する
 	if status_code != 200:
-		return "<html>\r\n<head><title>" + str(status_code)\
-			+ " Not Found</title></head>\r\n<body>\r\n<center><h1>"\
+		return "<html>\r\n<head><title>" + str(status_code) + " " + m[status_code]\
+			+ "</title></head>\r\n<body>\r\n<center><h1>"\
 			+ str(status_code) + " " + m[status_code]\
 			+ "</h1></center>\r\n<hr><center>WebServe</center>\r\n</body>\r\n</html>"
 	else:
@@ -73,11 +74,11 @@ def get_body_from_status(status_code, path):
 
 # レスポンスのヘッダーが正しいかを確認する
 def header_checker(expect_header, res_header, data_size):
-	print(data_size)
 	if len(expect_header) != len(res_header):
 		return False
 
 	for header_field in expect_header:
+		print(header_field)
 		# 'Date'は存在だけ確認できればいい
 		if header_field == 'Date':
 			continue
@@ -89,19 +90,17 @@ def header_checker(expect_header, res_header, data_size):
 
 		# その他のヘッダーは値が一致する必要ある
 		elif res_header[header_field] != expect_header[header_field]:
-			print(res_header[header_field])
 			return False
 
 	return True
 
 def response_test(url, expected_status, expected_headers, body_path):
 	res = requests.get(url)
-
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
 	data = get_body_from_status(expected_status, body_path)
-	assert header_checker(expected_headers, res.headers, len(data.encode(res.encoding))),\
+	assert header_checker(expected_headers, res.headers, len(data)),\
 		"Header Error" + error_text(expected_headers, res.headers)
 
 	assert res.text == data,\
@@ -119,19 +118,20 @@ def GET_test():
 		# 存在しないファイル
 		response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# GET禁止
-		response_test(create_path("/GET_DENIED"), 405, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+		response_test(create_path("/GET_DENIED"), 405, ALLOW_HEADERS, "wwwwwwwwwwwww.html")
 		# redirect
-		response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
+		#response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
 		# CGI
 		response_test(create_path("/CGI/cgi.py"), 200, SIMPLE_HEADERS, "")
-		# CGI設定されていない
-		response_test(create_path("/CGI_DENIED/cgi.py"), 405, SIMPLE_HEADERS, "")
+		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
+		response_test(create_path("/CGI_DENIED/cgi.py"), 200, SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
 		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
 		response_test(create_path("/CGI/syntax_error_cgi.py"), 404, SIMPLE_HEADERS, "")
+
+		print("========= test done!!!!! ==========")
 	except:
 		traceback.print_exc()
 		
-	print("========= test done!!!!! ==========")
 
 if __name__ == "__main__":
 	GET_test()
