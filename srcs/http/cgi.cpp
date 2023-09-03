@@ -5,12 +5,14 @@ Cgi::Cgi() {}
 Cgi::Cgi(const httpReq& request, Location location)
 :httpreq(request),
     target(location),
+	resType(NO_MATCH_TYPE),
 	status(200),
     envs(request.get_meta_variables())
 {}
 
 Cgi::Cgi(const Cgi& src)
 :target(src.target),
+	resType(NO_MATCH_TYPE),
 	status(src.status),
 	envs(src.envs),
 	header_fields(src.getHeaderFields())
@@ -396,6 +398,11 @@ int Cgi::parseCgiResponse() {
         std::string field_name = getToken(':', idx);
 		if (field_name == "") {
 			status = 502;
+			std::cout << "cgi_body: " << cgi_body << std::endl;
+			std::map<std::string, std::string>::iterator it = header_fields.begin();
+			for (; it != header_fields.end(); it++) {
+				std::cout << it->first << ": " << it->second << std::endl;
+			}
 			return status;
 		}
 		std::cout << "field_name: " << field_name << std::endl;

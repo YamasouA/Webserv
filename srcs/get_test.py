@@ -134,7 +134,7 @@ def GET_test():
 		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
 		response_test(create_path("/CGI_DENIED/cgi.py"), [200], SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
 		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
-		response_test(create_path("/CGI/syntax_error_cgi.py"), [404], SIMPLE_HEADERS, "")
+		response_test(create_path("/CGI/syntax_error_cgi.py"), [502], SIMPLE_HEADERS, "")
 
 		print("========= test done!!!!! ==========")
 	except:
