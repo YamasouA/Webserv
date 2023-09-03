@@ -67,8 +67,6 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	//fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
 //	client.setHttpReq(tmp);
-	kq.disableEvent(acceptfd, EVFILT_WRITE);
-//	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
 }
@@ -176,6 +174,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
+	// 一度送信したデータを持っている場合はクリア
 	httpReq httpreq;
 	if (client.getHttpRes().getIsSendedHeader() != 1) {
 		httpreq = client.getHttpReq();
