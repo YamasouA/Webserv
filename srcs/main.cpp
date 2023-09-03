@@ -64,7 +64,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		close(acceptfd);
 		return;
 	}
-	fd_client_map.erase(acceptfd);
+	//fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
 //	client.setHttpReq(tmp);
 	kq.disableEvent(acceptfd, EVFILT_WRITE);
@@ -176,8 +176,10 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
-	httpReq httpreq = client.getHttpReq();
-
+	httpReq httpreq;
+	if (client.getHttpRes().getIsSendedHeader() != 1) {
+		httpreq = client.getHttpReq();
+	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 //	if (recv_cnt == 0) {
@@ -216,9 +218,10 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
     }
 
     client.setHttpRes(respons);
+	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
 //	kq.setEvent(fd, EVFILT_READ, EV_DISABLE);
 //    kq.disableEvent(fd, EVFILT_READ);
-	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
+	std::cout << "===== read Event end =====" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -258,7 +261,7 @@ int main(int argc, char *argv[]) {
 	time_over.tv_nsec = 0;
 
 	const int time_out = 1;
-	const int time_check_span = 3;
+	const int time_check_span = 1000;
 	time_t last_check = std::time(0);
 	time_t now;
 
@@ -304,6 +307,7 @@ int main(int argc, char *argv[]) {
 				fd_client_map.erase(acceptfd);
 				close(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
+                std::cout << "==================NEW_EVENT==================" << std::endl;
 				Client client;
                 struct sockaddr_in client_addr;
                 socklen_t sock_len = sizeof(client_addr);
@@ -331,6 +335,7 @@ int main(int argc, char *argv[]) {
 //				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
+				std::cout << "eventfd: " << event_fd << std::endl;
 				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
