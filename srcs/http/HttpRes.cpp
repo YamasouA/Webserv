@@ -166,15 +166,13 @@ Location HttpRes::getUri2Location(std::string uri) const
 	std::map<std::string, Location>::const_iterator loc = uri2location.find(tmp_uri);
 	if (loc != uri2location.end()) {
 		return loc->second;
-	} else {
-		std::map<std::string, Location>::const_iterator it = uri2location.find(uri);
-		if (it != uri2location.end()) {
-			return it->second;
-		}
 	}
 	std::string path = uri;
 	while (1) {
-		/*
+		loc = uri2location.find(path);
+		if (loc != uri2location.end()) {
+			return loc->second;
+		}
 		std::string::size_type i = path.rfind('/');
 		if (i == std::string::npos) {
 			break;
@@ -188,33 +186,8 @@ Location HttpRes::getUri2Location(std::string uri) const
 		if (loc != uri2location.end()) {
 			return loc->second;
 		} else {
-//		} else if (path != "" && path[path.length() - 1]) {
 			path = path.substr(0, i);
-			loc = uri2location.find(path);
-			if (loc != uri2location.end()) {
-				return loc->second;
-			}
 		}
-        if (path == "/") {
-            break;
-        }
-		*/
-		std::cout << "path: " << path << std::endl;
-		loc = uri2location.find(path);
-		if (loc != uri2location.end()) {
-			std::cout << "1" << std::endl;
-			return loc->second;
-		}
-		std::string::size_type i = path.rfind('/');
-		if (i == std::string::npos) {
-			std::cout << "2" << std::endl;
-			break;
-		}
-		if (i == 0) {
-			path = path.substr(0, 1);
-        } else {
-		    path = path.substr(0, i);
-        }
 	}
     Location no_match_loc;
     return no_match_loc;
