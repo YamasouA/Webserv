@@ -2,6 +2,8 @@
 
 mkdir GET_DENIED
 mkdir POST_DENIED
+mkdir POST
+cp cgi_post.py ./POST/
 mkdir CGI_DENIED
 mkdir CGI
 cp cgi.py ./CGI/
