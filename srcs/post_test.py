@@ -5,7 +5,8 @@ import os
 SCHEME = "http"
 HOST_NAME = "localhost:8000"
 
-SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
+SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+REDIRECT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
 REQUEST_BODY = "HELLO WORLD"
 
 m = {
@@ -75,18 +76,19 @@ def header_checker(status_code, expect_header, res_header, file_path, expect_bod
 	root = os.getcwd() + '/'
 
 	for header_field in expect_header:
+		print(header_field)
 		# 'Date'は存在だけ確認できればいい
-		if header_field == 'Date':
+		if header_field.lower() == 'date':
 			continue
-		elif header_field == 'Location' and status_code != 201:
+		elif header_field.lower() == 'location' and status_code != 201:
 			continue
 		# 'Content-Length'はgetしたファイルのサイズと比較する
-		elif header_field == 'Content-Length':
-			if res_header['Content-Length'] != str(len(expect_body)):
+		elif header_field.lower() == 'content-length':
+			if res_header[header_field] != str(len(expect_body)):
 				print(res_header['Content-Length'], " ", len(expect_body))
 				return False
-		elif header_field == 'Location':
-			if res_header['Location'] != root + file_path:
+		elif header_field.lower() == 'location':
+			if res_header[header_field] != root + file_path:
 				return False
 
 		# その他のヘッダーは値が一致する必要ある
@@ -107,13 +109,11 @@ def response_test(url, expected_status, expected_headers, request_body, file_pat
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
-	aft_data = get_body_from_status(expected_status, file_path)
-
 	assert header_checker(res.status_code, expected_headers, res.headers, file_path, expect_data),\
 		"Header Error" + error_text(expected_headers, res.headers)
 
 	if res.status_code == 200 or res.status_code == 201:
-		assert  expect_data == aft_data,\
+		assert  expect_data == res.text,\
 			"Body Error" + error_text(expect_data, aft_data)
 
 	print(url + " test done")
@@ -142,7 +142,7 @@ def POST_test():
 		# CGI設定されていない
 		response_test(create_path("/CGI_DENIED/cgi_post.py"), 405, SIMPLE_HEADERS, REQUEST_BODY, "")
 		# CGI自体がエラー
-		response_test(create_path("/CGI"), 502, SIMPLE_HEADERS, REQUEST_BODY, "")
+		response_test(create_path("/CGI/syntax_errro.py"), 502, SIMPLE_HEADERS, REQUEST_BODY, "")
 
 	except:
 		traceback.print_exc()

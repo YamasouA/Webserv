@@ -1342,11 +1342,8 @@ void HttpRes::cgiHandler() {
 		status_code = handler_status;
     	cgi.getHeaderFields().erase("status");
     	setCgi(cgi);
-    	sendHeader(); //tmp here
-    	if (httpreq.getMethod() == "HEAD") {
-    	  return finalizeRes(status_code);
-    	}
     	out_buf = cgi.getCgiBody();
+		std::cout << "out_buf: " << out_buf << std::endl;
     	if (cgi.getHeaderFields().count("content-length")) {
 			  // ここもutil関数
     	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
@@ -1354,6 +1351,12 @@ void HttpRes::cgiHandler() {
     	} else {
     	  body_size = out_buf.length();
     	}
+		content_length_n = body_size;
+    	sendHeader(); //tmp here
+    	if (httpreq.getMethod() == "HEAD") {
+    	  header_only = 1;
+    	}
+		std::cout << "content_length_n: " << body_size << std::endl;
     	return finalizeRes(status_code);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
 		std::cout << "===LOCAL_REDIRECT===" << std::endl;
