@@ -19,12 +19,11 @@ def create_chunked_data(chunked_data_path, err):
 			line = f.readline()
 			if not line:
 				break
-			data += str(len(line))
+			data += format(len(line) - 1, 'x')
 			data += "\r\n"
-			data += line
+			data += line.replace('\n', '\r\n')
 	if err == 0:
-		data += "\r\n0\r\n\r\n"
-	print(data)
+		data += "0\r\n\r\n"
 	return bytes(data, encoding='utf-8')
 
 def header_checker(expect_header, res_header, data_size):
@@ -76,9 +75,9 @@ def response_test(path, expected_status, expected_header, file_path, err=0):
 
 def CHUNKED_test():
 	# 通常のPOST
-	#response_test("/POST/post.txt", 201, SIMPLE_HEADERS, "index.html")
+	response_test("/POST/post.txt", 201, SIMPLE_HEADERS, "index.html")
 	# ディレクトリを指定してPOST
-	#response_test("/POST/", 201, SIMPLE_HEADERS, "index.html")
+	response_test("/POST/", 201, SIMPLE_HEADERS, "index.html")
 	# 正しくないデータフォーマット
 	response_test("/POST/index.html", 400, SIMPLE_HEADERS, "index.html", err=1)
 
