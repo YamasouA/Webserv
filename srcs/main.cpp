@@ -36,8 +36,9 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		fd_client_map[acceptfd] = client;
 		if (res.isHeaderOnly() && !res.getKeepAlive()) {
 			std::cout << "Disconnect client fd: " << acceptfd << std::endl;
-			kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
-			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+//			kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
+//			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+//			acceptfd_to_config.erase(acceptfd);
 			fd_client_map.erase(acceptfd);
 			close(acceptfd);
 			return;
@@ -58,8 +59,9 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	std::cout << "keep-alive: " << res.getKeepAlive() << std::endl;
 	if (!res.getKeepAlive()) {
 		std::cout << "Disconnect client fd: " << acceptfd << std::endl;
-		kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
-		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+//		kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
+//		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
+//		acceptfd_to_config.erase(acceptfd);
 		fd_client_map.erase(acceptfd);
 		close(acceptfd);
 		return;
@@ -171,7 +173,8 @@ void assignServer(std::vector<virtualServer> server_confs, Client& client) {
 	client.setVserver(server_confs[0]);
 }
 
-void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
+//void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
+void readRequest(int fd, Client& client, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, Kqueue kq) {
 	char buf[1024];
 	memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
@@ -207,7 +210,9 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 
 	//client.setFd(fd);
     client.setHttpReq(httpreq);
-    assignServer(server_confs, client);
+    assignServer(acceptfd_to_config[fd], client);
+	acceptfd_to_config.erase(fd);
+//    assignServer(server_confs, client);
     HttpRes respons(client, kq);
     if (httpreq.getErrStatus() > 0) {
         respons.handleReqErr(httpreq.getErrStatus());
@@ -221,23 +226,17 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
 }
 
-int main(int argc, char *argv[]) {
-	// 設定ファイルを読み込む
-	// read_config();
-	(void)argc;
-	(void)argv;
-	std::map<int, std::vector<virtualServer> > fd_config_map;
-	std::map<int, std::vector<virtualServer> > acceptfd_to_config;
-	std::map<int, Client> fd_client_map;
-
+configParser handleConfig(int argc, char *argv[]) {
 	if (argc != 1 && argc != 2) {
 		std::cout << "usage: ./webserv *(path_to_config_file)" << std::endl;
-		return 1;
+		exit(1);
+		//return 1;
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
     if (access(config_path.c_str(), R_OK) != 0) {
         std::cerr << "couldn't open the specified config file" << std::endl;
-        return 1;
+        exit(1);
+        //return 1;
     }
 	configParser conf;
 	try {
@@ -248,41 +247,87 @@ int main(int argc, char *argv[]) {
 		std::cout << e.what() << std::endl;
 		std::exit(1);
 	}
-	Kqueue kqueue;
-	initializeFd(conf, kqueue, fd_config_map);
-	std::cout << fd_config_map.size() << std::endl;
-	int acceptfd;
+	return conf;
+}
 
-	struct timespec time_over;
-	time_over.tv_sec = 10;
-	time_over.tv_nsec = 0;
-
+void checkRequestTimeOut(time_t last_check, Kqueue& kqueue, std::map<int, Client>& fd_client_map) {
 	const int time_out = 1;
 	const int time_check_span = 3;
-	time_t last_check = std::time(0);
 	time_t now;
 
-	while (1) {
-		now = std::time(0);
-		if (now - last_check > time_check_span) {
-			std::map<int, Client>::iterator it = fd_client_map.begin();
-			while(it != fd_client_map.end()) {
-				std::cout << "hoge" << std::endl;
-				std::cout << "fd: " << it->second.getFd() << std::endl;
-				if (now - it->second.getLastRecvTime() > time_out) {
-					int fd = it->second.getFd();
-					it++;
-					sendTimeOutResponse(fd, kqueue, fd_client_map);
-					//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
-					//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
-//					fd_client_map.erase(fd);
-//					close(fd);
-				} else {
-					it++;
-				}
+	now = std::time(0);
+	if (now - last_check > time_check_span) {
+		std::map<int, Client>::iterator it = fd_client_map.begin();
+		while(it != fd_client_map.end()) {
+			std::cout << "hoge" << std::endl;
+			std::cout << "fd: " << it->second.getFd() << std::endl;
+			if (now - it->second.getLastRecvTime() > time_out) {
+				int fd = it->second.getFd();
+				it++;
+				sendTimeOutResponse(fd, kqueue, fd_client_map);
+				//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
+				//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
+//				fd_client_map.erase(fd);
+//				close(fd);
+			} else {
+				it++;
 			}
-			last_check = now;
 		}
+		last_check = now;
+	}
+}
+
+int handleAccept(int event_fd, Kqueue& kqueue, std::map<int, Client>& fd_client_map, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, std::map<int, std::vector<virtualServer> >& fd_config_map) {
+	Client client;
+	struct sockaddr_in client_addr;
+	socklen_t sock_len = sizeof(client_addr);
+	// ここのevent_fdはconfigで設定されてるserverのfd
+	int acceptfd = accept(event_fd, (struct sockaddr *)&client_addr, &sock_len);
+	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
+	acceptfd_to_config[acceptfd] = fd_config_map[event_fd];
+	if (acceptfd == -1) {
+		std::cerr << "Accept socket Error" << std::endl;
+		return 1;
+//		continue;
+	}
+	std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
+	client.setClientIp(client_ip); // or Have the one after adapting inet_ntoa
+	struct sockaddr_in sin;
+	socklen_t addrlen = sizeof(sin);
+	getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
+	int port_num = ntohs(sin.sin_port);
+	client.setPort(port_num);
+	client.setFd(acceptfd);
+	fd_client_map[acceptfd] =  client;
+	kqueue.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
+	kqueue.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
+	return 0;
+}
+
+int main(int argc, char *argv[]) {
+	// 設定ファイルを読み込む
+	// read_config();
+//	(void)argc;
+//	(void)argv;
+	std::map<int, std::vector<virtualServer> > fd_config_map;
+	std::map<int, std::vector<virtualServer> > acceptfd_to_config;
+	std::map<int, Client> fd_client_map;
+	Kqueue kqueue;
+
+	configParser conf = handleConfig(argc, argv);
+
+	initializeFd(conf, kqueue, fd_config_map);
+	std::cout << fd_config_map.size() << std::endl;
+//	int acceptfd;
+
+//	struct timespec time_over;
+//	time_over.tv_sec = 10;
+//	time_over.tv_nsec = 0;
+	time_t last_check = std::time(0);
+
+
+	while (1) {
+		checkRequestTimeOut(last_check, kqueue, fd_client_map);
 		int events_num = kqueue.getEventsNum();
 		if (events_num == -1) {
 			perror("kevent");
@@ -299,42 +344,22 @@ int main(int argc, char *argv[]) {
 			std::cout << "event_fd(): " << event_fd << std::endl;
 			if (reciver_event[i].flags & EV_EOF) {
 				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
-				kqueue.setEvent(event_fd, EVFILT_WRITE, EV_DELETE);
-				kqueue.setEvent(event_fd, EVFILT_READ, EV_DELETE);
-				fd_client_map.erase(acceptfd);
+//				kqueue.setEvent(event_fd, EVFILT_WRITE, EV_DELETE);
+//				kqueue.setEvent(event_fd, EVFILT_READ, EV_DELETE);
+				acceptfd_to_config.erase(event_fd);
+				fd_client_map.erase(event_fd);
 				close(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
-				Client client;
-                struct sockaddr_in client_addr;
-                socklen_t sock_len = sizeof(client_addr);
-				// ここのevent_fdはconfigで設定されてるserverのfd
-				acceptfd = accept(event_fd, (struct sockaddr *)&client_addr, &sock_len);
-				fcntl(acceptfd, F_SETFL, O_NONBLOCK);
-				acceptfd_to_config[acceptfd] = fd_config_map[event_fd];
-				if (acceptfd == -1) {
-					std::cerr << "Accept socket Error" << std::endl;
+				if (handleAccept(event_fd, kqueue, fd_client_map, acceptfd_to_config, fd_config_map))
 					continue;
-				}
-                std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
-                client.setClientIp(client_ip); // or Have the one after adapting inet_ntoa
-                struct sockaddr_in sin;
-                socklen_t addrlen = sizeof(sin);
-                getsockname(event_fd, (struct sockaddr *)&sin, &addrlen);
-                int port_num = ntohs(sin.sin_port);
-                client.setPort(port_num);
-				client.setFd(acceptfd);
-				fd_client_map[acceptfd] =  client;
-				kqueue.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
-				kqueue.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
                 std::cout << "==================READ_EVENT==================" << std::endl;
-//				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
-				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
+				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config, kqueue);
+//				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
-//				acceptfd = event_fd;
                 HttpRes res = fd_client_map[event_fd].getHttpRes();
 				sendResponse(event_fd, kqueue, fd_client_map);
 			}
