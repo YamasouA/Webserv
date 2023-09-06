@@ -313,24 +313,24 @@ Cgi HttpRes::getCgi() const {
     return cgi;
 }
 
-std::string HttpRes::getStatusString() {
-	switch (status_code) {
-		case 200:
-			return "OK\n";
-		case 404:
-			return "Not Found\n";
-	}
-	return "Error(statusString)\n";
-}
-
-void HttpRes::createControlData() {
-	header += "HTTP1.1 ";
-	std::stringstream ss;
-	ss << status_code;
-	header += ss.str();
-	header += " ";
-	header += getStatusString();
-}
+//std::string HttpRes::getStatusString() {
+//	switch (status_code) {
+//		case 200:
+//			return "OK\n";
+//		case 404:
+//			return "Not Found\n";
+//	}
+//	return "Error(statusString)\n";
+//}
+//
+//void HttpRes::createControlData() {
+//	header += "HTTP1.1 ";
+//	std::stringstream ss;
+//	ss << status_code;
+//	header += ss.str();
+//	header += " ";
+//	header += getStatusString();
+//}
 
 std::string HttpRes::createDate(time_t now, std::string fieldName)
 {
@@ -753,6 +753,163 @@ void HttpRes::sendHeader() {
     return headerFilter();
 }
 
+int HttpRes::HandleSafeMethod(std::string file_name, std::string uri) {
+    struct stat sb;
+    if (access(file_name.c_str(), R_OK) < 0) {
+        std::cerr << "open Error" << std::endl;
+        if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+            if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
+                return DECLINED;
+            } else if (target.getIndex().size() > 0 && uri[uri.length() - 1] == '/') {
+                std::cout << "FORBIDDEN1" << std::endl;
+				std::cout << location << std::endl;
+                std::cout << uri << std::endl;
+//                    status_code = FORBIDDEN;
+				status_code = NOT_FOUND;
+                return FORBIDDEN;
+            }
+            std::cout << "NOT FOUND" << std::endl;
+            status_code = NOT_FOUND;
+            return NOT_FOUND;
+        } else if (errno == EACCES){
+            std::cout << "FORBIDDEN2" << std::endl;
+//                status_code = FORBIDDEN;
+			status_code = NOT_FOUND;
+            return FORBIDDEN;
+        }
+        status_code = INTERNAL_SERVER_ERROR;
+        return INTERNAL_SERVER_ERROR;
+    }
+    if (stat(file_name.c_str(), &sb) == -1) {
+        std::cout << "GET Error(stat)" << std::endl;
+        status_code = INTERNAL_SERVER_ERROR;
+        return status_code;
+    }
+    if (S_ISDIR(sb.st_mode)) {
+        uri.push_back('/');
+        httpreq.setUri(uri);
+        if (target.getIndex().size() > 0 || target.getIsAutoindex()) {
+            return staticHandler();
+        } else {
+            return DECLINED;
+        }
+    } else if (!S_ISREG(sb.st_mode)) {
+        std::cerr << "NOT FOUND(404)" << std::endl;
+        status_code = NOT_FOUND;
+        return NOT_FOUND;
+    }
+	content_length_n = sb.st_size;
+	if (content_length_n == 0) {
+		status_code = NO_CONTENT;
+		header_only = 1;
+	}
+	last_modified_time = sb.st_mtime;
+	return status_code;
+}
+
+int HttpRes::handlePost(std::string file_name) {
+    struct stat sb;
+    if (stat(file_name.c_str(), &sb) == -1) {
+		std::cout << "errno: " << errno << std::endl;
+		if (errno == ENOENT) {
+		    status_code = CREATED;
+            setLocationField(file_name);
+			std::ofstream tmp_ofs(file_name);
+			if (tmp_ofs.bad()) {
+				status_code = INTERNAL_SERVER_ERROR;
+				return INTERNAL_SERVER_ERROR;
+			}
+			tmp_ofs.close();
+		} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
+            status_code = NOT_FOUND;
+            return status_code;
+        } else {
+//                std::cout << "POST errno: " << errno << std::endl;
+        }
+    } else {
+        status_code = HTTP_OK;
+    }
+    if (S_ISDIR(sb.st_mode)) {
+        time_t tm = std::time(NULL);
+        std::stringstream ss;
+        ss << tm;
+        std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+        if (file_name[file_name.length() - 1] != '/') {
+            file_name = file_name + '/' + ss.str() + ext;
+        } else {
+            file_name = file_name + ss.str() + ext;
+        }
+        std::ofstream tmp_ofs(file_name);
+        if (tmp_ofs.bad()) {
+            status_code = INTERNAL_SERVER_ERROR;
+            return INTERNAL_SERVER_ERROR;
+        }
+        tmp_ofs.close();
+        if (access(file_name.c_str(), W_OK) < 0) {
+            std::cerr << "POST open Error" << std::endl;
+            if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+                std::cout << "NOT FOUND" << std::endl;
+                status_code = NOT_FOUND;
+                return NOT_FOUND;
+            } else if (EACCES){
+                std::cout << "FORBIDDEN" << std::endl;
+//                    status_code = FORBIDDEN;
+                status_code = NOT_FOUND;
+                return FORBIDDEN;
+            }
+            status_code = INTERNAL_SERVER_ERROR;
+            return INTERNAL_SERVER_ERROR;
+        }
+        status_code = CREATED;
+        setLocationField(file_name);
+    }
+    content_length_n = sb.st_size;
+	if (content_length_n == 0) {
+		status_code = NO_CONTENT;
+		header_only = 1;
+	}
+	last_modified_time = sb.st_mtime;
+    if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
+		std::cerr << "stat Error" << std::endl;
+        return INTERNAL_SERVER_ERROR;
+    } else {
+        if (access(file_name.c_str(), W_OK) < 0) {
+			std::cout << file_name << std::endl;
+            std::cerr << "reg file open Error" << std::endl;
+            if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+                std::cout << "NOT FOUND" << std::endl;
+                status_code = NOT_FOUND;
+                return NOT_FOUND;
+            } else if (EACCES){
+                std::cout << "FORBIDDEN" << std::endl;
+//                    status_code = FORBIDDEN;
+                status_code = NOT_FOUND;
+                return FORBIDDEN;
+            }
+            status_code = INTERNAL_SERVER_ERROR;
+            return INTERNAL_SERVER_ERROR;
+        }
+        std::ofstream ofs(file_name.c_str(), std::ios::app);
+		if (!ofs) {
+            std::cerr << "POST open Error" << std::endl;
+            status_code = INTERNAL_SERVER_ERROR;
+            return INTERNAL_SERVER_ERROR;
+		}
+		std::cout << "set body done" << std::endl;
+		std::string body = httpreq.getContentBody();
+		if (body.length() == 0 && status_code != CREATED) {
+			status_code = NO_CONTENT;
+			header_only = 1;
+		}
+		std::cout << body << std::endl;
+        ofs << body;
+        ofs.close();
+        //content_length_n = body.size();
+	}
+	return OK;
+    //discoard request body here ?
+}
+
 int HttpRes::staticHandler() {
 	std::cout << "================== staticHandler ==================" << std::endl;
 	std::string uri = httpreq.getUri();
@@ -774,174 +931,34 @@ int HttpRes::staticHandler() {
 		return status_code;
 	}
 
-
 	std::string file_name = joinPath();
 
-    struct stat sb;
+	int handler_status;
     status_code = HTTP_OK;
     if (method == "GET" || method == "HEAD") {
-        if (access(file_name.c_str(), R_OK) < 0) {
-            std::cerr << "open Error" << std::endl;
-            if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
-                    return DECLINED;
-                } else if (target.getIndex().size() > 0 && uri[uri.length() - 1] == '/') {
-                    std::cout << "FORBIDDEN1" << std::endl;
-					std::cout << location << std::endl;
-                    std::cout << uri << std::endl;
-//                    status_code = FORBIDDEN;
-					status_code = NOT_FOUND;
-                    return FORBIDDEN;
-                }
-                std::cout << "NOT FOUND" << std::endl;
-                status_code = NOT_FOUND;
-                return NOT_FOUND;
-            } else if (errno == EACCES){
-                std::cout << "FORBIDDEN2" << std::endl;
-//                status_code = FORBIDDEN;
-				status_code = NOT_FOUND;
-                return FORBIDDEN;
-            }
-            status_code = INTERNAL_SERVER_ERROR;
-            return INTERNAL_SERVER_ERROR;
-        }
-        if (stat(file_name.c_str(), &sb) == -1) {
-            std::cout << "GET Error(stat)" << std::endl;
-            status_code = INTERNAL_SERVER_ERROR;
-            return status_code;
-//            abort();
-        }
-        if (S_ISDIR(sb.st_mode)) {
-            uri.push_back('/');
-            httpreq.setUri(uri);
-            if (target.getIndex().size() > 0 || target.getIsAutoindex()) {
-                return staticHandler();
-            } else {
-                return DECLINED;
-            }
-        } else if (!S_ISREG(sb.st_mode)) {
-            std::cerr << "NOT FOUND(404)" << std::endl;
-            status_code = NOT_FOUND;
-            return NOT_FOUND;
-        }
-	    content_length_n = sb.st_size;
-	    last_modified_time = sb.st_mtime;
-    } else if (method == "POST" || method == "PUT") {
-		std::cout << "stat path: " << file_name.c_str() << std::endl;
-        if (stat(file_name.c_str(), &sb) == -1) {
-//        if (stat("./upload/post.html", &sb) == -1) {
-			std::cout << "errno: " << errno << std::endl;
-			if (errno == ENOENT) {
-		        status_code = CREATED;
-                setLocationField(file_name);
-				std::ofstream tmp_ofs(file_name);
-				if (tmp_ofs.bad()) {
-					status_code = INTERNAL_SERVER_ERROR;
-					return INTERNAL_SERVER_ERROR;
-				}
-				tmp_ofs.close();
-			} else if (errno == ENOTDIR || errno == ENAMETOOLONG) {
-                status_code = NOT_FOUND;
-                return status_code;
-            } else {
-//                std::cout << "POST errno: " << errno << std::endl;
-            }
-        } else {
-            status_code = HTTP_OK;
-        }
-        if (S_ISDIR(sb.st_mode)) {
-            time_t tm = std::time(NULL);
-            std::stringstream ss;
-            ss << tm;
-            std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
-            if (file_name[file_name.length() - 1] != '/') {
-                file_name = file_name + '/' + ss.str() + ext;
-            } else {
-                file_name = file_name + ss.str() + ext;
-            }
-            std::ofstream tmp_ofs(file_name);
-            if (tmp_ofs.bad()) {
-                status_code = INTERNAL_SERVER_ERROR;
-                return INTERNAL_SERVER_ERROR;
-            }
-            tmp_ofs.close();
-            if (access(file_name.c_str(), W_OK) < 0) {
-                std::cerr << "POST open Error" << std::endl;
-                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                    std::cout << "NOT FOUND" << std::endl;
-                    status_code = NOT_FOUND;
-                    return NOT_FOUND;
-                } else if (EACCES){
-                    std::cout << "FORBIDDEN" << std::endl;
-//                    status_code = FORBIDDEN;
-                    status_code = NOT_FOUND;
-                    return FORBIDDEN;
-                }
-                status_code = INTERNAL_SERVER_ERROR;
-                return INTERNAL_SERVER_ERROR;
-            }
-            status_code = CREATED;
-            setLocationField(file_name);
-        }
-        content_length_n = sb.st_size;
-		if (content_length_n == 0) {
-			status_code = NO_CONTENT;
-			header_only = 1;
+		handler_status = HandleSafeMethod(file_name, uri);
+		if (handler_status >= 300) {
+			return status_code;
+		} else if (handler_status == DECLINED) {
+			return DECLINED;
 		}
-	    last_modified_time = sb.st_mtime;
-        if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
-			std::cerr << "stat Error" << std::endl;
-        	return INTERNAL_SERVER_ERROR;
-        } else {
-            if (access(file_name.c_str(), W_OK) < 0) {
-				std::cout << file_name << std::endl;
-                std::cerr << "reg file open Error" << std::endl;
-                if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                    std::cout << "NOT FOUND" << std::endl;
-                    status_code = NOT_FOUND;
-                    return NOT_FOUND;
-                } else if (EACCES){
-                    std::cout << "FORBIDDEN" << std::endl;
-//                    status_code = FORBIDDEN;
-                    status_code = NOT_FOUND;
-                    return FORBIDDEN;
-                }
-                status_code = INTERNAL_SERVER_ERROR;
-                return INTERNAL_SERVER_ERROR;
-            }
-            std::ofstream ofs(file_name.c_str(), std::ios::app);
-			if (!ofs) {
-                std::cerr << "POST open Error" << std::endl;
-                status_code = INTERNAL_SERVER_ERROR;
-                return INTERNAL_SERVER_ERROR;
-			}
-			std::cout << "set body done" << std::endl;
-			std::string body = httpreq.getContentBody();
-			if (body.length() == 0 && status_code != CREATED) {
-				status_code = NO_CONTENT;
-				header_only = 1;
-			}
-			std::cout << body << std::endl;
-            ofs << body;
-            ofs.close();
-            //content_length_n = body.size();
+    } else if (method == "POST" || method == "PUT") {
+		if (handlePost(file_name) != OK) {
+			return status_code;
 		}
     }
     //discoard request body here ?
-	int handler_status = setContentType();
+	handler_status = setContentType();
 	if (handler_status == BAD_REQUEST) {
 		return status_code;
 	}
-    //set_etag(); //necessary?
 
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
     if (!ifs) {
         status_code = INTERNAL_SERVER_ERROR;
         return status_code;
     }
-//    if (!(method == "HEAD")) {
     if (!header_only) {
-		std::cout << "set body2" << std::endl;
         std::ostringstream oss;
         oss << ifs.rdbuf();
         out_buf = oss.str();
@@ -1247,7 +1264,6 @@ int HttpRes::autoindexHandler() {
     status_code = HTTP_OK;
     // auto_index only text/html for now
     content_type = "text/html";
-    sendHeader(); // later ?
 
     dir_info.valid_info = 0;
     std::map<std::string, dir_t> index_of;
@@ -1293,7 +1309,9 @@ int HttpRes::autoindexHandler() {
     if (!header_only) {
         out_buf = createAutoIndexHtml(index_of);
         body_size = out_buf.length();
+		content_length_n = body_size;
     }
+    sendHeader(); // later ?
     return OK;
 
 }
