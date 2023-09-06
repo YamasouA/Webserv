@@ -145,8 +145,12 @@ class HttpRes {
         int checkClientBodySize();
         void cgiHandler();
         void httpHandler();
-		int HandleSafeMethod(std::string file_name, std::string uri);
-		int handlePost(std::string file_name);
+		int HandleSafeMethod(const char *file_name, std::string& uri);
+		int handlePost(std::string& file_name);
+		int checkAccessToPOST(const char *file_name);
+		int checkAccessToGET(const char *file_name, const std::string& uri);
+		int createDestFile(std::string& file_name);
+		int handleResBody(const std::string& file_name);
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);

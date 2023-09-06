@@ -263,7 +263,7 @@ std::string HttpRes::joinPath() {
         upload_path = "";
     }
     int index_flag = 0;
-	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST") {
+	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST" && method != "PUT") {
         index_flag = 1;
 	}
 	std::string alias;
@@ -753,10 +753,11 @@ void HttpRes::sendHeader() {
     return headerFilter();
 }
 
-int HttpRes::HandleSafeMethod(std::string file_name, std::string uri) {
-    struct stat sb;
-    if (access(file_name.c_str(), R_OK) < 0) {
+int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { //or safe method
+	std::cout << file_name << std::endl;
+    if (access(file_name, R_OK) < 0) {
         std::cerr << "open Error" << std::endl;
+		std::cout << "errno: " << errno << std::endl;
         if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
             if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
                 return DECLINED;
@@ -777,10 +778,20 @@ int HttpRes::HandleSafeMethod(std::string file_name, std::string uri) {
 			status_code = NOT_FOUND;
             return FORBIDDEN;
         }
+		std::cout << "errno: " << errno << std::endl;
         status_code = INTERNAL_SERVER_ERROR;
         return INTERNAL_SERVER_ERROR;
     }
-    if (stat(file_name.c_str(), &sb) == -1) {
+	return OK;
+}
+
+int HttpRes::HandleSafeMethod(const char *file_name, std::string& uri) {
+	int handler_status = checkAccessToGET(file_name, uri);
+	if (handler_status != OK) {
+		return handler_status;
+	}
+    struct stat sb;
+    if (stat(file_name, &sb) == -1) {
         std::cout << "GET Error(stat)" << std::endl;
         status_code = INTERNAL_SERVER_ERROR;
         return status_code;
@@ -807,7 +818,48 @@ int HttpRes::HandleSafeMethod(std::string file_name, std::string uri) {
 	return status_code;
 }
 
-int HttpRes::handlePost(std::string file_name) {
+int HttpRes::checkAccessToPOST(const char *file_name) {
+    if (access(file_name, W_OK) < 0) {
+		std::cerr << "POST open Error" << std::endl;
+		if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+			std::cout << "NOT FOUND" << std::endl;
+			status_code = NOT_FOUND;
+			return NOT_FOUND;
+		} else if (EACCES){
+			std::cout << "FORBIDDEN" << std::endl;
+//				  status_code = FORBIDDEN;
+			status_code = NOT_FOUND;
+			return FORBIDDEN;
+		}
+		status_code = INTERNAL_SERVER_ERROR;
+		return INTERNAL_SERVER_ERROR;
+	}
+	return OK;
+}
+
+int HttpRes::createDestFile(std::string& file_name) {
+    time_t tm = std::time(NULL);
+    std::stringstream ss;
+    ss << tm;
+    std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+    if (file_name[file_name.length() - 1] != '/') {
+        file_name = file_name + '/' + ss.str() + ext;
+    } else {
+        file_name = file_name + ss.str() + ext;
+    }
+    std::ofstream tmp_ofs(file_name);
+    if (tmp_ofs.bad()) {
+        status_code = INTERNAL_SERVER_ERROR;
+        return INTERNAL_SERVER_ERROR;
+    }
+    tmp_ofs.close();
+	if (checkAccessToPOST(file_name.c_str()) != OK) {
+		return status_code;
+	}
+	return OK;
+}
+
+int HttpRes::handlePost(std::string& file_name) {
     struct stat sb;
     if (stat(file_name.c_str(), &sb) == -1) {
 		std::cout << "errno: " << errno << std::endl;
@@ -830,36 +882,9 @@ int HttpRes::handlePost(std::string file_name) {
         status_code = HTTP_OK;
     }
     if (S_ISDIR(sb.st_mode)) {
-        time_t tm = std::time(NULL);
-        std::stringstream ss;
-        ss << tm;
-        std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
-        if (file_name[file_name.length() - 1] != '/') {
-            file_name = file_name + '/' + ss.str() + ext;
-        } else {
-            file_name = file_name + ss.str() + ext;
-        }
-        std::ofstream tmp_ofs(file_name);
-        if (tmp_ofs.bad()) {
-            status_code = INTERNAL_SERVER_ERROR;
-            return INTERNAL_SERVER_ERROR;
-        }
-        tmp_ofs.close();
-        if (access(file_name.c_str(), W_OK) < 0) {
-            std::cerr << "POST open Error" << std::endl;
-            if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                std::cout << "NOT FOUND" << std::endl;
-                status_code = NOT_FOUND;
-                return NOT_FOUND;
-            } else if (EACCES){
-                std::cout << "FORBIDDEN" << std::endl;
-//                    status_code = FORBIDDEN;
-                status_code = NOT_FOUND;
-                return FORBIDDEN;
-            }
-            status_code = INTERNAL_SERVER_ERROR;
-            return INTERNAL_SERVER_ERROR;
-        }
+		if (createDestFile(file_name) != OK) {
+			return status_code;
+		}
         status_code = CREATED;
         setLocationField(file_name);
     }
@@ -873,22 +898,9 @@ int HttpRes::handlePost(std::string file_name) {
 		std::cerr << "stat Error" << std::endl;
         return INTERNAL_SERVER_ERROR;
     } else {
-        if (access(file_name.c_str(), W_OK) < 0) {
-			std::cout << file_name << std::endl;
-            std::cerr << "reg file open Error" << std::endl;
-            if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-                std::cout << "NOT FOUND" << std::endl;
-                status_code = NOT_FOUND;
-                return NOT_FOUND;
-            } else if (EACCES){
-                std::cout << "FORBIDDEN" << std::endl;
-//                    status_code = FORBIDDEN;
-                status_code = NOT_FOUND;
-                return FORBIDDEN;
-            }
-            status_code = INTERNAL_SERVER_ERROR;
-            return INTERNAL_SERVER_ERROR;
-        }
+		if (checkAccessToPOST(file_name.c_str()) != OK) {
+			return status_code;
+		}
         std::ofstream ofs(file_name.c_str(), std::ios::app);
 		if (!ofs) {
             std::cerr << "POST open Error" << std::endl;
@@ -908,6 +920,28 @@ int HttpRes::handlePost(std::string file_name) {
 	}
 	return OK;
     //discoard request body here ?
+}
+
+int HttpRes::handleResBody(const std::string& file_name) {
+    if (!header_only) {
+		std::ifstream ifs(file_name.c_str(), std::ios::binary);
+		if (!ifs) {
+			std::cout << "file_name: " << file_name << std::endl;
+			status_code = INTERNAL_SERVER_ERROR;
+			return status_code;
+		}
+        std::ostringstream oss;
+        oss << ifs.rdbuf();
+        out_buf = oss.str();
+		std::cout << out_buf << std::endl;
+		content_length_n = out_buf.length();
+		std::cout << content_length_n << std::endl;
+//        body_size = content_length_n;
+		body_size = out_buf.length();
+		return OK;
+    }
+	return OK;
+
 }
 
 int HttpRes::staticHandler() {
@@ -930,13 +964,11 @@ int HttpRes::staticHandler() {
         status_code = NOT_ALLOWED;
 		return status_code;
 	}
-
 	std::string file_name = joinPath();
-
 	int handler_status;
     status_code = HTTP_OK;
     if (method == "GET" || method == "HEAD") {
-		handler_status = HandleSafeMethod(file_name, uri);
+		handler_status = HandleSafeMethod(file_name.c_str(), uri);
 		if (handler_status >= 300) {
 			return status_code;
 		} else if (handler_status == DECLINED) {
@@ -952,22 +984,9 @@ int HttpRes::staticHandler() {
 	if (handler_status == BAD_REQUEST) {
 		return status_code;
 	}
-
-    std::ifstream ifs(file_name.c_str(), std::ios::binary);
-    if (!ifs) {
-        status_code = INTERNAL_SERVER_ERROR;
-        return status_code;
-    }
-    if (!header_only) {
-        std::ostringstream oss;
-        oss << ifs.rdbuf();
-        out_buf = oss.str();
-		std::cout << out_buf << std::endl;
-		content_length_n = out_buf.length();
-		std::cout << content_length_n << std::endl;
-//        body_size = content_length_n;
-		body_size = out_buf.length();
-    }
+	if (handleResBody(file_name) != OK) {
+		return status_code;
+	}
     sendHeader();
     return OK;
 }
