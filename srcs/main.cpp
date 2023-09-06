@@ -64,6 +64,8 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		close(acceptfd);
 		return;
 	}
+	httpReq httpreq;
+	client.setHttpReq(httpreq);
 	//fd_client_map.erase(acceptfd);
 //	httpReq tmp = httpReq();
 //	client.setHttpReq(tmp);
@@ -175,10 +177,7 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
 	// 一度送信したデータを持っている場合はクリア
-	httpReq httpreq;
-	if (client.getHttpRes().getIsSendedHeader() != 1) {
-		httpreq = client.getHttpReq();
-	}
+	httpReq httpreq = client.getHttpReq();
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 //	if (recv_cnt == 0) {
@@ -260,7 +259,7 @@ int main(int argc, char *argv[]) {
 	time_over.tv_nsec = 0;
 
 	const int time_out = 1;
-	const int time_check_span = 1000;
+	const int time_check_span = 3;
 	time_t last_check = std::time(0);
 	time_t now;
 
