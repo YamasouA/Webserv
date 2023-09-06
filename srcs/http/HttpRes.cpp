@@ -1247,7 +1247,6 @@ int HttpRes::autoindexHandler() {
     status_code = HTTP_OK;
     // auto_index only text/html for now
     content_type = "text/html";
-    sendHeader(); // later ?
 
     dir_info.valid_info = 0;
     std::map<std::string, dir_t> index_of;
@@ -1293,7 +1292,9 @@ int HttpRes::autoindexHandler() {
     if (!header_only) {
         out_buf = createAutoIndexHtml(index_of);
         body_size = out_buf.length();
+		content_length_n = body_size;
     }
+    sendHeader(); // later ?
     return OK;
 
 }
