@@ -123,6 +123,8 @@ def GET_test():
 		response_test(create_path("/index.html"), [200], SIMPLE_HEADERS, "index.html")
 		# autoindex
 		response_test(create_path("/"), [200], SIMPLE_HEADERS, "index.html")
+		# ファイルはあるが中身がない
+		response_test(create_path("/no_content.html"), [204], SIMPLE_HEADERS, "no_content.html")
 		# 存在しないファイル
 		response_test(create_path("/wwwwwwwwwwwwww.html"), [404], SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# GET禁止
