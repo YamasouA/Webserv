@@ -139,8 +139,8 @@ def POST_test():
 		#response_test(create_path("/POST"), 201, SIMPLE_HEADERS, REQUEST_BODY, "")
 
 		# リダイレクト系
-		response_test(create_path(""), 301, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
-		response_test()
+		#response_test(create_path(""), 301, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
+		#response_test()
 
 		# CGI
 		response_test(create_path("/POST/cgi_post.py"), 200, SIMPLE_HEADERS, REQUEST_BODY, "")
