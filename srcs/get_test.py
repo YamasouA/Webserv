@@ -7,6 +7,7 @@ HOST_NAME = "localhost:8000"
 SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 
 ALLOW_HEADERS = {'Allow': 'POST ', 'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 m = {
     200: "OK",
     201: "Created",
@@ -59,7 +60,7 @@ def create_path(path):
 
 def get_body_from_status(status_code, path):
 	# それぞれのstatus_codeにデフォルトの内容が存在する
-	if status_code != 200:
+	if status_code != 200 and status_code != 204:
 		return "<html>\r\n<head><title>" + str(status_code) + " " + m[status_code]\
 			+ "</title></head>\r\n<body>\r\n<center><h1>"\
 			+ str(status_code) + " " + m[status_code]\
@@ -78,12 +79,14 @@ def header_checker(expect_header, res_header, data_size):
 		return False
 
 	for header_field in expect_header:
+		print(header_field)
 		# 'Date'は存在だけ確認できればいい
 		if header_field == 'Date':
 			continue
 		
 		# 'Content-Length'はgetしたファイルのサイズと比較する
 		if header_field == 'Content-Length':
+			print(data_size)
 			if res_header['Content-Length'] != str(data_size):
 				return False
 
@@ -124,7 +127,7 @@ def GET_test():
 		# autoindex
 		response_test(create_path("/"), [200], SIMPLE_HEADERS, "index.html")
 		# ファイルはあるが中身がない
-		response_test(create_path("/no_content.html"), [204], SIMPLE_HEADERS, "no_content.html")
+		response_test(create_path("/no_content.html"), [204], NO_CONTENT_HEADERS, "no_content.html")
 		# 存在しないファイル
 		response_test(create_path("/wwwwwwwwwwwwww.html"), [404], SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# GET禁止

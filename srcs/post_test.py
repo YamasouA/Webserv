@@ -7,6 +7,7 @@ HOST_NAME = "localhost:8000"
 
 SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 REDIRECT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
+NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'hogehoge/html', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
 REQUEST_BODY = "HELLO WORLD"
 
 m = {
@@ -136,6 +137,10 @@ def POST_test():
 		# ディレクトリを指定して作成(確認の仕方が思いついてない)
 		# POST配下に何もできないけど200が返ってくる
 		#response_test(create_path("/POST"), 201, SIMPLE_HEADERS, REQUEST_BODY, "")
+
+		# リダイレクト系
+		response_test(create_path(""), 301, SIMPLE_HEADERS, REQUEST_BODY, upload_path+"post.html")
+		response_test()
 
 		# CGI
 		response_test(create_path("/POST/cgi_post.py"), 200, SIMPLE_HEADERS, REQUEST_BODY, "")
