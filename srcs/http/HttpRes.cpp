@@ -332,8 +332,10 @@ Cgi HttpRes::getCgi() const {
 //	header += getStatusString();
 //}
 
-std::string HttpRes::createDate(time_t now, std::string fieldName)
+//std::string HttpRes::createDate(time_t now, std::string fieldName)
+std::string HttpRes::createDate(std::string fieldName)
 {
+	time_t now = std::time(NULL);
     std::string str;
     char buf[1000];
     struct tm tm = *gmtime(&now);
@@ -612,7 +614,7 @@ int HttpRes::deleteHandler() {
 	return deletePath(is_dir);
 }
 
-void HttpRes::headerFilter() {
+void HttpRes::createStatusLine() {
 	std::map<int, std::string> status_msg = create_status_msg();
 	if (last_modified_time != -1) {
 		if (status_code != HTTP_OK) {
@@ -654,46 +656,88 @@ void HttpRes::headerFilter() {
 			status_line = "";
 		}
 	}
-
 	buf += status_line;
 	buf += "\r\n";
-    if (status_code == NOT_ALLOWED) {
-        std::vector<std::string> allow_methods = target.get_methods();
-        buf += "Allow: ";
-        for (std::vector<std::string>::iterator it = allow_methods.begin(); it != allow_methods.end(); ++it) {
-            buf += *it + ' ';
-        }
+}
+
+void HttpRes::addAllowField() {
+    std::vector<std::string> allow_methods = target.get_methods();
+    buf += "Allow: ";
+    for (std::vector<std::string>::iterator it = allow_methods.begin(); it != allow_methods.end(); ++it) {
+        buf += *it + ' ';
+    }
+    buf += "\r\n";
+}
+
+void HttpRes::addContentTypeField() {
+	buf += "Content-Type: " + content_type;
+
+	if (charset != "") {
+		buf += "; charset=" + charset;
+
+		// content_type に charsetを加える
+	}
+	buf += "\r\n";
+}
+
+void HttpRes::addContentLengthField() {
+    std::stringstream ss;
+    ss << content_length_n;
+    buf += "Content-Length: " + ss.str();
+    buf += "\r\n";
+//	} else {
+//	buf += "Content-Length: 0";
+//	buf += "\r\n";
+}
+
+void HttpRes::addConnectionField() {
+	std::cout << "keep-alive in header: " << keep_alive << std::endl;
+    if (this->keep_alive) {
+        buf += "Connection: keep-alive";
+    } else {
+	    buf += "Connection: close";
+    }
+	buf += "\r\n";
+}
+
+void HttpRes::addLocationField() {
+	if (status_code == 201 && getLocationField() != "") {
+		std::string loc_field_value = getLocationField();
+		if (loc_field_value[0] == '.') {
+			loc_field_value = loc_field_value.substr(1);
+		}
+        buf += "Location: " + loc_field_value;
+//        buf += "Location: " + getLocationField();
         buf += "\r\n";
     }
-	buf += "Server: " + kServerName; //matchしたserve_nameに変更
-
-	buf += "\r\n";
-    time_t now = std::time(NULL);
-    buf += createDate(now, "Date");
-	if (content_type != "") {
-		buf += "Content-Type: " + content_type;
-
-		if (charset != "") {
-			buf += "; charset=" + charset;
-
-			// content_type に charsetを加える
-		}
+	else if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
+		buf += "Location: " + redirect_path;
 		buf += "\r\n";
+	}
+}
+
+void HttpRes::headerFilter() {
+	createStatusLine();
+    if (status_code == NOT_ALLOWED) {
+		addAllowField();
+    }
+	buf += "Server: " + kServerName; //matchしたserve_nameに変更
+	buf += "\r\n";
+
+    buf += createDate("Date");
+
+	if (content_type != "") {
+		addContentTypeField();
 	} if (content_length_n > 0) {
-        std::stringstream ss;
-        ss << content_length_n;
-        buf += "Content-Length: " + ss.str();
-	    buf += "\r\n";
-    } else {
-		buf += "Content-Length: 0";
-	    buf += "\r\n";
+		addContentLengthField();
+//    } else {
+//		buf += "Content-Length: 0";
+//	    buf += "\r\n";
 	}
 	if (last_modified_time != -1) {
 		//buf += "Last-Modified: " + http_time();
 //		buf += "\r\n";
 	}
-
-
 	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
 	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
 	for (; it != cgi_headers.end(); ++it) {
@@ -707,26 +751,8 @@ void HttpRes::headerFilter() {
 	}
 
 //    if (httpreq.getKeepAlive()) {
-	std::cout << "keep-alive in header: " << keep_alive << std::endl;
-    if (this->keep_alive) {
-        buf += "Connection: keep-alive";
-    } else {
-	    buf += "Connection: close";
-    }
-	buf += "\r\n";
-    if (status_code == 201 && getLocationField() != "") {
-		std::string loc_field_value = getLocationField();
-		if (loc_field_value[0] == '.') {
-			loc_field_value = loc_field_value.substr(1);
-		}
-        buf += "Location: " + loc_field_value;
-//        buf += "Location: " + getLocationField();
-        buf += "\r\n";
-    }
-	else if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
-		buf += "Location: " + redirect_path;
-		buf += "\r\n";
-	}
+	addConnectionField();
+	addLocationField();
 	// 残りのヘッダー  もしかしたら必要ないかも？ 現状Connection filedなどがダブってしまっているetc...
 	//std::map<std::string, std::string> headers = httpreq.getHeaderFields();
 //	std::map<std::string, std::string>::iterator it= headers.begin();

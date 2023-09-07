@@ -116,12 +116,19 @@ class HttpRes {
 		//void createResponseBody();
 		std::string getStatusString();
 		void createControlData();
-        std::string createDate(time_t now, std::string fieldName);
+        std::string createDate(std::string fieldName);
 		void createContentLength();
 		int setContentType();
 		void postEvent();
 		void evQueueInsert();
 		void headerFilter();
+		void createStatusLine();
+		void addAllowField();
+		void addContentTypeField();
+		void addContentLengthField();
+		void addConnectionField();
+		void addLocationField();
+
         int staticHandler();
         void sendHeader();
         Location getUri2Location(std::string uri) const;
