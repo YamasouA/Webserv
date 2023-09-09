@@ -361,6 +361,7 @@ void Cgi::fixUp() {
         if (status < 100 || 600 <= status) {
             status = 502;
         }
+		header_fields.erase("status");
     }
     detectResType();
 	if (resType == NO_MATCH_TYPE)

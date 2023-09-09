@@ -66,9 +66,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	}
 	httpReq httpreq;
 	client.setHttpReq(httpreq);
-	//fd_client_map.erase(acceptfd);
-//	httpReq tmp = httpReq();
-//	client.setHttpReq(tmp);
+	fd_client_map[acceptfd] = client;
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
 }

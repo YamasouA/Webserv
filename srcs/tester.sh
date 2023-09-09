@@ -1,5 +1,6 @@
 #!/bin/bash
 
+touch no_content.html
 mkdir GET_DENIED
 mkdir POST_DENIED
 mkdir POST

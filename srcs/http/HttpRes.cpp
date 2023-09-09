@@ -816,6 +816,10 @@ int HttpRes::staticHandler() {
             return NOT_FOUND;
         }
 	    content_length_n = sb.st_size;
+		if (content_length_n == 0) {
+        status_code = NO_CONTENT;
+        header_only = 1;
+    }
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST" || method == "PUT") {
 		std::cout << "stat path: " << file_name.c_str() << std::endl;
@@ -839,6 +843,12 @@ int HttpRes::staticHandler() {
             }
         } else {
             status_code = HTTP_OK;
+            std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);;
+			// 対応していない拡張子かつcontent-typeが存在する場合
+			if (ext == "" && httpreq.getHeaderFields()["content-type"] != "") {
+				status_code = UNSUPPORTED_MEDIA_TYPE;
+				return status_code;
+			}
         }
         if (S_ISDIR(sb.st_mode)) {
             time_t tm = std::time(NULL);
