@@ -1,22 +1,39 @@
-#include "Socket.hpp"
-#include <iostream>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include "Logger.hpp"
-#include "Kqueue.hpp"
-#include "Client.hpp"
-#include "conf/configParser.hpp"
-#include "http/httpReq.hpp"
 #include "EventLoop.hpp"
-#include <map>
-#include <set>
-#include <utility>
 
-void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
+EventLoop::EventLoop()
+{}
+
+EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<virtualServer> >& fd_config_map, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
+:kq(kq),
+	last_check(last_check)
+{
+	this->fd_config_map = fd_config_map;
+	this->acceptfd_to_config = acceptfd_to_config;
+	this->fd_client_map = fd_client_map;
+}
+
+EventLoop::EventLoop(const EventLoop& src)
+:kq(src.kq),
+	last_check(src.last_check)
+{
+	this->fd_config_map = src.fd_config_map;
+	this->acceptfd_to_config = src.acceptfd_to_config;
+	this->fd_client_map = src.fd_client_map;
+}
+
+EventLoop& EventLoop::operator=(const EventLoop& rhs) {
+	if (this == &rhs) {
+		return *this;
+	}
+	return *this;
+}
+
+EventLoop::~EventLoop() {
+
+}
+
+
+void EventLoop::sendResponse(int acceptfd) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	size_t send_cnt;
 	std::cout << "===== send response =====" << std::endl;
@@ -76,7 +93,7 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 	// fdのクローズは多分ここ
 }
 
-void sendTimeOutResponse(int fd, Kqueue &kq, std::map<int, Client> &fd_client_map) {
+void EventLoop::sendTimeOutResponse(int fd) {
 	Client client = fd_client_map[fd];
 	httpReq req;
     req.setClientIP(client.getClientIp());
@@ -98,23 +115,23 @@ void sendTimeOutResponse(int fd, Kqueue &kq, std::map<int, Client> &fd_client_ma
 //	sendResponse(fd, kq, fd_client_map);
 }
 
-std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
-	std::string ip;
-	(void) buf;
-	(void) len;
-	// 1バイトずつアクセスできるようにする
-	const u_int8_t *ap = (const u_int8_t *)&addr->s_addr;
-    std::stringstream ss;
-    for (size_t i = 0; ap[i] != '\0'; ++i) {
-        std::cout << "ap: " << i << "   :" << ap[i] << std::endl;
-    }
-    std::cout << std::endl;
-    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3];
-    ss >> ip;
-	return ip;
-}
+//static std::string inet_ntop4(struct in_addr *addr, char *buf, size_t len) {
+//	std::string ip;
+//	(void) buf;
+//	(void) len;
+//	// 1バイトずつアクセスできるようにする
+//	const u_int8_t *ap = (const u_int8_t *)&addr->s_addr;
+//    std::stringstream ss;
+//    for (size_t i = 0; ap[i] != '\0'; ++i) {
+//        std::cout << "ap: " << i << "   :" << ap[i] << std::endl;
+//    }
+//    std::cout << std::endl;
+//    ss << ap[0] << "." << ap[1] << "." << ap[2] << "." << ap[3];
+//    ss >> ip;
+//	return ip;
+//}
 
-std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
+static std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
 	std::string ip;
 	(void) buf;
 	(void) len;
@@ -125,34 +142,7 @@ std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
 	return ip;
 }
 
-void initializeFd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<virtualServer> >& fd_config_map) {
-	std::vector<virtualServer> server_confs = conf.getServerConfs();
-	std::map<int, int> m;
-	for (std::vector<virtualServer>::iterator it = server_confs.begin(); it != server_confs.end(); it++) {
-        std::vector<int> listen = it->getListen();
-        for (std::vector<int>::iterator it_listen = listen.begin(); it_listen != listen.end(); ++it_listen) {
-
-            Socket socket;
-            if (m.find(*it_listen) == m.end()) {
-                std::cout << "listen: " << *it_listen << std::endl;
-                socket = Socket(*it_listen);
-
-                if (socket.setSocket() != 0) {
-                    std::exit(1);
-                }
-                m[*it_listen] = socket.getListenFd();
-                if (kqueue.setEvent(socket.getListenFd(), EVFILT_READ, EV_ADD | EV_ENABLE) != 0) {
-                    std::exit(1);
-                }
-
-            }
-            fd_config_map[m[*it_listen]].push_back(*it);
-            std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
-        }
-	}
-}
-
-void assignServer(std::vector<virtualServer> server_confs, Client& client) {
+static void assignServer(std::vector<virtualServer> server_confs, Client& client) {
 	for (std::vector<virtualServer>::iterator it = server_confs.begin();
 		it != server_confs.end(); it++) {
 
@@ -175,7 +165,7 @@ void assignServer(std::vector<virtualServer> server_confs, Client& client) {
 }
 
 //void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
-void readRequest(int fd, Client& client, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, Kqueue kq) {
+void EventLoop::readRequest(int fd, Client& client) {
 	char buf[1024];
 	memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
@@ -189,6 +179,9 @@ void readRequest(int fd, Client& client, std::map<int, std::vector<virtualServer
 //	}
 	client.setLastRecvTime(std::time(0));
 	if (recv_cnt < 0) {
+		acceptfd_to_config.erase(fd);
+		fd_client_map.erase(fd);
+		close(fd);
 		std::cout << "ko" << std::endl;
 		return;
 	} else {
@@ -227,31 +220,7 @@ void readRequest(int fd, Client& client, std::map<int, std::vector<virtualServer
 	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
 }
 
-configParser handleConfig(int argc, char *argv[]) {
-	if (argc != 1 && argc != 2) {
-		std::cout << "usage: ./webserv *(path_to_config_file)" << std::endl;
-		exit(1);
-		//return 1;
-	}
-	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
-    if (access(config_path.c_str(), R_OK) != 0) {
-        std::cerr << "couldn't open the specified config file" << std::endl;
-        exit(1);
-        //return 1;
-    }
-	configParser conf;
-	try {
-		std::string txt= readConfFile(config_path);
-		conf.set_buf(txt);
-		conf.parseConf();
-	} catch (const std::exception &e) {
-		std::cout << e.what() << std::endl;
-		std::exit(1);
-	}
-	return conf;
-}
-
-void checkRequestTimeOut(time_t last_check, Kqueue& kqueue, std::map<int, Client>& fd_client_map) {
+void EventLoop::checkRequestTimeOut() {
 	const int time_out = 1;
 	const int time_check_span = 3;
 	time_t now;
@@ -265,7 +234,7 @@ void checkRequestTimeOut(time_t last_check, Kqueue& kqueue, std::map<int, Client
 			if (now - it->second.getLastRecvTime() > time_out) {
 				int fd = it->second.getFd();
 				it++;
-				sendTimeOutResponse(fd, kqueue, fd_client_map);
+				sendTimeOutResponse(fd);
 				//kqueue.setEvent(fd, EVFILT_WRITE, EV_DELETE);
 				//kqueue.setEvent(fd, EVFILT_READ, EV_DELETE);
 //				fd_client_map.erase(fd);
@@ -278,7 +247,7 @@ void checkRequestTimeOut(time_t last_check, Kqueue& kqueue, std::map<int, Client
 	}
 }
 
-int handleAccept(int event_fd, Kqueue& kqueue, std::map<int, Client>& fd_client_map, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, std::map<int, std::vector<virtualServer> >& fd_config_map) {
+int EventLoop::handleAccept(int event_fd) {
 	Client client;
 	struct sockaddr_in client_addr;
 	socklen_t sock_len = sizeof(client_addr);
@@ -300,24 +269,49 @@ int handleAccept(int event_fd, Kqueue& kqueue, std::map<int, Client>& fd_client_
 	client.setPort(port_num);
 	client.setFd(acceptfd);
 	fd_client_map[acceptfd] =  client;
-	kqueue.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
-	kqueue.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
+	kq.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
+	kq.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
 	return 0;
 }
 
-int main(int argc, char *argv[]) {
-	std::map<int, std::vector<virtualServer> > fd_config_map;
-	std::map<int, std::vector<virtualServer> > acceptfd_to_config;
-	std::map<int, Client> fd_client_map;
-	Kqueue kqueue;
+void EventLoop::monitoringEvents() {
+	while (1) {
+		checkRequestTimeOut();
+		int events_num = kq.getEventsNum();
+		if (events_num == -1) {
+			perror("kevent");
+			std::exit(1);
+		} else if (events_num == 0) {
+			std::cout << "time over" << std::endl;
+			continue;
+		}
 
-	configParser conf = handleConfig(argc, argv);
-
-	initializeFd(conf, kqueue, fd_config_map);
-	std::cout << fd_config_map.size() << std::endl;
-
-	time_t last_check = std::time(0);
-
-	EventLoop ev_loop(kqueue, fd_config_map, acceptfd_to_config, fd_client_map, last_check);
-	ev_loop.monitoringEvents();
+		for (int i = 0; i < events_num; ++i) {
+			struct kevent* reciver_event = kq.getReciverEvent();
+			int event_fd = reciver_event[i].ident;
+//			fcntl(event_fd, F_SETFL, O_NONBLOCK);
+			std::cout << "event_fd(): " << event_fd << std::endl;
+			if (reciver_event[i].flags & EV_EOF) {
+				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
+//				kqueue.setEvent(event_fd, EVFILT_WRITE, EV_DELETE);
+//				kqueue.setEvent(event_fd, EVFILT_READ, EV_DELETE);
+				acceptfd_to_config.erase(event_fd);
+				fd_client_map.erase(event_fd);
+				close(event_fd);
+			} else if (fd_config_map.count(event_fd) == 1) {
+				if (handleAccept(event_fd))
+					continue;
+			} else if (reciver_event[i].filter ==  EVFILT_READ) {
+                std::cout << "==================READ_EVENT==================" << std::endl;
+				char buf[1024];
+				memset(buf, 0, sizeof(buf));
+				readRequest(event_fd, fd_client_map[event_fd]);
+//				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
+			} else if (reciver_event[i].filter == EVFILT_WRITE) {
+				std::cout << "==================WRITE_EVENT==================" << std::endl;
+                HttpRes res = fd_client_map[event_fd].getHttpRes();
+				sendResponse(event_fd);
+			}
+		}
+	}
 }
