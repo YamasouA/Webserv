@@ -59,11 +59,11 @@ def set_up(file_list):
 			f.write("HELLO WORLD")
 
 def DELETE_test():
-	file_list = ["post.html"]
+	file_list = ["delete.html"]
 	set_up(file_list)
 	try:
 		# 正常系
-		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, "post.html")
+		response_test(create_path("/delete.html"), 200, SIMPLE_HEADERS, "delete.html")
 		# 存在しないファイル
 		response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# 
