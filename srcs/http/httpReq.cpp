@@ -159,9 +159,6 @@ void httpReq::setHeaderField(const std::string& name, const std::string value)
 {
     if (name == "host" && header_fields.count("host") == 1) {
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     } else if (header_fields.count(name) == 1) {
         header_fields[name] += " ," + value;
     } else {
@@ -274,8 +271,6 @@ int httpReq::expect(char c)
     if (buf[idx] != c) {
         std::cerr << "no expected Error" << c << std::endl;
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
         return 1;
     }
     ++idx;
@@ -297,20 +292,14 @@ std::string httpReq::getToken(char delimiter)
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
         return "";
 	}
 	if (expect(delimiter)) {
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
         return "";
     }
     if (token.find(' ') != std::string::npos) {
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
         return "";
     }
 	return token;
@@ -354,8 +343,6 @@ int httpReq::getChunkSize() {
 				if (tmp == "" || tmp.find_first_not_of("0123456789abcdef") != std::string::npos) {
 					std::cerr << "400 Bad request" << std::endl;
 					rejectReq(400);
-//					setErrStatus(400);
-//					is_req_end = true;
 					return ERROR;
 				}
 				std::stringstream(tmp) >> std::hex >> chunk_size;
@@ -367,8 +354,6 @@ int httpReq::getChunkSize() {
 			} else {
 				std::cerr << "400 Bad request" << std::endl;
 				rejectReq(400);
-//				setErrStatus(400);
-//				is_req_end = true;
 				return ERROR;
 			}
 		}
@@ -475,8 +460,6 @@ void httpReq::parseScheme() {
 	} else {
         std::cerr << "invalid scheme Error" << std::endl;
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
 	}
 }
 
@@ -495,9 +478,6 @@ void httpReq::parseHostPort() {
     if (host.length() <= 0) {
         std::cerr << "invalid host Error" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
     if (uri[i] == ':') {
         path_pos = uri.find('/');
@@ -510,18 +490,12 @@ void httpReq::parseHostPort() {
 			if (port_num < 0 || 65535 < port_num) {
         	    std::cerr << "invalid port Error" << std::endl;
 				return rejectReq(400);
-//                setErrStatus(400);
-//				is_req_end = true;
-//                return;
         	}
         }
     }
     if (uri[i] != '/') {
         std::cerr << "path not found" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
     header_fields["host"] = host;
 	uri = uri.substr(i);
@@ -548,8 +522,6 @@ void httpReq::absUrlParse() {
 	    parseAuthorityAndPath();
     } else {
 		rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
     }
 }
 
@@ -573,18 +545,12 @@ void httpReq::fixUp() {
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
 	}
 
 	if (header_fields.count("connection") == 1) {
 		if (header_fields["connection"] == "") {
 			std::cerr << "no connection Error" << std::endl;
 			return rejectReq(400);
-//			setErrStatus(400);
-//			is_req_end = true;
-//			return;
 		}
 //		std::cout << "Connection field raw value: " << header_fields["connection"] << std::endl;
 		std::vector<std::string> connections = fieldValueSplit(toLower(header_fields["connection"]), ',');
@@ -610,23 +576,14 @@ void httpReq::fixUp() {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
 		return rejectReq(411);
-//        setErrStatus(411);
-//		is_req_end = true;
-//        return;
 	}
     if (header_fields.count("content-length") == 1 && header_fields.count("transfer-encoding") == 1) {
         std::cerr << "400 (Bad Request)" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
     if (header_fields.count("content-length") == 1) {
         if (header_fields["content-length"].find_first_not_of("0123456789") != std::string::npos) {
 			return rejectReq(400);
-//            setErrStatus(400);
-//			is_req_end = true;
-//            return;
         }
 	    std::string content_length_s = header_fields["content-length"];
         std::stringstream ss(content_length_s);
@@ -645,9 +602,6 @@ void httpReq::fixUp() {
 			if (*t_it != "chunked") {
 			    std::cerr << "501(Not Implement) transfer-encoding" << std::endl;
 				return rejectReq(501);
-//        	    setErrStatus(501);
-//				is_req_end = true;
-//        	    return;
             }
 		}
 		header_fields["transfer-encoding"] = "chunked";
@@ -656,9 +610,6 @@ void httpReq::fixUp() {
 	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST" || method == "PUT")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
 		return rejectReq(501);
-//        setErrStatus(501);
-//		is_req_end = true;
-//        return;
 	}
 	if (uri.length() != 0 && uri[0] != '/') {
 		absUrlParse();
@@ -671,9 +622,6 @@ void httpReq::parseReqLine()
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
     uri = getToken(' ');
 	checkUri();
@@ -683,35 +631,23 @@ void httpReq::parseReqLine()
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
     version = buf.substr(idx, 8);
     idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
         std::cerr << "version Error" << std::endl;
 		return rejectReq(505);
-//        setErrStatus(505); //400?
-//		is_req_end = true;
-//        return;
     }
     if (buf[idx] == '\015') {
         ++idx;
         if (expect('\012')) {
 			return rejectReq(400);
-//            setErrStatus(400);
-//			is_req_end = true;
-//            return;
         }
     } else if (buf[idx] == '\012') {
         ++idx;
     } else {
         std::cerr << "invalid format" << std::endl;
 		return rejectReq(400);
-//        setErrStatus(400);
-//		is_req_end = true;
-//        return;
     }
 }
 
@@ -792,9 +728,6 @@ void httpReq::skipEmptyLines() {
 		} else {
             std::cerr << "400 (Bad Request)" << std::endl;
 			return rejectReq(400);
-//            setErrStatus(400);
-//			is_req_end = true;
-//            return;
         }
     }
 }
