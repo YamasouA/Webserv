@@ -935,7 +935,7 @@ int HttpRes::handlePost(std::string& file_name) {
 		}
 		std::cout << "set body done" << std::endl;
 		std::string body = httpreq.getContentBody();
-		if (body.length() == 0 && content_length_n == 0 status_code != CREATED) {
+		if (body.length() == 0 && content_length_n == 0 && status_code != CREATED) {
 			status_code = NO_CONTENT;
 			header_only = 1;
 		}
@@ -1258,6 +1258,21 @@ std::string HttpRes::joinPathAutoindex() {
 	return path_root + config_path + file_path;
 }
 
+int HttpRes::opendirError() {
+	if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+		std::cout << "NOT_FOUND" << std::endl;
+		status_code = NOT_FOUND;
+		return NOT_FOUND;
+	} else if (errno == EACCES) {
+		std::cout << "FORBIDDEN" << std::endl;
+//			status_code = FORBIDDEN;
+		status_code = NOT_FOUND;
+		return FORBIDDEN;
+	}
+	std::cout << "INTERNAL_SERVER_ERROR" << std::endl;
+	status_code = INTERNAL_SERVER_ERROR;
+	return INTERNAL_SERVER_ERROR;
+}
 
 int HttpRes::autoindexHandler() {
     std::cout << "================== autoindexHandler ==================" << std::endl;
@@ -1290,19 +1305,7 @@ int HttpRes::autoindexHandler() {
     dir_t dir_info;
     dir_info.dir = opendir(dir_path.c_str());
 	if (dir_info.dir == NULL) {
-		if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-			std::cout << "NOT_FOUND" << std::endl;
-			status_code = NOT_FOUND;
-			return NOT_FOUND;
-		} else if (errno == EACCES) {
-			std::cout << "FORBIDDEN" << std::endl;
-//			status_code = FORBIDDEN;
-			status_code = NOT_FOUND;
-			return FORBIDDEN;
-		}
-		std::cout << "INTERNAL_SERVER_ERROR" << std::endl;
-		status_code = INTERNAL_SERVER_ERROR;
-		return INTERNAL_SERVER_ERROR;
+		return opendirError();
     }
     status_code = HTTP_OK;
     // auto_index only text/html for now

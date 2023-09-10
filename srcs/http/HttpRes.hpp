@@ -158,6 +158,7 @@ class HttpRes {
 		int checkAccessToGET(const char *file_name, const std::string& uri);
 		int createDestFile(std::string& file_name);
 		int handleResBody(const std::string& file_name);
+		int opendirError();
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
