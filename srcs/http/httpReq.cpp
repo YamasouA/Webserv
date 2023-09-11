@@ -486,6 +486,10 @@ void httpReq::parseHostPort() {
             std::stringstream ss(port_str);
             int port_num;
             ss >> port_num;
+			if (ss.bad()) {
+				setErrStatus(500);
+				return;
+			}
 			if (port_num < 0 || 65535 < port_num) {
         	    std::cerr << "invalid port Error" << std::endl;
                 setErrStatus(400);
@@ -594,6 +598,14 @@ void httpReq::fixUp() {
 	    std::string content_length_s = header_fields["content-length"];
         std::stringstream ss(content_length_s);
         ss >> content_length;
+		if (ss.bad()) {
+			setErrStatus(500);
+			return;
+		}
+		if (ss.fail() && (content_length == std::numeric_limits<int>::max())) {
+            setErrStatus(413); //or 400
+			return;
+		}
     }
 
     std::cout << "cl: " << content_length << std::endl;;
