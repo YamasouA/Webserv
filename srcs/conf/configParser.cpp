@@ -123,7 +123,6 @@ static std::vector<std::string> methodsSplit(const std::string &strs, char delim
 void configParser::handleRootInLoc(Location& location, int *which_one_exist) {
 	if (location.getRoot() != "" || location.getAlias() != "") {
 		throw SyntaxException("Location: duplicate directive: root");
-		//        throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kRootExist;
 	//must single and not coexist with alias
@@ -155,7 +154,6 @@ void configParser::handleMethodInLoc(Location& location, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kMethodExist) {
 		throw SyntaxException("Location: duplicate directive: method");
-		//                throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kMethodExist;
 	const std::string methods = getToken(';');
@@ -166,7 +164,6 @@ void configParser::handleAutoindexInLoc(Location& location, int *which_one_exist
 	//must single
 	if (*which_one_exist & kAutoIndexExist) {
 		throw SyntaxException("Location: duplicate directive: autoindex");
-		//                throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kAutoIndexExist;
 	location.setIsAutoindex(getToken(';')=="on");
@@ -175,7 +172,6 @@ void configParser::handleAutoindexInLoc(Location& location, int *which_one_exist
 void configParser::handleUploadPathInLoc(Location& location, int *which_one_exist) {
 	if (location.getUploadPath() != "") {
 		throw SyntaxException("Location: duplicate directive: upload_path");
-		//                throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kUploadPathExist;
 	location.setUploadPath(getToken(';'));
@@ -185,23 +181,18 @@ void configParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 	//must single
 	if (*which_one_exist & kMaxSizeExist) {
 		throw SyntaxException("Location: duplicate directive: max_body_size");
-		//                throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kMaxSizeExist;
 	const std::string tmp(getToken(';'));
 	if (tmp.find_first_not_of("0123456789") != std::string::npos) {
 		throw ConfigValueException("v_serv: invalid value: max_body_size");
-		//                throw ConfigValueException("v_serv: invalid value: " + directive);
 	}
 	std::stringstream sstream(tmp);
-	//			std::stringstream sstream(getToken(';'));
 	int result;
 	sstream >> result;
 	if (sstream.fail() && std::numeric_limits<int>::max() == result) {
 		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("Location: invalid value: max_body_size");
-		//                throw ConfigValueException("Location: invalid value: " + directive);
-		//                throw SyntaxException("Location: invalid value: " + directive);
 	}
 	location.setMaxBodySize(result);
 }
@@ -209,14 +200,11 @@ void configParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 void configParser::handleAliasInLoc(Location& location, int *which_one_exist) {
 	if (location.getAlias() != "" || location.getRoot() != "") {
 		throw SyntaxException("Location: duplicate directive: alias");
-		//                throw SyntaxException("Location: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kAliasExist;
 	location.setAlias(getToken(';'));
 }
-//void configParser::handleLocationInLoc(Location& location, int *which_one_exist) {
-//
-//}
+
 void configParser::handleErrorPageInLoc(Location& location, int *which_one_exist) {
 	*which_one_exist |= kErrorPageExist;
 	const std::string pages = getToken(';');
@@ -232,10 +220,6 @@ void configParser::handleCgiExtInLoc(Location& location, int *which_one_exist) {
 	}
 	*which_one_exist |= kCgiExtExist;
 }
-
-
-
-
 
 Location configParser::parseLocation() {
 	Location location;
@@ -258,99 +242,27 @@ Location configParser::parseLocation() {
 		skip();
 		if (directive == "root") {
 			handleRootInLoc(location, &which_one_exist);
-//            if (location.getRoot() != "" || location.getAlias() != "") {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kRootExist;
-//            //must single and not coexist with alias
-//			location.setRoot(getToken(';'));
 		} else if (directive == "index") {
 			handleIndexInLoc(location, &which_one_exist);
-//            //can multiple
-//            if (which_one_exist & kIndexExist) {
-//                location.appendIndex(methodsSplit(getToken(';'), ' '));
-//            } else {
-//                location.setIndex(methodsSplit(getToken(';'), ' '));
-//            }
-//            which_one_exist |= kIndexExist;
 		} else if (directive == "return") {
 			handleReturnInLoc(location, &which_one_exist);
-//            //can multiple, but first one is used
-//            if (which_one_exist & kReturnExist) {
-//                getToken(';');
-//                continue;
-//            }
-//			location.setReturn(getToken(';'));
-//            which_one_exist |= kReturnExist;
 		} else if (directive == "method") {
 			handleMethodInLoc(location, &which_one_exist);
-//            //must single
-//            if (which_one_exist & kMethodExist) {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kMethodExist;
-//			const std::string methods = getToken(';');
-//			location.setMethods(methodsSplit(methods, ' '));
 		} else if (directive == "autoindex") {
 			handleAutoindexInLoc(location, &which_one_exist);
-//            //must single
-//            if (which_one_exist & kAutoIndexExist) {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kAutoIndexExist;
-//			location.setIsAutoindex(getToken(';')=="on");
 		} else if (directive == "upload_path") {
 			handleUploadPathInLoc(location, &which_one_exist);
-//            if (location.getUploadPath() != "") {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kUploadPathExist;
-//			location.setUploadPath(getToken(';'));
 		} else if (directive == "max_body_size") {
 			handleMaxBodySizeInLoc(location, &which_one_exist);
-//            //must single
-//            if (which_one_exist & kMaxSizeExist) {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kMaxSizeExist;
-//			const std::string tmp(getToken(';'));
-//			if (tmp.find_first_not_of("0123456789") != std::string::npos) {
-//                throw ConfigValueException("v_serv: invalid value: " + directive);
-//			}
-//			std::stringstream sstream(tmp);
-////			std::stringstream sstream(getToken(';'));
-//			int result;
-//			sstream >> result;
-//			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
-//				std::cerr << "overflow" << std::endl;
-//                throw ConfigValueException("Location: invalid value: " + directive);
-////                throw SyntaxException("Location: invalid value: " + directive);
-//			}
-//			location.setMaxBodySize(result);
 		} else if (directive == "alias") {
 			handleAliasInLoc(location, &which_one_exist);
-//            if (location.getAlias() != "" || location.getRoot() != "") {
-//                throw SyntaxException("Location: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kAliasExist;
-//			location.setAlias(getToken(';'));
 		} else if (directive == "location") {
 			std::cout << "location-location" << std::endl;
 			location.setLocation(parseLocation());
 		} else if (directive == "error_page") {
 			handleErrorPageInLoc(location, &which_one_exist);
-//            which_one_exist |= kErrorPageExist;
-//			const std::string pages = getToken(';');
-//			location.setErrorPages(methodsSplit(pages, ' '));
 		} else if (directive == "cgi_ext") {
 			handleCgiExtInLoc(location, &which_one_exist);
-//			const std::string exts = getToken(';');
-//            if (which_one_exist & kCgiExtExist) {
-//                location.appendCgiExt(methodsSplit(exts, ' '));
-//            } else {
-//                location.setCgiExt(methodsSplit(exts, ' '));
-//            }
-//            which_one_exist |= kCgiExtExist;
 		} else if (directive == "") {
             continue;
         } else {
@@ -441,7 +353,6 @@ void configParser::handleListenInServ(virtualServer& v_serv) {
 
 	}
 	std::stringstream sstream(tmp);
-	//			std::stringstream sstream(getToken(';'));
 	int result;
 	sstream >> result;
 	if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > 65535) {
@@ -449,9 +360,6 @@ void configParser::handleListenInServ(virtualServer& v_serv) {
 	}
 	v_serv.setListen(result);
 }
-//void handleServerNameInServ(virtualServer& v_serv, int *which_one_exist) {
-//
-//}
 
 void configParser::handleRootInServ(virtualServer& v_serv, int *which_one_exist) {
 	//must single
@@ -486,7 +394,6 @@ void configParser::handleMethodInServ(virtualServer& v_serv, int *which_one_exis
 	//must single
 	if (*which_one_exist & kMethodExist) {
 		throw SyntaxException("v_serv: duplicate directive: method");
-		//                throw SyntaxException("v_serv: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kMethodExist;
 	const std::string methods = getToken(';');
@@ -496,7 +403,6 @@ void configParser::handleMethodInServ(virtualServer& v_serv, int *which_one_exis
 void configParser::handleAutoindexInServ(virtualServer& v_serv, int *which_one_exist) {
 	if (*which_one_exist & kAutoIndexExist) { //bool -> int
 		throw SyntaxException("v_serv: duplicate directive: autoindex");
-		//                throw SyntaxException("v_serv: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kAutoIndexExist;
 	v_serv.setIsAutoindex(getToken(';')=="on");
@@ -505,37 +411,28 @@ void configParser::handleAutoindexInServ(virtualServer& v_serv, int *which_one_e
 void configParser::handleUploadPathInServ(virtualServer& v_serv) {
 	if (v_serv.getUploadPath() != "") {
 		throw SyntaxException("v_serv: duplicate directive: upload_path");
-		//                throw SyntaxException("v_serv: duplicate directive: " + directive);
 	}
-	//            *which_one_exist |= kUploadPathExist;
 	v_serv.setUploadPath(getToken(';'));
 }
 
 void configParser::handleMaxBodySizeInServ(virtualServer& v_serv, int *which_one_exist) {
 	if (*which_one_exist & kMaxSizeExist) {
 		throw SyntaxException("v_serv: duplicate directive: max_body_size");
-		//                throw SyntaxException("v_serv: duplicate directive: " + directive);
 	}
 	*which_one_exist |= kMaxSizeExist;
 	const std::string tmp(getToken(';'));
 	if (tmp.find_first_not_of("0123456789") != std::string::npos) {
 		throw ConfigValueException("v_serv: invalid value: max_body_size");
-		//                throw ConfigValueException("v_serv: invalid value: " + directive);
 	}
 	std::stringstream sstream(tmp);
-	//			std::stringstream sstream(getToken(';'));
 	size_t result;
 	sstream >> result;
 	if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("v_serv: invalid value: max_body_size");
-		//            throw SyntaxException("v_serv: invalid value: " + directive);
 	}
 	v_serv.setMaxBodySize(result);
 }
-//void handleLocationInServ(virtualServer& v_serv, int *which_one_exist) {
-//
-//}
 
 void configParser::handleErrorPageInServ(virtualServer& v_serv) {
 	const std::string pages = getToken(';');
@@ -566,105 +463,27 @@ virtualServer configParser::parseServe() {
 		skip();
 		if (directive == "listen") {
 			handleListenInServ(v_serv);
-//            //can multiple
-//			const std::string tmp(getToken(';'));
-//			if (tmp.find_first_not_of("0123456789") != std::string::npos) {
-//                throw ConfigValueException("v_serv: invalid value: " + directive);
-//
-//			}
-//			std::stringstream sstream(tmp);
-////			std::stringstream sstream(getToken(';'));
-//			int result;
-//			sstream >> result;
-//			if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > 65535) {
-//                throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
-//            }
-//			v_serv.setListen(result);
 		} else if (directive == "server_name") {
             //can multiple
 			v_serv.setServerName(methodsSplit(getToken(';'), ' '));
 		} else if (directive == "root") {
 			handleRootInServ(v_serv, &which_one_exist);
-//            //must single
-//            if (which_one_exist & kRootExist) {
-//                throw SyntaxException("Server: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kRootExist;
-//			v_serv.setRoot(getToken(';'));
 		} else if (directive == "index") {
 			handleIndexInServ(v_serv, &which_one_exist);
-//            //can multiple
-//            if (which_one_exist & kIndexExist) {
-//                v_serv.appendIndex(methodsSplit(getToken(';'), ' '));
-//            } else {
-//                v_serv.setIndex(methodsSplit(getToken(';'), ' '));
-//            }
-//            which_one_exist |= kIndexExist;
 		} else if (directive == "return") {
 			handleReturnInServ(v_serv, &which_one_exist);
-//            //can multiple, but first one is used
-//            if (which_one_exist & kReturnExist) {
-//                continue;
-//            }
-//			v_serv.setReturn(getToken(';'));
-//            which_one_exist |= kReturnExist;
 		} else if (directive == "method") {
 			handleMethodInServ(v_serv, &which_one_exist);
-//            //must single
-//            if (which_one_exist & kMethodExist) {
-//                throw SyntaxException("v_serv: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kMethodExist;
-//			const std::string methods = getToken(';');
-//			v_serv.setMethods(methodsSplit(methods, ' '));
 		} else if (directive == "autoindex") {
 			handleAutoindexInServ(v_serv, &which_one_exist);
-//            if (which_one_exist & kAutoIndexExist) { //bool -> int
-//                throw SyntaxException("v_serv: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kAutoIndexExist;
-//			v_serv.setIsAutoindex(getToken(';')=="on");
 		} else if (directive == "upload_path") {
 			handleUploadPathInServ(v_serv);
-//			handleUploadPathInServ(v_serv, &which_one_exist);
-//            if (v_serv.getUploadPath() != "") {
-//                throw SyntaxException("v_serv: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kUploadPathExist;
-//			v_serv.setUploadPath(getToken(';'));
 		} else if (directive == "max_body_size") {
 			handleMaxBodySizeInServ(v_serv, &which_one_exist);
-//            if (which_one_exist & kMaxSizeExist) {
-//                throw SyntaxException("v_serv: duplicate directive: " + directive);
-//            }
-//            which_one_exist |= kMaxSizeExist;
-//			const std::string tmp(getToken(';'));
-//			if (tmp.find_first_not_of("0123456789") != std::string::npos) {
-//                throw ConfigValueException("v_serv: invalid value: " + directive);
-//			}
-//			std::stringstream sstream(tmp);
-////			std::stringstream sstream(getToken(';'));
-//			size_t result;
-//			sstream >> result;
-//			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
-//				std::cerr << "overflow" << std::endl;
-//                throw ConfigValueException("v_serv: invalid value: " + directive);
-////            throw SyntaxException("v_serv: invalid value: " + directive);
-//			}
-//			v_serv.setMaxBodySize(result);
 		} else if (directive == "error_page") {
 			handleErrorPageInServ(v_serv);
-//			const std::string pages = getToken(';');
-//			v_serv.setErrorPages(methodsSplit(pages, ' '));
 		} else if (directive == "cgi_ext") {
 			handleCgiExtInServ(v_serv, &which_one_exist);
-//			const std::string exts = getToken(';');
-//            if (which_one_exist & kCgiExtExist) {
-//                v_serv.appendCgiExt(methodsSplit(exts, ' '));
-//            } else {
-//                v_serv.setCgiExt(methodsSplit(exts, ' '));
-//            }
-//            which_one_exist |= kCgiExtExist;
 		} else if (directive == "") {
             continue;
 		} else if (directive == "location") {
