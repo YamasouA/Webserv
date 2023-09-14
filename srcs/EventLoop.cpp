@@ -47,8 +47,12 @@ void EventLoop::sendResponse(int acceptfd) {
 		std::cout << "=== send header ===" << std::endl;
 //		fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
-		if (send_cnt < 0)
+		if (send_cnt < 0 || send_cnt == 0) {
+			acceptfd_to_config.erase(acceptfd);
+			fd_client_map.erase(acceptfd);
+			close(acceptfd);
 			return;
+		}
 		res.setIsSendedHeader(true);
 	    client.setHttpRes(res);
 		fd_client_map[acceptfd] = client;
@@ -56,7 +60,7 @@ void EventLoop::sendResponse(int acceptfd) {
 			std::cout << "Disconnect client fd: " << acceptfd << std::endl;
 //			kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
 //			kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
-//			acceptfd_to_config.erase(acceptfd);
+			acceptfd_to_config.erase(acceptfd);
 			fd_client_map.erase(acceptfd);
 			close(acceptfd);
 			return;
@@ -67,9 +71,15 @@ void EventLoop::sendResponse(int acceptfd) {
 	std::cout << "=== send body ===" << std::endl;
 //	if (res.getBodySize() > 0) {
 //	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
-	send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
-	if (send_cnt < 0)
-		return;
+	if (res.getBodySize() > 0) {
+		send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
+		if (send_cnt < 0 || send_cnt == 0) {
+			acceptfd_to_config.erase(acceptfd);
+			fd_client_map.erase(acceptfd);
+			close(acceptfd);
+			return;
+		}
+	}
 //	}
 	res.setIsSendedBody(true);
 	client.setHttpRes(res);
@@ -79,7 +89,7 @@ void EventLoop::sendResponse(int acceptfd) {
 		std::cout << "Disconnect client fd: " << acceptfd << std::endl;
 //		kq.setEvent(acceptfd, EVFILT_WRITE, EV_DELETE);
 //		kq.setEvent(acceptfd, EVFILT_READ, EV_DELETE);
-//		acceptfd_to_config.erase(acceptfd);
+		acceptfd_to_config.erase(acceptfd);
 		fd_client_map.erase(acceptfd);
 		close(acceptfd);
 		return;
@@ -161,13 +171,15 @@ static void assignServer(std::vector<virtualServer> server_confs, Client& client
         }
 	}
 	std::cout << "no match" << std::endl;
+	std::cout << "ok" << std::endl;
 	client.setVserver(server_confs[0]);
+	std::cout << "ok" << std::endl;
 }
 
 //void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs, Kqueue kq) {
 void EventLoop::readRequest(int fd, Client& client) {
 	char buf[1024];
-	memset(buf, 0, sizeof(buf));
+	std::memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
 	httpReq httpreq = client.getHttpReq();
@@ -178,7 +190,7 @@ void EventLoop::readRequest(int fd, Client& client) {
 //		httpreq.setIsReqEnd();
 //	}
 	client.setLastRecvTime(std::time(0));
-	if (recv_cnt < 0) {
+	if (recv_cnt < 0 || recv_cnt == 0) {
 		acceptfd_to_config.erase(fd);
 		fd_client_map.erase(fd);
 		close(fd);
@@ -205,7 +217,7 @@ void EventLoop::readRequest(int fd, Client& client) {
 	//client.setFd(fd);
     client.setHttpReq(httpreq);
     assignServer(acceptfd_to_config[fd], client);
-	acceptfd_to_config.erase(fd);
+//	acceptfd_to_config.erase(fd);
 //    assignServer(server_confs, client);
     HttpRes respons(client, kq);
     if (httpreq.getErrStatus() > 0) {
@@ -248,6 +260,7 @@ void EventLoop::checkRequestTimeOut() {
 }
 
 int EventLoop::handleAccept(int event_fd) {
+	std::cout << "================handle accept===================" << std::endl;
 	Client client;
 	struct sockaddr_in client_addr;
 	socklen_t sock_len = sizeof(client_addr);
@@ -304,7 +317,7 @@ void EventLoop::monitoringEvents() {
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
                 std::cout << "==================READ_EVENT==================" << std::endl;
 				char buf[1024];
-				memset(buf, 0, sizeof(buf));
+				std::memset(buf, 0, sizeof(buf));
 				readRequest(event_fd, fd_client_map[event_fd]);
 //				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
