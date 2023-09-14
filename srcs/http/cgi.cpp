@@ -211,15 +211,21 @@ void Cgi::forkProcess() {
 	sendBodyToChild();
 	pid_t pid2 = 0;
 	int st = 0;
+	time_t before_wait = std::time(NULL);
 	while (pid2 != -1) {
-		pid2 = waitpid(-1, &st, 0);
+		pid2 = waitpid(pid, &st, WNOHANG);
 		if (!WIFEXITED(st)) {
-			status = 502;
+			status = 502; // or 500
+		}
+		if (std::time(NULL) - before_wait >= 3) {
+			kill(pid, SIGKILL);
+			status = 504;
+			break;
 		}
 	}
 	close(fd[1]);
     char tmp_buf;
-    while (read(0, &tmp_buf, 1) > 0) {
+    while (read(0, &tmp_buf, 1) > 0 && status != 504) {
         buf += tmp_buf;
     }
 	close(fd2[0]);

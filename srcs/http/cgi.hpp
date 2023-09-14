@@ -1,6 +1,8 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
+#include <sys/types.h>
+#include <signal.h>
 #include <unistd.h>
 #include "httpReq.hpp"
 #include "../conf/Location.hpp"

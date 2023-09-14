@@ -1289,7 +1289,7 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
-		finalizeRes(status_code);
+		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
   	if (cgi.getResType() == DOCUMENT) {
