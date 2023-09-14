@@ -48,6 +48,7 @@ class Cgi {
         std::string encodeUri();
         bool checkMetaVar(std::string var1, std::string var2);
         std::string joinPath();
+		void setStatusCode(int status);
 
         std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
