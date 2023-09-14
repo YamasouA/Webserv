@@ -148,7 +148,7 @@ void Cgi::runHandler() {
 	envs_ptr = new char *[envs.size() + 1];
 	std::map<std::string, std::string>::iterator it = envs.begin();
     std::vector<std::string> tmp_vec;
-	int i = 0;
+	size_t i = 0;
 	for (; it != envs.end(); ++it) {
 		std::string env_exp = it->first + "=" + it->second;
         tmp_vec.push_back(env_exp);
@@ -161,6 +161,10 @@ void Cgi::runHandler() {
     std::string path = joinPath();
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
+//		for (i = 0; i < envs.size() + 1; ++i) {
+//			delete [] envs_ptr[i];
+//		}
+		delete [] envs_ptr;
     }
 }
 
