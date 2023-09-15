@@ -64,9 +64,11 @@ void sendResponse(int acceptfd, Kqueue &kq, std::map<int, Client> &fd_client_map
 		close(acceptfd);
 		return;
 	}
-	httpReq httpreq;
-	client.setHttpReq(httpreq);
-	fd_client_map[acceptfd] = client;
+	fd_client_map.erase(acceptfd);
+//	httpReq tmp = httpReq();
+//	client.setHttpReq(tmp);
+	kq.disableEvent(acceptfd, EVFILT_WRITE);
+//	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
 }
@@ -174,8 +176,8 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
 	memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
-	// 一度送信したデータを持っている場合はクリア
 	httpReq httpreq = client.getHttpReq();
+
 	fcntl(fd, F_SETFL, O_NONBLOCK);
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 //	if (recv_cnt == 0) {
@@ -214,10 +216,9 @@ void readRequest(int fd, Client& client, std::vector<virtualServer> server_confs
     }
 
     client.setHttpRes(respons);
-	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
 //	kq.setEvent(fd, EVFILT_READ, EV_DISABLE);
 //    kq.disableEvent(fd, EVFILT_READ);
-	std::cout << "===== read Event end =====" << std::endl;
+	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
 }
 
 int main(int argc, char *argv[]) {
@@ -303,7 +304,6 @@ int main(int argc, char *argv[]) {
 				fd_client_map.erase(acceptfd);
 				close(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
-                std::cout << "==================NEW_EVENT==================" << std::endl;
 				Client client;
                 struct sockaddr_in client_addr;
                 socklen_t sock_len = sizeof(client_addr);
@@ -331,7 +331,6 @@ int main(int argc, char *argv[]) {
 //				acceptfd = event_fd;
 				char buf[1024];
 				memset(buf, 0, sizeof(buf));
-				std::cout << "eventfd: " << event_fd << std::endl;
 				readRequest(event_fd, fd_client_map[event_fd], acceptfd_to_config[event_fd], kqueue);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 				std::cout << "==================WRITE_EVENT==================" << std::endl;
