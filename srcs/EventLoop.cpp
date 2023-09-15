@@ -94,10 +94,11 @@ void EventLoop::sendResponse(int acceptfd) {
 		close(acceptfd);
 		return;
 	}
-	fd_client_map.erase(acceptfd);
-//	httpReq tmp = httpReq();
-//	client.setHttpReq(tmp);
-	kq.disableEvent(acceptfd, EVFILT_WRITE);
+//	fd_client_map.erase(acceptfd);
+	httpReq tmp = httpReq();
+	client.setHttpReq(tmp);
+	fd_client_map[acceptfd] = client;
+//	kq.disableEvent(acceptfd, EVFILT_WRITE);
 //	kq.setEvent(acceptfd, EVFILT_READ, EV_ENABLE);
 	std::cout << "=== DONE ===" << std::endl;
 	// fdのクローズは多分ここ
