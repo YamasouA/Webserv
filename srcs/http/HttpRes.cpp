@@ -581,7 +581,7 @@ int HttpRes::deleteHandler() {
 	std::string file_name = joinPath();
     if (stat(file_name.c_str(), &sb) == -1) {
 		std::cout << "Error(stat)" << std::endl;
-		status_code = INTERNAL_SERVER_ERROR;
+		status_code = NOT_FOUND;
 		return status_code;
 	}
 	if (S_ISDIR(sb.st_mode)) {
