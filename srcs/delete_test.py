@@ -1,5 +1,6 @@
 import requests
 import traceback
+import os
 
 SCHEME = "http"
 HOST_NAME = "localhost:8000"
@@ -34,35 +35,44 @@ def header_checker(expect_header, res_header, expect_body):
 
 	return True
 
-def response_test(url, expected_status, expected_headers, request_body, file_path):
+def response_test(url, expected_status, expected_headers, file_path):
 	res = requests.delete(url)
 
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
-	try:
-		with open(file_path, 'r', encoding='utf-8') as f:
-			data = f.read()
-	except FileNotFoundError:
-		data = ""
+
+	is_exist = os.path.exists(file_path)
 
 	assert header_checker(expected_headers, res.headers, ""),\
 		"Header Error" + error_text(expected_headers, res.headers)
 
-	# filegaが見つかってないから
-	assert  data == "",\
-		"Body Error" + error_text("", aft_data)
+	# fileが見つかってないから
+	assert  not is_exist,\
+		"Body Error"
 
 	print(url + " test done")
 
+def set_up(file_list):
+	for filename in file_list:
+		with open(filename, "w") as f:
+			f.write("HELLO WORLD")
+
 def DELETE_test():
+	file_list = ["delete.html"]
+	set_up(file_list)
 	try:
-		response_test(create_path("/post.html"), 200, SIMPLE_HEADERS, "post.html")
-		#response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+		# 正常系
+		response_test(create_path("/delete.html"), 200, SIMPLE_HEADERS, "delete.html")
+		# 存在しないファイル
+		response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+		# 
+		#response_test(create_path("/.html"), 204, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+
 	except:
 		traceback.print_exc()
 		
 
 
 if __name__ == "__main__":
-	POST_test()
+	DELETE_test()
