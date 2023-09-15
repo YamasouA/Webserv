@@ -14,7 +14,8 @@ Client::Client(const Client& source)
 	fd(source.getFd()),
     client_ip(source.getClientIp()),
     port(source.getPort()),
-	last_recv_time(source.getLastRecvTime())
+	last_recv_time(source.getLastRecvTime()),
+	is_req_end(source.isEndOfReq())
 {}
 
 Client& Client::operator=(const Client& rhs)
@@ -28,6 +29,8 @@ Client& Client::operator=(const Client& rhs)
     fd = rhs.getFd();
     client_ip = rhs.getClientIp();
     port = rhs.getPort();
+	last_recv_time = rhs.getLastRecvTime();
+	is_req_end = rhs.isEndOfReq();
     return *this;
 }
 
@@ -60,6 +63,14 @@ void Client::setPort(int port) {
 
 void Client::setLastRecvTime(time_t now) {
 	this->last_recv_time = now;
+}
+
+void Client::setEndOfReq(bool flag) {
+	this->is_req_end = flag;
+}
+
+bool Client::isEndOfReq() const {
+	return is_req_end;
 }
 
 int Client::getFd() const{
