@@ -1006,6 +1006,7 @@ int HttpRes::redirectHandle() {
     switch (status_code) {
         case BAD_REQUEST:
         case REQUEST_ENTITY_TOO_LARGE:
+		case REQUEST_TIME_OUT:
 //        case REQUEST_URI_TOO_LARGE:
 //        case HTTP_TO_HTTPS:
 //        case HTTPS_CERT_ERROR:
