@@ -1078,11 +1078,11 @@ void HttpRes::finalizeRes(int handler_status)
     if (handler_status == DECLINED || handler_status == OK) {
         return;
     }
-    if ((200 <= status_code && status_code < 207)) {// && status_code != 204) {
+    if ((200 <= status_code && status_code < 207) && status_code != 204) {
         // handle connection
         return;
     }
-    if (status_code >= 300) {// || status_code == 204) {
+    if (status_code >= 300 || status_code == 204) {
         // handle around timeer
         redirectHandle();
         return;
