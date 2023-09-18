@@ -50,6 +50,32 @@ class configParser {
 		std::string getToken(char delimiter);
 		std::string getTokenToEOL();
 		std::map<std::string, Location> uri2location;
+
+		void handleListenInServ(virtualServer& v_serv);
+//		void handleServerNameInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleRootInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleIndexInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleReturnInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleMethodInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleAutoindexInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleUploadPathInServ(virtualServer& v_serv);
+//		void handleUploadPathInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleMaxBodySizeInServ(virtualServer& v_serv, int *which_one_exist);
+//		void handleLocationInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleErrorPageInServ(virtualServer& v_serv);
+		void handleCgiExtInServ(virtualServer& v_serv, int *which_one_exist);
+
+		void handleRootInLoc(Location& location, int *which_one_exist);
+		void handleIndexInLoc(Location& location, int *which_one_exist);
+		void handleReturnInLoc(Location& location, int *which_one_exist);
+		void handleMethodInLoc(Location& location, int *which_one_exist);
+		void handleAutoindexInLoc(Location& location, int *which_one_exist);
+		void handleUploadPathInLoc(Location& location, int *which_one_exist);
+		void handleMaxBodySizeInLoc(Location& location, int *which_one_exist);
+		void handleAliasInLoc(Location& location, int *which_one_exist);
+//		void handleLocationInLoc(Location& location, int *which_one_exist);
+		void handleErrorPageInLoc(Location& location, int *which_one_exist);
+		void handleCgiExtInLoc(Location& location, int *which_one_exist);
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);
