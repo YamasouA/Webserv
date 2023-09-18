@@ -312,6 +312,9 @@ std::string httpReq::getTokenToEOL() {
 			if (buf[idx+1] == '\012') { // expect is better
 				idx += 2;
 				return line;
+			} else {
+				rejectReq(400);
+				return "";
 			}
 		} else if (buf[idx] == '\012') {
 			idx++;
