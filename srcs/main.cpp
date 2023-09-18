@@ -46,14 +46,12 @@ void initializeFd(configParser conf, Kqueue &kqueue, std::map<int, std::vector<v
 configParser handleConfig(int argc, char *argv[]) {
 	if (argc != 1 && argc != 2) {
 		std::cout << "usage: ./webserv *(path_to_config_file)" << std::endl;
-		exit(1);
-		//return 1;
+		std::exit(1);
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
     if (access(config_path.c_str(), R_OK) != 0) {
         std::cerr << "couldn't open the specified config file" << std::endl;
-        exit(1);
-        //return 1;
+        std::exit(1);
     }
 	configParser conf;
 	try {
