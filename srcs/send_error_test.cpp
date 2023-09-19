@@ -19,8 +19,18 @@ const char *NO_NEWLINE = "GET / HTTP/1.1\r\n"
 			"Accept: text/html\r\n\r\n";
 
 const char *NO_END_OF_HEADER = "GET / HTTP/1.1\r\n"
-			"Host: localhost:8000\r"
+			"Host: localhost:8000\r\n"
 			"User-Agent: Test-Client\r\n";
+
+const char *BAD_METHOD_HEADER = "GETTTTT / HTTP/1.1\r\n"
+			"Host: localhost:8000\r\n"
+			"User-Agent: Test-Client\r\n\r\n";
+
+const char *BAD_FIELD_PAIR_HEADER = "GET / HTTP/1.1\r\n"
+			"Host: localhost:8000\r\n"
+			"Content-Length: 100\r\n"
+			"Transfer-encoding: chunked\r\n"
+			"User-Agent: Test-Client\r\n\r\n";
 
 int send_http_request(const char *host, int port, const char *request) {
     struct sockaddr_in server_addr;
@@ -74,6 +84,10 @@ int main() {
     send_http_request(host, port, NO_NEWLINE);
 	printf("\n\n");
     send_http_request(host, port, NO_END_OF_HEADER);
+	printf("\n\n");
+    send_http_request(host, port, BAD_METHOD_HEADER);
+	printf("\n\n");
+    send_http_request(host, port, BAD_FIELD_PAIR_HEADER);
 
     return 0;
 }
