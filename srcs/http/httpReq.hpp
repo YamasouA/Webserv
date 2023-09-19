@@ -84,6 +84,7 @@ class httpReq {
 		void skipSpace();
 		int expect(char c);
 		std::string getToken(char delimiter);
+		std::string getUriToken(char delimiter);
 		std::string getTokenToEOL();
 		void parseReqLine();
 		bool checkHeaderEnd();

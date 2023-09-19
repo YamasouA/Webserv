@@ -301,6 +301,41 @@ std::string httpReq::getToken(char delimiter)
 	return token;
 }
 
+std::string httpReq::getUriToken(char delimiter)
+{
+	size_t uri_length = 0;
+	std::string token = "";
+	while(idx < buf.length() || uri_length <= 8000) {
+		if (buf[idx] == delimiter) {
+			break;
+		}
+		token += buf[idx];
+		++idx;
+		++uri_length;
+	}
+	if (idx == buf.length()) {
+		std::cout << "delimiter: " << delimiter << std::endl;
+		std::cout << "token: " << token<< std::endl;
+		std::cout << "ko getToken" << std::endl;
+        setErrStatus(400);
+        return "";
+	}
+	if (uri_length > 8000) {
+		setErrStatus(414);
+		is_req_end = true;
+		return "";
+	}
+	if (expect(delimiter)) {
+        setErrStatus(400);
+        return "";
+    }
+    if (token.find(' ') != std::string::npos) {
+        setErrStatus(400);
+        return "";
+    }
+	return token;
+}
+
 std::string httpReq::getTokenToEOL() {
 	std::string line = "";
 	while (idx < buf.length()) {
@@ -644,7 +679,10 @@ void httpReq::parseReqLine()
         setErrStatus(400);
         return;
     }
-    uri = getToken(' ');
+    uri = getUriToken(' ');
+	if (uri.length() == 0) {
+		return;
+	}
 	checkUri();
 	if (uri.length() != 0 && uri[0] != '/') {
 		absUrlParse();
@@ -767,6 +805,9 @@ void httpReq::parseHeader() {
 		return ;
 	}
     parseReqLine();
+	if (getErrStatus() > 0) {
+		return ;
+	}
 	while (idx < buf.size()) {
 		if (checkHeaderEnd()) {
 			break;
