@@ -351,7 +351,8 @@ std::string httpReq::getTokenToEOL() {
 		line += buf[idx];
 		idx++;
 	}
-	return line;
+	return "";
+//	return line;
 }
 
 static const int RE_RECV = 1;
@@ -377,7 +378,20 @@ int httpReq::getChunkSize() {
 					is_req_end = true;
 					return ERROR;
 				}
-				std::stringstream(tmp) >> std::hex >> chunk_size;
+				std::stringstream ss(tmp);
+				ss >> std::hex >> chunk_size;
+				if (ss.fail() && chunk_size == std::numeric_limits<size_t>::max()) {
+					setErrStatus(400);
+					is_req_end = true;
+					return ERROR;
+				}
+				if (chunk_size + content_length > std::numeric_limits<size_t>::max()) {
+					setErrStatus(413);
+					is_req_end = true;
+					return ERROR;
+				}
+				content_length += chunk_size;
+//				std::stringstream(tmp) >> std::hex >> chunk_size;
 				std::cout << "chunk_size: " << chunk_size << std::endl;
 				return OK;
 			} else if (body_buf[idx + 1] == '\0') {
@@ -692,26 +706,27 @@ void httpReq::parseReqLine()
         setErrStatus(400);
         return;
     }
-    version = buf.substr(idx, 8);
-    idx += 8;
+    version = getTokenToEOL();
+//    version = buf.substr(idx, 8);
+//    idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
         std::cerr << "version Error" << std::endl;
         setErrStatus(400); //400?
         return;
     }
-    if (buf[idx] == '\015') {
-        ++idx;
-        if (expect('\012')) {
-            setErrStatus(400);
-            return;
-        }
-    } else if (buf[idx] == '\012') {
-        ++idx;
-    } else {
-        std::cerr << "invalid format" << std::endl;
-        setErrStatus(400);
-        return;
-    }
+//    if (buf[idx] == '\015') {
+//        ++idx;
+//        if (expect('\012')) {
+//            setErrStatus(400);
+//            return;
+//        }
+//    } else if (buf[idx] == '\012') {
+//        ++idx;
+//    } else {
+//        std::cerr << "invalid format" << std::endl;
+//        setErrStatus(400);
+//        return;
+//    }
 }
 
 bool httpReq::checkHeaderEnd()
