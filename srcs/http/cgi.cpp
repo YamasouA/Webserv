@@ -176,13 +176,9 @@ void Cgi::forkProcess() {
 
 	if (pipe(fd) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	if (pipe(fd2) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	setEnv();
 
@@ -191,12 +187,8 @@ void Cgi::forkProcess() {
 	pid = fork();
     if (pid == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	if (pid == 0) {
-//		set_signal_handler(SIGINT, SIG_DFL);
-//		set_signal_handler(SIGQUIT, SIG_DFL);
 		close(fd[1]);
 		close(fd2[0]);
 
@@ -213,13 +205,9 @@ void Cgi::forkProcess() {
 	close(fd2[1]);
 	if (dup2(fd[1], 1) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	if (dup2(fd2[0], 0) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	sendBodyToChild();
 	pid_t pid2 = 0;
@@ -346,6 +334,9 @@ std::string Cgi::getTokenToEOL(size_t& idx) {
 			if (buf[idx+1] == '\012') {
 				idx += 2;
 				return line;
+			} else {
+				setStatusCode(500);
+				return "";
 			}
 		} else if (buf[idx] == '\012') {
 			idx++;
@@ -369,8 +360,6 @@ std::string Cgi::getTokenToEOF(size_t& idx) {
 void Cgi::fixUp() {
     if (header_fields.size() == 0) {
 		return setStatusCode(502);
-//        status = 502;
-//        return;
     }
     if (header_fields.count("status") == 1) {
 		// ここもutil関数使いたい
@@ -379,13 +368,11 @@ void Cgi::fixUp() {
         ss >> status;
         if (status < 100 || 600 <= status) {
 			setStatusCode(502);
-//            status = 502;
         }
     }
     detectResType();
 	if (resType == NO_MATCH_TYPE)
 		setStatusCode(502);
-//		status = 502;
 }
 
 // util関数
@@ -420,8 +407,6 @@ int Cgi::parseCgiResponse() {
 		if (field_name == "") {
 			setStatusCode(502);
 			return status;
-//			status = 502;
-//			return status;
 		}
 		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
@@ -435,29 +420,6 @@ int Cgi::parseCgiResponse() {
     return status;
 }
 
-//void	Cgi::get_exit_status(pid_t pid)
-//{
-//	int		exit_status;
-//	pid_t	pid2;
-//
-//	pid2 = 0;
-//	while (pid2 != -1)
-//	{
-//		pid2 = waitpid(-1, &exit_status, 0);
-//		if (pid == pid2)
-//		{
-//			if (WIFSIGNALED(exit_status))
-//			{
-////				if (WTERMSIG(status) == SIGQUIT)
-//                status = 502;
-////				status = WTERMSIG(status);
-////                std::cout << "exit status" << status << std::endl;
-//			}
-////			else if (WIFEXITED(exit_status))
-////				exit_status = WEXITSTATUS(exit_status);
-//		}
-//	}
-//}
 
 
 void Cgi::runCgi() {
@@ -465,29 +427,20 @@ void Cgi::runCgi() {
 	int backup_stdin = dup(STDIN_FILENO);
     if (backup_stdin == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	int backup_stdout = dup(STDOUT_FILENO);
     if (backup_stdout == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 
 	forkProcess();
 
 	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
     if (dup2(backup_stdout, STDOUT_FILENO) == -1) {
 		return setStatusCode(500);
-//        status = 502;
-//        return;
     }
 	close(backup_stdin);
 	close(backup_stdout);
-//    get_exit_status(pid);
 }
