@@ -1345,7 +1345,6 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
-		std::cout << "status_code: " << status_code << std::endl;
 		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
