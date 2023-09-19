@@ -6,7 +6,12 @@ HOST_NAME = "localhost:8000"
 
 SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 
+TIME_OUT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'close'}
+
 ALLOW_HEADERS = {'Allow': 'POST ', 'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+
+UNSUPPORT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
+
 NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 m = {
     200: "OK",
@@ -136,6 +141,10 @@ def GET_test():
 		response_test(create_path("/redirect/hoge.txt"), [301, 200], SIMPLE_HEADERS, "index.html")
 		# CGI
 		response_test(create_path("/CGI/cgi.py"), [200], SIMPLE_HEADERS, "")
+		# CGIヘッダーのみ
+		#response_test(create_path("/CGI/cgi_only_header.py"), [204], SIMPLE_HEADERS, "")
+		# CGIタイムアウト
+		response_test(create_path("/CGI/cgi_time_out.py"), [504], TIME_OUT_HEADERS, "")
 		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
 		response_test(create_path("/CGI_DENIED/cgi.py"), [200], SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
 		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
