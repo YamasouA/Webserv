@@ -192,8 +192,6 @@ void Cgi::forkProcess() {
         return;
     }
 	if (pid == 0) {
-//		set_signal_handler(SIGINT, SIG_DFL);
-//		set_signal_handler(SIGQUIT, SIG_DFL);
 		close(fd[1]);
 		close(fd2[0]);
 
@@ -328,6 +326,9 @@ std::string Cgi::getTokenToEOL(size_t& idx) {
 			if (buf[idx+1] == '\012') {
 				idx += 2;
 				return line;
+			} else {
+				status = 400;
+				return "";
 			}
 		} else if (buf[idx] == '\012') {
 			idx++;
@@ -417,31 +418,6 @@ int Cgi::parseCgiResponse() {
     fixUp();
     return status;
 }
-
-//void	Cgi::get_exit_status(pid_t pid)
-//{
-//	int		exit_status;
-//	pid_t	pid2;
-//
-//	pid2 = 0;
-//	while (pid2 != -1)
-//	{
-//		pid2 = waitpid(-1, &exit_status, 0);
-//		if (pid == pid2)
-//		{
-//			if (WIFSIGNALED(exit_status))
-//			{
-////				if (WTERMSIG(status) == SIGQUIT)
-//                status = 502;
-////				status = WTERMSIG(status);
-////                std::cout << "exit status" << status << std::endl;
-//			}
-////			else if (WIFEXITED(exit_status))
-////				exit_status = WEXITSTATUS(exit_status);
-//		}
-//	}
-//}
-
 
 void Cgi::runCgi() {
 
