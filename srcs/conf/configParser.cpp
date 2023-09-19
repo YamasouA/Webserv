@@ -190,9 +190,9 @@ Location configParser::parseLocation() {
             }
             which_one_exist |= kMaxSizeExist;
 			std::stringstream sstream(getToken(';'));
-			int result;
+			size_t result;
 			sstream >> result;
-			if (sstream.fail() && std::numeric_limits<int>::max() == result) {
+			if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 				std::cerr << "overflow" << std::endl;
                 throw SyntaxException("Location: invalid value: " + directive);
 			}

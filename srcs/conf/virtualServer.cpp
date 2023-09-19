@@ -3,7 +3,7 @@
 virtualServer::virtualServer()
 :whichOneExist(0),
 	autoindex(false),
-	max_body_size(-1)
+	max_body_size(0)
 {}
 
 virtualServer::virtualServer(const virtualServer& src)

@@ -7,7 +7,7 @@ httpReq::httpReq()
 	is_req_end(false),
 	parse_error(false),
     keep_alive(0),
-    content_length(-1),
+    content_length(0),
     err_status(0),
 	is_in_chunk_data(false)
 {}
@@ -20,7 +20,7 @@ httpReq::httpReq(const std::string& request_msg)
 	is_req_end(false),
 	parse_error(false),
     keep_alive(0),
-    content_length(-1),
+    content_length(0),
     err_status(0),
 	is_in_chunk_data(false)
 {}
@@ -200,7 +200,7 @@ std::map<std::string, std::string> httpReq::getHeaderFields() const
     return this->header_fields;
 }
 
-int httpReq::getContentLength() const
+size_t httpReq::getContentLength() const
 {
     return this->content_length;
 }
@@ -651,7 +651,7 @@ void httpReq::fixUp() {
 			setErrStatus(500);
 			return;
 		}
-		if (ss.fail() && (content_length == std::numeric_limits<int>::max())) {
+		if (ss.fail() && (content_length == std::numeric_limits<size_t>::max())) {
             setErrStatus(413); //or 400
 			return;
 		}
@@ -844,7 +844,8 @@ void httpReq::parseHeader() {
 //    }
 	fixUp();
 	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
-	if (content_length != -1 && content_length <= (int)body_buf.size())
+	if (getHeaderFields().count("content-length") == 1 && content_length <= body_buf.size())
+//	if (content_length != -1 && content_length <= body_buf.size())
 		is_req_end= true;
 	idx = 0;
 }
@@ -853,7 +854,7 @@ void httpReq::parseBody() {
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
 	} else if (header_fields.count("content-length") == 1) {
-		if (header_fields.size() > 0 && content_length <= (int)body_buf.size()) {
+		if (header_fields.size() > 0 && content_length <= body_buf.size()) {
 //		if (header_fields.size() > 0 && content_length <= (int)content_body.size()) {
 //			body_buf += body_buf.substr(0, content_length);
 			content_body += body_buf.substr(0, content_length);

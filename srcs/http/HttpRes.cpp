@@ -1321,7 +1321,7 @@ bool HttpRes::isCgi() {
 int HttpRes::checkClientBodySize() {
     if (httpreq.getContentBody() != "") {
 	    Location loc = getUri2Location(httpreq.getUri());
-        int limit_size = loc.getMaxBodySize();
+        size_t limit_size = loc.getMaxBodySize();
         if (limit_size > 0 && (limit_size < httpreq.getContentLength())) {
             status_code = REQUEST_ENTITY_TOO_LARGE;
             return status_code;
