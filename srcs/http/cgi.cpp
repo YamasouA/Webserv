@@ -5,12 +5,17 @@ Cgi::Cgi() {}
 Cgi::Cgi(const httpReq& request, Location location)
 :httpreq(request),
     target(location),
+	resType(NO_MATCH_TYPE),
 	status(200),
     envs(request.get_meta_variables())
 {}
 
 Cgi::Cgi(const Cgi& src)
-:header_fields(src.getHeaderFields())
+:target(src.target),
+	resType(NO_MATCH_TYPE),
+	status(src.status),
+	envs(src.envs),
+	header_fields(src.getHeaderFields())
 {
     (void)src;
 }
@@ -51,9 +56,17 @@ void Cgi::setStatusCode(int status) {
 std::string Cgi::joinPath() {
     std::cerr << "===== joinPath(cgi) =====" << std::endl;
 	std::string path_root = target.getRoot();
+	if (path_root == "" || path_root[0] != '/') {
+		path_root = "./" + path_root;
+	}
 
 	std::string config_path  = target.getUri();
     std::string script_name = envs["SCRIPT_NAME"];
+	if (config_path.length() < script_name.length()) {
+		script_name = script_name.substr(config_path.length());
+	} else {
+		script_name = "";
+	}
 	std::string alias;
 	if ((alias = target.getAlias()) != "") {
 		config_path = alias;
@@ -61,11 +74,6 @@ std::string Cgi::joinPath() {
 	if ((path_root.size() && path_root[path_root.length() - 1] == '/') || path_root.size() == 0) {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
-	}
-	if (config_path == "" || config_path[config_path.length() - 1] == '/') {
-		if (script_name.size() >= 1) {
-			script_name = script_name.substr(1);
-        }
 	}
 	std::cerr << "joinPath: " << path_root + config_path + script_name << std::endl;
     std::cerr << "===== End joinPath =====" << std::endl;
@@ -369,6 +377,7 @@ void Cgi::fixUp() {
         if (status < 100 || 600 <= status) {
 			setStatusCode(502);
         }
+		header_fields.erase("status");
     }
     detectResType();
 	if (resType == NO_MATCH_TYPE)
@@ -406,6 +415,11 @@ int Cgi::parseCgiResponse() {
         std::string field_name = getToken(':', idx);
 		if (field_name == "") {
 			setStatusCode(502);
+			std::cout << "cgi_body: " << cgi_body << std::endl;
+			std::map<std::string, std::string>::iterator it = header_fields.begin();
+			for (; it != header_fields.end(); it++) {
+				std::cout << it->first << ": " << it->second << std::endl;
+			}
 			return status;
 		}
 		std::cout << "field_name: " << field_name << std::endl;
@@ -419,8 +433,6 @@ int Cgi::parseCgiResponse() {
     fixUp();
     return status;
 }
-
-
 
 void Cgi::runCgi() {
 

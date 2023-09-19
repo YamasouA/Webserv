@@ -117,8 +117,11 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 	std::string path = tokens[tokens.size() - 1];
 	tokens.pop_back();
 	// pathとして正しくない
+//	if (path[0] != '/') {
+//		return;
+//	}
 	if (path[0] != '/') {
-		return;
+		path = '/' + path;
 	}
 	for (std::vector<std::string>::iterator it = tokens.begin();
 		it != tokens.end(); it++) {

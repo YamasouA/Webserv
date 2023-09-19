@@ -2,18 +2,20 @@
 #include "http/HttpRes.hpp"
 
 Client::Client()
-: httpreq()
+: httpreq(),
+fd(0),
+last_recv_time(std::time(0))
 {}
 
 Client::Client(const Client& source)
 :httpreq(source.getHttpReq()),
     httpres(source.getHttpRes()),
     vServer(source.getVserver()),
+	fd(source.getFd()),
     client_ip(source.getClientIp()),
-    port(source.getPort())
-{
-	this->fd = source.getFd();
-}
+    port(source.getPort()),
+	last_recv_time(source.getLastRecvTime())
+{}
 
 Client& Client::operator=(const Client& rhs)
 {
@@ -56,6 +58,10 @@ void Client::setPort(int port) {
     this->port = port;
 }
 
+void Client::setLastRecvTime(time_t now) {
+	this->last_recv_time = now;
+}
+
 int Client::getFd() const{
 	return fd;
 }
@@ -79,4 +85,7 @@ std::string Client::getClientIp() const {
 
 int Client::getPort() const {
     return port;
+}
+time_t Client::getLastRecvTime() const {
+	return last_recv_time;
 }

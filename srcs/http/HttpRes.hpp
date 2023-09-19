@@ -118,7 +118,7 @@ class HttpRes {
 		void createControlData();
         std::string createDate(time_t now, std::string fieldName);
 		void createContentLength();
-		void setContentType();
+		int setContentType();
 		void postEvent();
 		void evQueueInsert();
 		void headerFilter();
@@ -164,14 +164,18 @@ class HttpRes {
         size_t getHeaderSize() const;
         std::string getResBody() const;
         size_t getBodySize() const;
+		Kqueue* getConnection() const;
 		std::string redirect_path;
 
 		void setIsSendedHeader(bool b);
 		void setIsSendedBody(bool b);
 		bool getIsSendedBody() const;
 		bool getIsSendedHeader() const;
-    void setLocationField(std::string loc);
+		void createErrorResponse(int status);
+		void setLocationField(std::string loc);
     std::string getLocationField() const;
+		int getKeepAlive() const;
+		bool isHeaderOnly() const;
 };
 
 #endif

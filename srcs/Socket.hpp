@@ -1,3 +1,6 @@
+#ifndef SOCKET_HPP
+#define SOCKET_HPP
+
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -27,3 +30,5 @@ class Socket {
 		int getPort();
 		struct sockaddr_in getServerAddr();
 };
+
+#endif

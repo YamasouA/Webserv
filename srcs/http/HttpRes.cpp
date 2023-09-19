@@ -68,6 +68,7 @@ HttpRes::HttpRes(const Client& source, Kqueue &kq)
 	this->vServer = source.getVserver();
     this->connection = &kq;
 	this->fd = source.getFd();
+	this->keep_alive = httpreq.getKeepAlive();
 }
 
 HttpRes::HttpRes(const HttpRes& src) {
@@ -77,6 +78,9 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->body_size = src.body_size;
     this->is_sended_header = src.getIsSendedHeader();
     this->is_sended_body = src.getIsSendedBody();
+    this->connection = src.getConnection();
+	this->keep_alive = src.keep_alive;
+
 }
 
 HttpRes& HttpRes::operator=(const HttpRes& rhs) {
@@ -89,6 +93,8 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->body_size = rhs.body_size;
     this->is_sended_header = rhs.getIsSendedHeader();
     this->is_sended_body = rhs.getIsSendedBody();
+    this->connection = rhs.getConnection();
+	this->keep_alive = rhs.keep_alive;
 	return *this;
 }
 
@@ -138,6 +144,17 @@ std::string HttpRes::getLocationField() const {
     return location_field;
 }
 
+int HttpRes::getKeepAlive() const {
+	return keep_alive;
+}
+
+bool HttpRes::isHeaderOnly() const {
+	return header_only;
+}
+
+Kqueue* HttpRes::getConnection() const {
+    return connection;
+}
 
 Location HttpRes::getUri2Location(std::string uri) const
 {
@@ -152,6 +169,10 @@ Location HttpRes::getUri2Location(std::string uri) const
 	}
 	std::string path = uri;
 	while (1) {
+		loc = uri2location.find(path);
+		if (loc != uri2location.end()) {
+			return loc->second;
+		}
 		std::string::size_type i = path.rfind('/');
 		if (i == std::string::npos) {
 			break;
@@ -165,18 +186,18 @@ Location HttpRes::getUri2Location(std::string uri) const
 		if (loc != uri2location.end()) {
 			return loc->second;
 		} else {
-//		} else if (path != "" && path[path.length() - 1]) {
 			path = path.substr(0, i);
 		}
-        if (path == "/") {
-            break;
-        }
 	}
     Location no_match_loc;
     return no_match_loc;
 }
 
-
+void HttpRes::createErrorResponse(int status) {
+	status_code = status;
+	headerFilter();
+	out_buf = "";
+}
 
 Location HttpRes::longestMatchLocation(std::string request_path, std::vector<Location> locations) {
 	Location location;
@@ -322,18 +343,18 @@ void HttpRes::createContentLength() {
 	header += ss.str();
 }
 
-void HttpRes::setContentType() {
+int HttpRes::setContentType() {
 	std::string ext;
 	std::string type;
 	std::string uri = httpreq.getUri();
-	std::string::size_type dot_pos = uri.find('.');
+	std::string::size_type dot_pos = uri.rfind('.');
 
-	// .のみのケースに対応できるか？
 	if (dot_pos != std::string::npos) {
 		ext = uri.substr(dot_pos + 1);
 		if (ext.length() == 0) {
 			std::cerr << "Error dot" << std::endl;
-            abort(); // status_codeに置き換え
+			status_code = BAD_REQUEST;
+			return status_code;
 		}
 	}
 	for (size_t i = 0; i < ext.length(); i++) {
@@ -344,19 +365,17 @@ void HttpRes::setContentType() {
 		}
 	}
 
-	// content-typeが受けられるか
-	/*
-	if (types.count(type) != 0) {
-		content_type = types[type];
-	}*/
 	content_type = getContentType(type);
 
     if (content_type.length() == 0) {
 	    content_type = default_type;
     }
+	return status_code;
 }
 
+/*
 void HttpRes::evQueueInsert() {
+	std::cout << "connection: " << connection << std::endl;
 	connection->setEvent(fd, EVFILT_WRITE, EV_ENABLE);
     std::cout << "==================send write event==================" << std::endl;
 }
@@ -367,6 +386,7 @@ void HttpRes::postEvent() {
         evQueueInsert();
     }
 }
+*/
 
 std::map<int, std::string> create_status_msg(){
     std::map<int, std::string> m;
@@ -440,8 +460,6 @@ void HttpRes::divingThroughDir(const std::string& path) {
             if (errno != 0) {
 				std::cerr << "readdir Error" << std::endl;
 				status_code = INTERNAL_SERVER_ERROR;
-            } else {
-            // read directory end
             }
             if (closedir(dir_info.dir) == -1) {
                 std::cerr << "closedir Error" << std::endl;
@@ -522,6 +540,7 @@ int HttpRes::deletePath(bool is_dir) {
         }
         if (rmdir(dir_path.c_str()) >= 0) {
             status_code = NO_CONTENT;
+			header_only = 1;
             return status_code;
         }
 
@@ -529,6 +548,7 @@ int HttpRes::deletePath(bool is_dir) {
 		std::string file_name = joinPath();
 		if (remove(file_name.c_str()) >= 0) {
 		    status_code = NO_CONTENT;
+			header_only = 1;
 			return status_code;
 		}
 	}
@@ -561,15 +581,11 @@ int HttpRes::deleteHandler() {
 	std::string file_name = joinPath();
     if (stat(file_name.c_str(), &sb) == -1) {
 		std::cout << "Error(stat)" << std::endl;
-		status_code = INTERNAL_SERVER_ERROR;
+		status_code = NOT_FOUND;
 		return status_code;
 	}
 	if (S_ISDIR(sb.st_mode)) {
 		std::string uri = httpreq.getUri();
-//		if (uri[uri.length() - 1] != '/') {
-//			status_code = BAD_REQUEST;
-//			return;
-//		}
 		depth = dav_depth();
 		if (depth != -1) {
 			status_code = BAD_REQUEST;
@@ -619,7 +635,7 @@ void HttpRes::headerFilter() {
                 header_only = 1;
             }
             if (status_code == NO_CONTENT) {
-                header_only = 1;
+//                header_only = 1;
                 content_type = "";
                 last_modified_time = NULL;
             }
@@ -681,17 +697,24 @@ void HttpRes::headerFilter() {
 		buf += "\r\n";
 	}
 
-    if (httpreq.getKeepAlive()) {
+//    if (httpreq.getKeepAlive()) {
+	std::cout << "keep-alive in header: " << keep_alive << std::endl;
+    if (this->keep_alive) {
         buf += "Connection: keep-alive";
     } else {
 	    buf += "Connection: close";
     }
 	buf += "\r\n";
     if (status_code == 201 && getLocationField() != "") {
-        buf += "Location: " + getLocationField();
+		std::string loc_field_value = getLocationField();
+		if (loc_field_value[0] == '.') {
+			loc_field_value = loc_field_value.substr(1);
+		}
+        buf += "Location: " + loc_field_value;
+//        buf += "Location: " + getLocationField();
         buf += "\r\n";
     }
-	if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
+	else if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
 		buf += "Location: " + redirect_path;
 		buf += "\r\n";
 	}
@@ -710,7 +733,7 @@ void HttpRes::headerFilter() {
 	//
     std::cout << "response Header: " << std::endl;
 	std::cout << buf << std::endl;
-    postEvent();
+    //postEvent();
 }
 
 void HttpRes::sendHeader() {
@@ -727,7 +750,7 @@ int HttpRes::staticHandler() {
     std::cout << "uri: " << uri << std::endl;
 	target = getUri2Location(uri);
     if (target.getUri() == "") {
-        status_code = 404;
+        status_code = NOT_FOUND;
         return status_code;
     }
 	std::cout << target << std::endl;
@@ -746,7 +769,7 @@ int HttpRes::staticHandler() {
 	std::string file_name = joinPath();
 
     struct stat sb;
-    status_code = 200;
+    status_code = HTTP_OK;
     if (method == "GET" || method == "HEAD") {
         if (access(file_name.c_str(), R_OK) < 0) {
             std::cerr << "open Error" << std::endl;
@@ -793,9 +816,16 @@ int HttpRes::staticHandler() {
             return NOT_FOUND;
         }
 	    content_length_n = sb.st_size;
+		if (content_length_n == 0) {
+        status_code = NO_CONTENT;
+        header_only = 1;
+    }
 	    last_modified_time = sb.st_mtime;
     } else if (method == "POST" || method == "PUT") {
+		std::cout << "stat path: " << file_name.c_str() << std::endl;
         if (stat(file_name.c_str(), &sb) == -1) {
+//        if (stat("./upload/post.html", &sb) == -1) {
+			std::cout << "errno: " << errno << std::endl;
 			if (errno == ENOENT) {
 		        status_code = CREATED;
                 setLocationField(file_name);
@@ -812,7 +842,13 @@ int HttpRes::staticHandler() {
 //                std::cout << "POST errno: " << errno << std::endl;
             }
         } else {
-            status_code = 200;
+            status_code = HTTP_OK;
+            std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);;
+			// 対応していない拡張子かつcontent-typeが存在する場合
+			if (ext == "" && httpreq.getHeaderFields()["content-type"] != "") {
+				status_code = UNSUPPORTED_MEDIA_TYPE;
+				return status_code;
+			}
         }
         if (S_ISDIR(sb.st_mode)) {
             time_t tm = std::time(NULL);
@@ -849,6 +885,10 @@ int HttpRes::staticHandler() {
             setLocationField(file_name);
         }
         content_length_n = sb.st_size;
+		if (content_length_n == 0) {
+			status_code = NO_CONTENT;
+			header_only = 1;
+		}
 	    last_modified_time = sb.st_mtime;
         if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
 			std::cerr << "stat Error" << std::endl;
@@ -878,6 +918,10 @@ int HttpRes::staticHandler() {
 			}
 			std::cout << "set body done" << std::endl;
 			std::string body = httpreq.getContentBody();
+			if (body.length() == 0 && status_code != CREATED) {
+				status_code = NO_CONTENT;
+				header_only = 1;
+			}
 			std::cout << body << std::endl;
             ofs << body;
             ofs.close();
@@ -885,7 +929,10 @@ int HttpRes::staticHandler() {
 		}
     }
     //discoard request body here ?
-	setContentType();
+	int handler_status = setContentType();
+	if (handler_status == BAD_REQUEST) {
+		return status_code;
+	}
     //set_etag(); //necessary?
 
     std::ifstream ifs(file_name.c_str(), std::ios::binary);
@@ -959,6 +1006,7 @@ int HttpRes::redirectHandle() {
     switch (status_code) {
         case BAD_REQUEST:
         case REQUEST_ENTITY_TOO_LARGE:
+		case REQUEST_TIME_OUT:
 //        case REQUEST_URI_TOO_LARGE:
 //        case HTTP_TO_HTTPS:
 //        case HTTPS_CERT_ERROR:
@@ -1046,6 +1094,8 @@ int HttpRes::returnRedirect() {
 	std::string uri = httpreq.getUri();
 	Location loc = getUri2Location(uri);
 	std::string ret = loc.getReturn();
+	std::cout << "loc: " << loc << std::endl;
+	std::cout << "ret: " << ret << std::endl;
 	if (ret == "")
 		return DECLINED;
 	std::vector<std::string> elms;
@@ -1082,6 +1132,7 @@ int HttpRes::returnRedirect() {
 		path = elms[1];
 	}
 	redirect_path = path;
+	std::cout << "redirect_path: " << redirect_path << std::endl;
     // needs path with support status_code
 	// compile_complex_valueは$の展開をしてそう
     return status_code;
@@ -1201,7 +1252,6 @@ int HttpRes::autoindexHandler() {
     status_code = HTTP_OK;
     // auto_index only text/html for now
     content_type = "text/html";
-    sendHeader(); // later ?
 
     dir_info.valid_info = 0;
     std::map<std::string, dir_t> index_of;
@@ -1211,6 +1261,8 @@ int HttpRes::autoindexHandler() {
         if (!dir_info.d_ent) {
             if (errno != 0) {
                 std::cerr << "readdir Error" << std::endl;
+				status_code = INTERNAL_SERVER_ERROR;
+				return status_code;
                 // close dir and return error or INTERNAL_SERVER_ERROR
             } else {
                 //read directory end
@@ -1239,18 +1291,22 @@ int HttpRes::autoindexHandler() {
     }
     if (closedir(dir_info.dir) == -1) {
         std::cerr << "closedir Error" << std::endl;
+		return status_code;
     }
 
     if (!header_only) {
         out_buf = createAutoIndexHtml(index_of);
         body_size = out_buf.length();
+		content_length_n = body_size;
     }
+    sendHeader(); // later ?
     return OK;
 
 }
 
 bool HttpRes::isCgi() {
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
+	std::cout << "cgi_loc: " << location << std::endl;
     std::vector<std::string> vec = location.getCgiExt();
 	if (vec.size() == 0)
 		return false;
@@ -1293,14 +1349,12 @@ void HttpRes::cgiHandler() {
 	}
 	handler_status = cgi.parseCgiResponse();
   	if (cgi.getResType() == DOCUMENT) {
+		std::cout << "===DOCUMENT===" << std::endl;
 		status_code = handler_status;
     	cgi.getHeaderFields().erase("status");
     	setCgi(cgi);
-    	sendHeader(); //tmp here
-    	if (httpreq.getMethod() == "HEAD") {
-    	  return finalizeRes(status_code);
-    	}
     	out_buf = cgi.getCgiBody();
+		std::cout << "out_buf: " << out_buf << std::endl;
     	if (cgi.getHeaderFields().count("content-length")) {
 			  // ここもutil関数
     	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
@@ -1308,24 +1362,34 @@ void HttpRes::cgiHandler() {
     	} else {
     	  body_size = out_buf.length();
     	}
+		content_length_n = body_size;
+    	sendHeader(); //tmp here
+    	if (httpreq.getMethod() == "HEAD") {
+    	  header_only = 1;
+    	}
+		std::cout << "content_length_n: " << body_size << std::endl;
     	return finalizeRes(status_code);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
+		std::cout << "===LOCAL_REDIRECT===" << std::endl;
 		if (httpreq.isRedirectLimit()) {
-			status_code = 500;
+			status_code = INTERNAL_SERVER_ERROR;
 			return finalizeRes(status_code);
 		}
 		httpreq.setUri(cgi.getHeaderFields()["Location"]);
 		httpreq.incrementRedirectCnt();
 		return runHandlers();
     } else if (cgi.getResType() == CLIENT_REDIRECT || cgi.getResType() == CLIENT_REDIRECT_WITH_DOC) {
-		status_code = 302;
+		std::cout << "===OTHER===" << std::endl;
+		status_code = MOVED_TEMPORARILY;
 		redirect_path = cgi.getHeaderFields()["Location"];
 		body = cgi.getCgiBody();
 		headerFilter();
 
 		return finalizeRes(status_code);
     } else {
-      body_size = out_buf.length();
+		std::cout << "===NONE===" << std::endl;
+		status_code = handler_status;
+		body_size = out_buf.length();
     }
     return finalizeRes(status_code);
 }
