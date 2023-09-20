@@ -897,7 +897,7 @@ int HttpRes::handlePost(std::string& file_name) {
         }
     } else {
         status_code = HTTP_OK;
-        std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);;
+        std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
 			// 対応していない拡張子かつcontent-typeが存在する場合
 		if (ext == "" && httpreq.getHeaderFields()["content-type"] != "") {
 			status_code = UNSUPPORTED_MEDIA_TYPE;
