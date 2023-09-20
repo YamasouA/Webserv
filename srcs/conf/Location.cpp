@@ -3,7 +3,7 @@
 Location::Location()
 : depth(-1),
 	autoindex(false),
-	max_body_size(-1),
+	max_body_size(0),
 	which_one_exist(0)
 {}
 
@@ -77,7 +77,7 @@ void Location::setIndex(std::vector<std::string> index)
 	this->index = index;
 }
 
-void Location::setMaxBodySize(int max_body_size)
+void Location::setMaxBodySize(size_t max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
@@ -161,7 +161,7 @@ std::string Location::getUploadPath() const{
 std::vector<std::string> Location::getIndex() const{
 	return index;
 }
-int Location::getMaxBodySize() const {
+size_t Location::getMaxBodySize() const {
 	return max_body_size;
 }
 

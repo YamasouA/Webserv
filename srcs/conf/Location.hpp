@@ -15,7 +15,7 @@ class Location {
 		void setIsAutoindex(bool autoindex);
 		void setUploadPath(std::string upload_path);
 		void setIndex(std::vector<std::string> index);
-		void setMaxBodySize(int max_body_size);
+		void setMaxBodySize(size_t max_body_size);
 		void setCgiPath(std::string cgi_path);
 		void setReturn(std::string ret);
 		void setLocation(Location location);
@@ -33,7 +33,7 @@ class Location {
 		bool getIsAutoindex() const;
 		std::string getUploadPath() const;
         std::vector<std::string> getIndex() const;
-		int getMaxBodySize() const;
+		size_t getMaxBodySize() const;
 		std::string getCgiPath() const;
 		std::string getReturn() const;
 		std::string getErrorPage(int status_code) const;
@@ -61,7 +61,7 @@ class Location {
 		int depth;
 		std::string alias;
 		bool autoindex;
-		int max_body_size;
+		size_t max_body_size;
 		std::vector<Location> locations;
 		std::vector<std::string> cgi_ext;
         int which_one_exist;

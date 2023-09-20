@@ -188,9 +188,9 @@ void configParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 		throw ConfigValueException("v_serv: invalid value: max_body_size");
 	}
 	std::stringstream sstream(tmp);
-	int result;
+	size_t result;
 	sstream >> result;
-	if (sstream.fail() && std::numeric_limits<int>::max() == result) {
+	if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
 		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("Location: invalid value: max_body_size");
 	}

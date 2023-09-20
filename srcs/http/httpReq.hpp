@@ -36,7 +36,7 @@ class httpReq {
         std::string getVersion() const;
         std::string getContentBody() const;
         std::string getBuf() const;
-        int getContentLength() const;
+        size_t getContentLength() const;
 		std::string getQueryString() const;
         std::map<std::string, std::string> getHeaderFields() const;
         int getKeepAlive() const;
@@ -75,7 +75,8 @@ class httpReq {
 		bool parse_error;
         int keep_alive;
 		std::string query_string;
-        int content_length;
+        size_t content_length;
+//        int content_length;
         int err_status;
 		size_t chunk_size;
 		bool is_in_chunk_data;
@@ -84,6 +85,7 @@ class httpReq {
 		void skipSpace();
 		int expect(char c);
 		std::string getToken(char delimiter);
+		std::string getUriToken(char delimiter);
 		std::string getTokenToEOL();
 		void parseReqLine();
 		bool checkHeaderEnd();
