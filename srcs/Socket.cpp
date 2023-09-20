@@ -34,7 +34,7 @@ void Socket::setPort(int port) {
 }
 
 void Socket::setServerAddr() {
-	memset(&this->serv_addr, 0, sizeof(this->serv_addr));
+	std::memset(&this->serv_addr, 0, sizeof(this->serv_addr));
 
 	this->serv_addr.sin_family = AF_INET;
 	this->serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);

@@ -116,12 +116,19 @@ class HttpRes {
 		//void createResponseBody();
 		std::string getStatusString();
 		void createControlData();
-        std::string createDate(time_t now, std::string fieldName);
+        std::string createDate(std::string fieldName);
 		void createContentLength();
 		int setContentType();
 		void postEvent();
 		void evQueueInsert();
 		void headerFilter();
+		void createStatusLine();
+		void addAllowField();
+		void addContentTypeField();
+		void addContentLengthField();
+		void addConnectionField();
+		void addLocationField();
+
         int staticHandler();
         void sendHeader();
         Location getUri2Location(std::string uri) const;
@@ -145,6 +152,13 @@ class HttpRes {
         int checkClientBodySize();
         void cgiHandler();
         void httpHandler();
+		int HandleSafeMethod(const char *file_name, std::string& uri);
+		int handlePost(std::string& file_name);
+		int checkAccessToPOST(const char *file_name);
+		int checkAccessToGET(const char *file_name, const std::string& uri);
+		int createDestFile(std::string& file_name);
+		int handleResBody(const std::string& file_name);
+		int opendirError();
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
