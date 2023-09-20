@@ -37,6 +37,12 @@ const char *BAD_ENCODE_HEADER = "GET / HTTP/1.1\r\n"
 			"Transfer-encoding: gzip\r\n"
 			"User-Agent: Test-Client\r\n\r\n";
 
+const char *OBS_HEADER = "GET / HTTP/1.1\r\n"
+			"Host: localhost:8000\r\n"
+			"Transfer-encoding: gzip\r\n"
+			"	chunked\r\n"
+			"chunkedUser-Agent: Test-Client\r\n\r\n";
+
 int send_http_request(const char *host, int port, const char *request) {
     struct sockaddr_in server_addr;
     int sockfd, bytes_sent, bytes_received;
@@ -101,6 +107,9 @@ int main() {
 	printf("\n\n");
 	// 501 NOT IMPLEMENT
     send_http_request(host, port, BAD_ENCODE_HEADER);
+	printf("\n\n");
+	// 400 BAD Request
+    send_http_request(host, port, OBS_HEADER);
 
     return 0;
 }
