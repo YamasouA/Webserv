@@ -263,7 +263,7 @@ std::string HttpRes::joinPath() {
         upload_path = "";
     }
     int index_flag = 0;
-	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST" && method != "PUT") {
+	if ((file_path[file_path.length() -1 ] == '/' || file_path == "") && config_path[config_path.length() - 1] == '/' && method != "POST") {
         index_flag = 1;
 	}
 	std::string alias;
