@@ -166,14 +166,13 @@ Location HttpRes::getUri2Location(std::string uri) const
 	std::map<std::string, Location>::const_iterator loc = uri2location.find(tmp_uri);
 	if (loc != uri2location.end()) {
 		return loc->second;
-	} else {
-		std::map<std::string, Location>::const_iterator it = uri2location.find(uri);
-		if (it != uri2location.end()) {
-			return it->second;
-		}
 	}
 	std::string path = uri;
 	while (1) {
+		loc = uri2location.find(path);
+		if (loc != uri2location.end()) {
+			return loc->second;
+		}
 		std::string::size_type i = path.rfind('/');
 		if (i == std::string::npos) {
 			break;
@@ -187,16 +186,8 @@ Location HttpRes::getUri2Location(std::string uri) const
 		if (loc != uri2location.end()) {
 			return loc->second;
 		} else {
-//		} else if (path != "" && path[path.length() - 1]) {
 			path = path.substr(0, i);
-			loc = uri2location.find(path);
-			if (loc != uri2location.end()) {
-				return loc->second;
-			}
 		}
-        if (path == "/") {
-            break;
-        }
 	}
     Location no_match_loc;
     return no_match_loc;
@@ -592,7 +583,7 @@ int HttpRes::deleteHandler() {
 	std::string file_name = joinPath();
     if (stat(file_name.c_str(), &sb) == -1) {
 		std::cout << "Error(stat)" << std::endl;
-		status_code = INTERNAL_SERVER_ERROR;
+		status_code = NOT_FOUND;
 		return status_code;
 	}
 	if (S_ISDIR(sb.st_mode)) {
@@ -999,6 +990,7 @@ int HttpRes::staticHandler() {
 			return status_code;
 		} else if (handler_status == DECLINED) {
 			return DECLINED;
+
 		}
     } else if (method == "POST" || method == "PUT") {
 		if (handlePost(file_name) != OK) {
@@ -1067,6 +1059,7 @@ int HttpRes::redirectHandle() {
     switch (status_code) {
         case BAD_REQUEST:
         case REQUEST_ENTITY_TOO_LARGE:
+		case REQUEST_TIME_OUT:
 //        case REQUEST_URI_TOO_LARGE:
 //        case HTTP_TO_HTTPS:
 //        case HTTPS_CERT_ERROR:
@@ -1138,11 +1131,11 @@ void HttpRes::finalizeRes(int handler_status)
     if (handler_status == DECLINED || handler_status == OK) {
         return;
     }
-    if ((200 <= status_code && status_code < 207)) {// && status_code != 204) {
+    if ((200 <= status_code && status_code < 207) && status_code != 204) {
         // handle connection
         return;
     }
-    if (status_code >= 300) {// || status_code == 204) {
+    if (status_code >= 300 || status_code == 204) {
         // handle around timeer
         redirectHandle();
         return;
@@ -1154,6 +1147,8 @@ int HttpRes::returnRedirect() {
 	std::string uri = httpreq.getUri();
 	Location loc = getUri2Location(uri);
 	std::string ret = loc.getReturn();
+	std::cout << "loc: " << loc << std::endl;
+	std::cout << "ret: " << ret << std::endl;
 	if (ret == "")
 		return DECLINED;
 	std::vector<std::string> elms;
@@ -1190,6 +1185,7 @@ int HttpRes::returnRedirect() {
 		path = elms[1];
 	}
 	redirect_path = path;
+	std::cout << "redirect_path: " << redirect_path << std::endl;
     // needs path with support status_code
 	// compile_complex_valueは$の展開をしてそう
     return status_code;
@@ -1403,7 +1399,6 @@ void HttpRes::cgiHandler() {
 	int handler_status = 0;
 	if (cgi.getStatusCode() > 400) {
 		status_code = cgi.getStatusCode();
-		std::cout << "status_code: " << status_code << std::endl;
 		return finalizeRes(status_code);
 	}
 	handler_status = cgi.parseCgiResponse();
@@ -1412,11 +1407,8 @@ void HttpRes::cgiHandler() {
 		status_code = handler_status;
     	cgi.getHeaderFields().erase("status");
     	setCgi(cgi);
-    	sendHeader(); //tmp here
-    	if (httpreq.getMethod() == "HEAD") {
-    	  return finalizeRes(status_code);
-    	}
     	out_buf = cgi.getCgiBody();
+		std::cout << "out_buf: " << out_buf << std::endl;
     	if (cgi.getHeaderFields().count("content-length")) {
 			  // ここもutil関数
     	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
@@ -1424,6 +1416,12 @@ void HttpRes::cgiHandler() {
     	} else {
     	  body_size = out_buf.length();
     	}
+		content_length_n = body_size;
+    	sendHeader(); //tmp here
+    	if (httpreq.getMethod() == "HEAD") {
+    	  header_only = 1;
+    	}
+		std::cout << "content_length_n: " << body_size << std::endl;
     	return finalizeRes(status_code);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
 		std::cout << "===LOCAL_REDIRECT===" << std::endl;

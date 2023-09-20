@@ -7,6 +7,7 @@ HOST_NAME = "localhost:8000"
 SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 
 ALLOW_HEADERS = {'Allow': 'POST ', 'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
 m = {
     200: "OK",
     201: "Created",
@@ -59,7 +60,7 @@ def create_path(path):
 
 def get_body_from_status(status_code, path):
 	# それぞれのstatus_codeにデフォルトの内容が存在する
-	if status_code != 200:
+	if status_code != 200 and status_code != 204:
 		return "<html>\r\n<head><title>" + str(status_code) + " " + m[status_code]\
 			+ "</title></head>\r\n<body>\r\n<center><h1>"\
 			+ str(status_code) + " " + m[status_code]\
@@ -85,6 +86,7 @@ def header_checker(expect_header, res_header, data_size):
 		
 		# 'Content-Length'はgetしたファイルのサイズと比較する
 		if header_field == 'Content-Length':
+			print(data_size)
 			if res_header['Content-Length'] != str(data_size):
 				return False
 
@@ -94,8 +96,17 @@ def header_checker(expect_header, res_header, data_size):
 
 	return True
 
-def response_test(url, expected_status, expected_headers, body_path):
+def response_test(url, expected_status_list, expected_headers, body_path):
 	res = requests.get(url)
+	if len(res.history) >= 1:
+		# 最終的なステータスはhistoryに入らない
+		assert len(res.history) == len(expected_status_list) - 1,\
+			"redirect num Error" + error_text(expected_status_list, res.history)
+		for hi, exp_st in zip(res.history, expected_status_list):
+			if hi.status_code != exp_st:
+				assert len(res.history) == len(expected_status_list),\
+					"redirect num Error" + error_text(expected_status_list, res.history)
+	expected_status = expected_status_list[-1]
 	assert res.status_code == expected_status,\
 		"Status_code Error" + error_text(expected_status, res.status_code)
 
@@ -112,21 +123,23 @@ def GET_test():
 	try:
 		# response_test(uri, expected status_code, expected haders, return file's path)
 		# 正常なテスト
-		response_test(create_path("/index.html"), 200, SIMPLE_HEADERS, "index.html")
+		response_test(create_path("/index.html"), [200], SIMPLE_HEADERS, "index.html")
 		# autoindex
-		response_test(create_path("/"), 200, SIMPLE_HEADERS, "index.html")
+		response_test(create_path("/"), [200], SIMPLE_HEADERS, "index.html")
+		# ファイルはあるが中身がない
+		response_test(create_path("/no_content.html"), [204], NO_CONTENT_HEADERS, "no_content.html")
 		# 存在しないファイル
-		response_test(create_path("/wwwwwwwwwwwwww.html"), 404, SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
+		response_test(create_path("/wwwwwwwwwwwwww.html"), [404], SIMPLE_HEADERS, "wwwwwwwwwwwww.html")
 		# GET禁止
-		response_test(create_path("/GET_DENIED"), 405, ALLOW_HEADERS, "wwwwwwwwwwwww.html")
+		response_test(create_path("/GET_DENIED"), [405], ALLOW_HEADERS, "wwwwwwwwwwwww.html")
 		# redirect
-		#response_test(create_path("/redirect/hoge.txt"), 301, SIMPLE_HEADERS, "index.html")
+		response_test(create_path("/redirect/hoge.txt"), [301, 200], SIMPLE_HEADERS, "index.html")
 		# CGI
-		response_test(create_path("/CGI/cgi.py"), 200, SIMPLE_HEADERS, "")
+		response_test(create_path("/CGI/cgi.py"), [200], SIMPLE_HEADERS, "")
 		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
-		response_test(create_path("/CGI_DENIED/cgi.py"), 200, SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
+		response_test(create_path("/CGI_DENIED/cgi.py"), [200], SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
 		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
-		response_test(create_path("/CGI/syntax_error_cgi.py"), 404, SIMPLE_HEADERS, "")
+		response_test(create_path("/CGI/syntax_error_cgi.py"), [502], SIMPLE_HEADERS, "")
 
 		print("========= test done!!!!! ==========")
 	except:
@@ -135,3 +148,4 @@ def GET_test():
 
 if __name__ == "__main__":
 	GET_test()
+

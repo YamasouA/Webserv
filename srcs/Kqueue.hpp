@@ -24,7 +24,6 @@ class Kqueue {
 		int getEventsNum();
 		int getKq();
 		int setEvent(int fd, short ev_filter, u_int fflags);
-		int disableEvent(int fd, short ev_filter);
 };
 
 #endif

@@ -105,6 +105,7 @@ class httpReq {
 		void skipTokenToEOF();
 		size_t getChunkedSize() const;
 		bool isInChunkData() const;
+		void rejectReq(int err_status); // or discardReq
 };
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj);
