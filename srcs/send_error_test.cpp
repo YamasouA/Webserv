@@ -91,23 +91,30 @@ int main() {
     int port = 8000;
 
 	// 505 HTTP Version Not Supported
+	printf("expected 505\n");
     send_http_request(host, port, ERROR_HTTP_VERSION);
 	printf("\n\n");
+	printf("expected 400\n");
 	// 400 Bad Request
     send_http_request(host, port, NO_NEWLINE);
 	printf("\n\n");
+	printf("expected 408\n");
 	// 408 Request Time-out
     send_http_request(host, port, NO_END_OF_HEADER);
 	printf("\n\n");
+	printf("expected 501\n");
 	// 501 NOT IMPLEMENT
     send_http_request(host, port, BAD_METHOD_HEADER);
 	printf("\n\n");
+	printf("expected 400\n");
 	// 400 BAD REQUEST
     send_http_request(host, port, BAD_FIELD_PAIR_HEADER);
 	printf("\n\n");
+	printf("expected 501\n");
 	// 501 NOT IMPLEMENT
     send_http_request(host, port, BAD_ENCODE_HEADER);
 	printf("\n\n");
+	printf("expected 400\n");
 	// 400 BAD Request
     send_http_request(host, port, OBS_HEADER);
 

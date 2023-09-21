@@ -304,26 +304,6 @@ Cgi HttpRes::getCgi() const {
     return cgi;
 }
 
-//std::string HttpRes::getStatusString() {
-//	switch (status_code) {
-//		case 200:
-//			return "OK\n";
-//		case 404:
-//			return "Not Found\n";
-//	}
-//	return "Error(statusString)\n";
-//}
-//
-//void HttpRes::createControlData() {
-//	header += "HTTP1.1 ";
-//	std::stringstream ss;
-//	ss << status_code;
-//	header += ss.str();
-//	header += " ";
-//	header += getStatusString();
-//}
-
-//std::string HttpRes::createDate(time_t now, std::string fieldName)
 std::string HttpRes::createDate(std::string fieldName)
 {
 	time_t now = std::time(NULL);
@@ -374,21 +354,6 @@ int HttpRes::setContentType() {
     }
 	return status_code;
 }
-
-/*
-void HttpRes::evQueueInsert() {
-	std::cout << "connection: " << connection << std::endl;
-	connection->setEvent(fd, EVFILT_WRITE, EV_ENABLE);
-    std::cout << "==================send write event==================" << std::endl;
-}
-
-void HttpRes::postEvent() {
-    if (!is_posted) {
-        is_posted = 1;
-        evQueueInsert();
-    }
-}
-*/
 
 std::map<int, std::string> create_status_msg(){
     std::map<int, std::string> m;
@@ -676,9 +641,6 @@ void HttpRes::addContentLengthField() {
     ss << content_length_n;
     buf += "Content-Length: " + ss.str();
     buf += "\r\n";
-//	} else {
-//	buf += "Content-Length: 0";
-//	buf += "\r\n";
 }
 
 void HttpRes::addConnectionField() {
@@ -721,13 +683,9 @@ void HttpRes::headerFilter() {
 		addContentTypeField();
 	} if (content_length_n > 0) {
 		addContentLengthField();
-//    } else {
-//		buf += "Content-Length: 0";
-//	    buf += "\r\n";
-	}
-	if (last_modified_time != -1) {
-		//buf += "Last-Modified: " + http_time();
-//		buf += "\r\n";
+    } else if (status_code != 204) {
+		buf += "Content-Length: 0";
+	    buf += "\r\n";
 	}
 	std::map<std::string, std::string> cgi_headers = cgi.getHeaderFields();
 	std::map<std::string, std::string>::iterator it= cgi_headers.begin();
@@ -741,25 +699,13 @@ void HttpRes::headerFilter() {
 		buf += "\r\n";
 	}
 
-//    if (httpreq.getKeepAlive()) {
 	addConnectionField();
 	addLocationField();
-	// 残りのヘッダー  もしかしたら必要ないかも？ 現状Connection filedなどがダブってしまっているetc...
-	//std::map<std::string, std::string> headers = httpreq.getHeaderFields();
-//	std::map<std::string, std::string>::iterator it= headers.begin();
-//	for (; it != headers.end(); it++) {
-//		buf += it->first;
-//		buf += ": ";
-//		buf += it->second;
-//		buf += "\r\n";
-//	}
 	buf += "\r\n";
 	header_size = buf.size();
 
-	//
     std::cout << "response Header: " << std::endl;
 	std::cout << buf << std::endl;
-    //postEvent();
 }
 
 void HttpRes::sendHeader() {

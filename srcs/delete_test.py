@@ -6,7 +6,7 @@ SCHEME = "http"
 HOST_NAME = "localhost:8000"
 
 NOT_FOUND_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Type': 'text/html', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
-SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+SIMPLE_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Connection': 'keep-alive'}
 
 m = {
     200: "OK",

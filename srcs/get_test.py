@@ -12,7 +12,7 @@ ALLOW_HEADERS = {'Allow': 'POST ', 'Server': 'WebServe', 'Date': 'hoge', 'Conten
 
 UNSUPPORT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive', 'Location': 'tmp'}
 
-NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Content-Length':'tmp', 'Connection': 'keep-alive'}
+NO_CONTENT_HEADERS = {'Server': 'WebServe', 'Date': 'hoge', 'Connection': 'keep-alive'}
 m = {
     200: "OK",
     201: "Created",
