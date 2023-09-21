@@ -66,7 +66,6 @@ class Cgi {
         bool isLocalRedirect();
         bool isClientRedirect();
         void detectResType();
-//        void get_exit_status(pid_t pid);
 };
 
 #endif

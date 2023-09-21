@@ -75,26 +75,19 @@ class HttpRes {
 		size_t body_idx;
 		int status_code;
 		std::string status_string;
-		std::string status_line; //Doesn't have to be a member variable?
+		std::string status_line; 
 		size_t content_length_n;
 		std::string content_type;
 		static const std::string default_type;
-		time_t last_modified_time;
-//		struct timespec last_modified_time;
 		bool is_posted;
 		std::string location;
 		bool header_only;
-//        time_t last_modified;
         std::string charset;
         int keep_alive;
 
         int err_status;
-//        size_t header_size;
 
         std::string location_field;
-
-		// 対応可能なMedia-Typeを持つ
-		//static const std::map<std::string, std::string> types;// = {{"html", "text/html"},{"json", "application/json"}};
 
 		httpReq httpreq;
 		virtualServer vServer;
@@ -113,7 +106,6 @@ class HttpRes {
         size_t body_size;
 
 		void createResponseHeader(struct stat sb);
-		//void createResponseBody();
 		std::string getStatusString();
 		void createControlData();
         std::string createDate(std::string fieldName);

@@ -43,7 +43,6 @@ class httpReq {
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
         int getErrStatus() const;
-		//void parseRequest();
         bool isSpace(char c);
 		std::string toLower(std::string str);
 		bool isRedirectLimit();
@@ -53,7 +52,6 @@ class httpReq {
 		void parseBody();
 		bool isEndOfHeader() const;
 		bool isEndOfReq() const;
-//		void setIsReqEnd();
     private:
         std::string body_buf;
         std::string buf;
@@ -76,7 +74,6 @@ class httpReq {
         int keep_alive;
 		std::string query_string;
         size_t content_length;
-//        int content_length;
         int err_status;
 		size_t chunk_size;
 		bool is_in_chunk_data;
@@ -107,7 +104,7 @@ class httpReq {
 		void skipTokenToEOF();
 		size_t getChunkedSize() const;
 		bool isInChunkData() const;
-		void rejectReq(int err_status); // or discardReq
+		void rejectReq(int err_status);
 };
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj);

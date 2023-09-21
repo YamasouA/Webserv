@@ -15,7 +15,6 @@ class Client {
 
 		virtualServer vServer;
 		int fd;
-//		std::map<std::string, Location> uritolocation;
         std::string client_ip;
         int port;
 		time_t last_recv_time;
@@ -32,7 +31,6 @@ class Client {
         void setHttpReq(httpReq httpreq);
 		void setHttpRes(HttpRes source);
 		void setVserver(const virtualServer& source);
-//		void setUritolocation(const std::map<std::string, Location> map);
         void setClientIp(std::string client_ip);
         void setPort(int port);
 		void setLastRecvTime(time_t now);
@@ -45,7 +43,6 @@ class Client {
         HttpRes* getHttpResp() const;
 		virtualServer getVserver() const;
 		time_t getLastRecvTime() const;
-//		std::map<std::string, Location> getUriToLocation() const;
         std::string getClientIp() const;
         int getPort() const;
 };

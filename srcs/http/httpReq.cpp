@@ -108,9 +108,6 @@ void httpReq::appendHeader(std::string str) {
 }
 
 void httpReq::appendBody(std::string str) {
-//	if (header_fields.size() > 0 && (content_length - body_buf.size() <= str.size()))
-//		is_req_end = true;
-//	this->body_buf += str.substr(0, std::min(content_length - body_buf.size(), str.size()));
 	body_buf += str;
 }
 
@@ -150,7 +147,7 @@ void httpReq::setContentBody(const std::string& token)
     this->content_body = token;
 }
 
-void httpReq::rejectReq(int err_status) { // or discardReq
+void httpReq::rejectReq(int err_status) {
 	setErrStatus(err_status);
 	is_req_end = true;
 }
@@ -196,7 +193,6 @@ std::string httpReq::getVersion() const
 std::string httpReq::getContentBody() const
 {
 	return this->content_body;
-//    return this->body_buf;
 }
 
 std::map<std::string, std::string> httpReq::getHeaderFields() const
@@ -343,7 +339,7 @@ std::string httpReq::getTokenToEOL() {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
-			if (buf[idx+1] == '\012') { // expect is better
+			if (buf[idx+1] == '\012') {
 				idx += 2;
 				return line;
 			} else {
@@ -358,7 +354,6 @@ std::string httpReq::getTokenToEOL() {
 		idx++;
 	}
 	return "";
-//	return line;
 }
 
 static const int RE_RECV = 1;
@@ -396,7 +391,6 @@ int httpReq::getChunkSize() {
 					return ERROR;
 				}
 				content_length += chunk_size;
-//				std::stringstream(tmp) >> std::hex >> chunk_size;
 				std::cout << "chunk_size: " << chunk_size << std::endl;
 				return OK;
 			} else if (body_buf[idx + 1] == '\0') {
@@ -408,10 +402,6 @@ int httpReq::getChunkSize() {
 				return ERROR;
 			}
 		}
-//		} else if (buf[idx] == '\012') {
-//			++idx;
-
-//		}
 		tmp += body_buf[idx++];
 	}
 	idx = tmp_idx;
@@ -430,11 +420,9 @@ int httpReq::getChunkData() {
 		is_in_chunk_data = true;
 		return RE_RECV;
 	}
-//	std::cout << "prev content_body: " << content_body << std::endl;
 	content_body += tmp.substr(0, chunk_size);
-//	std::cout << "after content_body: " << content_body << std::endl;
-	idx += chunk_size; // It would be better to trim the body_buf than to proceed with the idx
-	while (1) { // Skip to newline
+	idx += chunk_size;
+	while (1) {
 		if (body_buf[idx] == '\015') {
 			if (body_buf[idx + 1] == '\012') {
 				idx += 2;
@@ -495,7 +483,6 @@ void httpReq::checkUri() {
 	    args = uri.substr(query_pos+1);
     } else {
         args = uri.substr(query_pos + 1, fragment_pos);
-//        fragment = uri.substr(fragment_pos + 1);
     }
 	if (query_pos != std::string::npos) {
 		query_string = uri.substr(query_pos + 1);
@@ -555,12 +542,6 @@ void httpReq::parseHostPort() {
     header_fields["host"] = host;
 	uri = uri.substr(i);
 	checkUri();
-
-
-    // :/が見つかるまでをhostとして切り取る :が見つかった場合はportの処理も行う
-    // hostの長さが0で無いかのチェックとport番号が有効かのチェックを行う
-    // host以降の始めが/だった場合uri(request-target)として切り取る checkuri呼べば良さそう?
-    // host以降の始めが/ではなかった場合invalid format
 }
 
 void httpReq::parseAuthorityAndPath() {
@@ -608,18 +589,14 @@ void httpReq::fixUp() {
 			std::cerr << "no connection Error" << std::endl;
 			return rejectReq(400);
 		}
-//		std::cout << "Connection field raw value: " << header_fields["connection"] << std::endl;
 		std::vector<std::string> connections = fieldValueSplit(toLower(header_fields["connection"]), ',');
 		std::vector<std::string>::iterator c_it = connections.begin();
-//		std::cout << "====Connection field values====" << std::endl;
 		for (; c_it != connections.end(); c_it++) {
-//			std::cout << *c_it << std::endl;
 			if (*c_it == "close") {
 				break;
 			}
 		}
 		if (c_it == connections.end() || connections.size() == 0) {
-//			std::cout << "======================KO================" << std::endl;
 			keep_alive = 1;
 		} else
 			keep_alive = 0;
@@ -653,8 +630,6 @@ void httpReq::fixUp() {
 			return;
 		}
     }
-
-    std::cout << "cl: " << content_length << std::endl;;
 
     if (content_body != "" && header_fields.count("content-type") != 1) {
         header_fields["content-type"] = "application/octet-stream";
@@ -700,8 +675,6 @@ void httpReq::parseReqLine()
 		return rejectReq(400);
     }
     version = getTokenToEOL();
-//    version = buf.substr(idx, 8);
-//    idx += 8;
     if (version != "HTTP/1.1") { //tmp fix version
         std::cerr << "version Error" << std::endl;
 		return rejectReq(505);
@@ -713,7 +686,6 @@ bool httpReq::checkHeaderEnd()
     if (buf[idx] == '\015') {
         ++idx;
         if (expect('\012')) {
-//            setErrStatus(400);
             return false;
         }
         return true;
@@ -798,7 +770,6 @@ void httpReq::parseHeader() {
 	fixUp();
 	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
 	if (getHeaderFields().count("content-length") == 1 && content_length <= body_buf.size())
-//	if (content_length != -1 && content_length <= body_buf.size())
 		is_req_end= true;
 	idx = 0;
 }
@@ -808,8 +779,6 @@ void httpReq::parseBody() {
 		parseChunk();
 	} else if (header_fields.count("content-length") == 1) {
 		if (header_fields.size() > 0 && content_length <= body_buf.size()) {
-//		if (header_fields.size() > 0 && content_length <= (int)content_body.size()) {
-//			body_buf += body_buf.substr(0, content_length);
 			content_body += body_buf.substr(0, content_length);
 			std::cout << "content_body_buf: " << body_buf << std::endl;
 			is_req_end = true;
@@ -871,7 +840,6 @@ void httpReq::set_meta_variables(Location loc) {
     cgi_envs["REMOTE_HOST"] = cgi_envs["REMOTE_ADDR"];
 	cgi_envs["REQUEST_METHOD"] = getMethod();
     cgi_envs["SERVER_NAME"] = header_fields["host"];
-	// util関数
     std::stringstream ss;
     std::string port_str;
     ss << getPort();
@@ -882,11 +850,9 @@ void httpReq::set_meta_variables(Location loc) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {
-//    const std::vector<httpReq> tmp = obj.getHeaderInfo();
     const std::map<std::string, std::string> tmp = obj.getHeaderFields();
     stream << "method: " << obj.getMethod() << std::endl
     << "uri: " << obj.getUri() << std::endl
-//    << "buf: " << obj.getBuf() << std::endl
     << "version" << obj.getVersion() << std::endl << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = tmp.begin(); it != tmp.end(); ++it) {
         stream << "header field: " << (*it).first << std::endl

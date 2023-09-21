@@ -572,12 +572,6 @@ int HttpRes::deleteHandler() {
 
 void HttpRes::createStatusLine() {
 	std::map<int, std::string> status_msg = create_status_msg();
-	if (last_modified_time != -1) {
-		if (status_code != HTTP_OK) {
-			last_modified_time = -1;
-		}
-	}
-
 	if (status_line == "") {
         std::stringstream ss;
         ss << status_code;
@@ -602,13 +596,10 @@ void HttpRes::createStatusLine() {
                 header_only = 1;
             }
             if (status_code == NO_CONTENT) {
-//                header_only = 1;
                 content_type = "";
-                last_modified_time = NULL;
             }
             status_line = "HTTP/1.1 " + status_code_str + ' ' +  status_msg[status_code];
         } else {
-            //
 			status_line = "";
 		}
 	}
@@ -630,8 +621,6 @@ void HttpRes::addContentTypeField() {
 
 	if (charset != "") {
 		buf += "; charset=" + charset;
-
-		// content_type に charsetを加える
 	}
 	buf += "\r\n";
 }
@@ -660,7 +649,6 @@ void HttpRes::addLocationField() {
 			loc_field_value = loc_field_value.substr(1);
 		}
         buf += "Location: " + loc_field_value;
-//        buf += "Location: " + getLocationField();
         buf += "\r\n";
     }
 	else if (status_code >= 300 && status_code < 400 && redirect_path.length()> 0) {
@@ -728,7 +716,6 @@ int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { /
                 std::cout << "FORBIDDEN1" << std::endl;
 				std::cout << location << std::endl;
                 std::cout << uri << std::endl;
-//                    status_code = FORBIDDEN;
 				status_code = NOT_FOUND;
                 return FORBIDDEN;
             }
@@ -737,7 +724,6 @@ int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { /
             return NOT_FOUND;
         } else if (errno == EACCES){
             std::cout << "FORBIDDEN2" << std::endl;
-//                status_code = FORBIDDEN;
 			status_code = NOT_FOUND;
             return FORBIDDEN;
         }
@@ -777,7 +763,6 @@ int HttpRes::HandleSafeMethod(const char *file_name, std::string& uri) {
 		status_code = NO_CONTENT;
 		header_only = 1;
 	}
-	last_modified_time = sb.st_mtime;
 	return status_code;
 }
 
@@ -790,7 +775,6 @@ int HttpRes::checkAccessToPOST(const char *file_name) {
 			return NOT_FOUND;
 		} else if (EACCES){
 			std::cout << "FORBIDDEN" << std::endl;
-//				  status_code = FORBIDDEN;
 			status_code = NOT_FOUND;
 			return FORBIDDEN;
 		}
@@ -839,7 +823,8 @@ int HttpRes::handlePost(std::string& file_name) {
             status_code = NOT_FOUND;
             return status_code;
         } else {
-//                std::cout << "POST errno: " << errno << std::endl;
+            status_code = INTERNAL_SERVER_ERROR;
+            return status_code;
         }
     } else {
         status_code = HTTP_OK;
@@ -858,12 +843,7 @@ int HttpRes::handlePost(std::string& file_name) {
         setLocationField(file_name);
     }
     content_length_n = sb.st_size;
-//	if (content_length_n == 0) {
-//		status_code = NO_CONTENT;
-//		header_only = 1;
-//	}
-	last_modified_time = sb.st_mtime;
-    if (!S_ISREG(sb.st_mode) && status_code != CREATED) { // neccessary?
+    if (!S_ISREG(sb.st_mode) && status_code != CREATED) { 
 		std::cerr << "stat Error" << std::endl;
         return INTERNAL_SERVER_ERROR;
     } else {
@@ -885,10 +865,8 @@ int HttpRes::handlePost(std::string& file_name) {
 		std::cout << body << std::endl;
         ofs << body;
         ofs.close();
-        //content_length_n = body.size();
 	}
 	return OK;
-    //discoard request body here ?
 }
 
 int HttpRes::handleResBody(const std::string& file_name) {
@@ -905,7 +883,6 @@ int HttpRes::handleResBody(const std::string& file_name) {
 		std::cout << out_buf << std::endl;
 		content_length_n = out_buf.length();
 		std::cout << content_length_n << std::endl;
-//        body_size = content_length_n;
 		body_size = out_buf.length();
 		return OK;
     }
@@ -963,7 +940,6 @@ int HttpRes::staticHandler() {
 
 std::string HttpRes::createErrPage() {
     std::map<int, std::string> status_msg_map = create_status_msg();
-//    std::string err_page_buf = "<!DOCTYPE html>" "\r\n";
     std::string err_page_buf = "<html>" "\r\n""<head><title>";
     std::stringstream ss;
 	ss << status_code;
@@ -1000,8 +976,7 @@ int HttpRes::sendErrorPage() {
         runHandlers();
         return OK;
     }
-    //if path[0] == '@' non-supported
-    //  nameed_location
+
 	return 0;
 }
 
@@ -1012,10 +987,7 @@ int HttpRes::redirectHandle() {
         case BAD_REQUEST:
         case REQUEST_ENTITY_TOO_LARGE:
 		case REQUEST_TIME_OUT:
-//        case REQUEST_URI_TOO_LARGE:
-//        case HTTP_TO_HTTPS:
-//        case HTTPS_CERT_ERROR:
-//        case HTTPS_NO_CERT:
+        case REQUEST_URI_TOO_LARGE:
         case INTERNAL_SERVER_ERROR:
         case HTTP_NOT_IMPLEMENTED:
             keep_alive = 0;
@@ -1031,19 +1003,6 @@ int HttpRes::redirectHandle() {
         content_length_n = 0;
     }
 
-//    if (status_code >= 490) { //49x ~ 5xx
-//        switch (status_code) {
-//            case HTTP_TO_HTTPS:
-//            case HTTPS_CERT_ERROR:
-//            case HTTPS_NO_CERT:
-//            case HTTP_REQUEST_HEADER_TOO_LARGE:
-//                status_code = BAD_REQUEST;
-                // or err_status = BAD_REQUEST;
-//        }
-//    } else {
-//        std::cout << "unknown status code" << std::endl;
-//    }
-    // if We create a new file, how do We handle mtime?
     std::string err_page_buf = std::string();
     if (status_code >= 300) {
         err_page_buf = createErrPage();
@@ -1055,15 +1014,7 @@ int HttpRes::redirectHandle() {
     else {
         content_length_n = 0;
     }
-//  clear accept_range
-//  clear last_modified
-    last_modified_time = -1;
-//  clear etag
     sendHeader();
-//    if err || only_header
-//        return
-//    if content_length == 0
-        // something
 	if (!header_only) {
 		out_buf = err_page_buf;
 		body_size = content_length_n;
@@ -1119,8 +1070,6 @@ int HttpRes::returnRedirect() {
 		path = elms[0];
 		if (!path.compare(0, 7, "http://") || !path.compare(0, 8, "https://")) {
 			status_code = MOVED_TEMPORARILY;
-//            return status_code;
-			//path = elms[0];
 		} else {
 			std::cout << "scheme Error" << std::endl;
 			return DECLINED; //ERROR;
@@ -1138,8 +1087,6 @@ int HttpRes::returnRedirect() {
 	}
 	redirect_path = path;
 	std::cout << "redirect_path: " << redirect_path << std::endl;
-    // needs path with support status_code
-	// compile_complex_valueは$の展開をしてそう
     return status_code;
 }
 
@@ -1213,7 +1160,6 @@ int HttpRes::opendirError() {
 		return NOT_FOUND;
 	} else if (errno == EACCES) {
 		std::cout << "FORBIDDEN" << std::endl;
-//			status_code = FORBIDDEN;
 		status_code = NOT_FOUND;
 		return FORBIDDEN;
 	}
@@ -1269,9 +1215,6 @@ int HttpRes::autoindexHandler() {
                 std::cerr << "readdir Error" << std::endl;
 				status_code = INTERNAL_SERVER_ERROR;
 				return status_code;
-                // close dir and return error or INTERNAL_SERVER_ERROR
-            } else {
-                //read directory end
             }
             break;
         }
@@ -1289,9 +1232,7 @@ int HttpRes::autoindexHandler() {
                     return status_code;
                 }
             }
-            // handle ENOENT or ELOOP -> error or INTERNAL_SERVER_ERROR
         }
-        // check link info
 
         index_of[file_name] = dir_info;
     }
@@ -1305,13 +1246,13 @@ int HttpRes::autoindexHandler() {
         body_size = out_buf.length();
 		content_length_n = body_size;
     }
-    sendHeader(); // later ?
+    sendHeader();
     return OK;
 
 }
 
 bool HttpRes::isCgi() {
-	Location location = getUri2Location(httpreq.getUri()); //req uri?
+	Location location = getUri2Location(httpreq.getUri());
 	std::cout << "cgi_loc: " << location << std::endl;
     std::vector<std::string> vec = location.getCgiExt();
 	if (vec.size() == 0)
@@ -1322,11 +1263,6 @@ bool HttpRes::isCgi() {
 		if (path.find(*it) != std::string::npos)
 			return true;
 	}
-	/*
-    if (path.find(vec[0]) != std::string::npos) {
-//	if (vec[0] != "") {
-		return true;
-	}*/
 	return false;
 }
 
@@ -1421,7 +1357,6 @@ void HttpRes::httpHandler() {
 }
 
 void HttpRes::runHandlers() {
-//	int handler_status = 0;
 	std::string method = httpreq.getMethod();
     if (method == "HEAD") {
         header_only = 1;

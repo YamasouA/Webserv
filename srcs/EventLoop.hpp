@@ -26,9 +26,7 @@ class EventLoop {
 		std::map<int, Client> fd_client_map;
 		Kqueue kq;
 		time_t last_check;
-//		configParser conf;
 
-//		void assignServer(std::vector<virtualServer> server_confs, Client& client);
 		int handleAccept(int event_fd);
 		void readRequest(int fd, Client& client);
 		void sendResponse(int acceptfd);

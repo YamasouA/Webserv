@@ -169,9 +169,6 @@ void Cgi::runHandler() {
     std::string path = joinPath();
 	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
-//		for (i = 0; i < envs.size() + 1; ++i) {
-//			delete [] envs_ptr[i];
-//		}
 		delete [] envs_ptr;
     }
 }
