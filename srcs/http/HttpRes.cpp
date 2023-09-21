@@ -867,7 +867,7 @@ int HttpRes::staticHandler() {
     }
 	std::cout << target << std::endl;
 	std::string method = httpreq.getMethod();
-	if (method != "GET" && method != "HEAD" && method != "POST" && method != "PUT") {
+	if (method != "GET" && method != "HEAD" && method != "POST") {
         std::cerr << "not allow method in static handler" << std::endl;
 		return DECLINED;
 	}
@@ -887,7 +887,7 @@ int HttpRes::staticHandler() {
 			return DECLINED;
 
 		}
-    } else if (method == "POST" || method == "PUT") {
+    } else if (method == "POST") {
 		if (handlePost(file_name) != OK) {
 			return status_code;
 		}

@@ -646,7 +646,7 @@ void HttpReq::fixUp() {
 		header_fields["transfer-encoding"] = "chunked";
     }
 
-	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST" || method == "PUT")) {
+	if (!(method == "GET" || method == "HEAD" || method == "DELETE" || method == "POST")) {
 		std::cerr << "501(Not Implement) method" << std::endl;
 		return rejectReq(501);
 	}
