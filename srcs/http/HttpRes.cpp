@@ -193,40 +193,6 @@ Location HttpRes::getUri2Location(std::string uri) const
     return no_match_loc;
 }
 
-void HttpRes::createErrorResponse(int status) {
-	status_code = status;
-	headerFilter();
-	out_buf = "";
-}
-
-Location HttpRes::longestMatchLocation(std::string request_path, std::vector<Location> locations) {
-	Location location;
-	size_t max_len = 0;
-	for (std::vector<Location>::iterator it = locations.begin(); it != locations.end(); it++) {
-        std::string location_path = it->getUri();
-		if (request_path.find(location_path) == 0) {
-			if (request_path[location_path.length()] == '/' || request_path.length() == location_path.length()) {
-				if (location_path.length() > max_len) {
-					max_len = location_path.length();
-					location = *it;
-				}
-			}
-		}
-	}
-	return location;
-}
-
-bool HttpRes::isAllowMethod(std::string method) {
-	std::vector<std::string> allow_method = target.get_methods();
-	for (std::vector<std::string>::iterator it = allow_method.begin();
-		it != allow_method.end(); it++) {
-		if (*it == method) {
-			return true;
-		}
-	}
-	return false;
-}
-
 std::string HttpRes::joinPath() {
 //    std::cout << "===== joinPath =====" << std::endl;
 	std::string path_root = target.getRoot();
@@ -843,7 +809,7 @@ int HttpRes::handlePost(std::string& file_name) {
         setLocationField(file_name);
     }
     content_length_n = sb.st_size;
-    if (!S_ISREG(sb.st_mode) && status_code != CREATED) { 
+    if (!S_ISREG(sb.st_mode) && status_code != CREATED) {
 		std::cerr << "stat Error" << std::endl;
         return INTERNAL_SERVER_ERROR;
     } else {
@@ -1281,7 +1247,7 @@ int HttpRes::checkClientBodySize() {
 void HttpRes::cgiHandler() {
 	std::cout << "================== cgi ==================" << std::endl;
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
-	httpreq.set_meta_variables(location);
+	httpreq.setMetaVariables(location);
 	Cgi cgi(httpreq ,location);
 	cgi.runCgi();
 	int handler_status = 0;

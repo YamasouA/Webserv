@@ -26,7 +26,7 @@ class HttpReq {
         void setVersion(const std::string&);
         void setContentBody(const std::string&);
 		void setHeaderField(const std::string& name, const std::string value);
-        void set_meta_variables(Location loc);
+        void setMetaVariables(Location loc);
         void setErrStatus(int err_status);
 
         std::string getClientIP() const;
@@ -43,8 +43,6 @@ class HttpReq {
         std::map<std::string, std::string> get_meta_variables() const;
         int getRedirectCnt() const;
         int getErrStatus() const;
-        bool isSpace(char c);
-		std::string toLower(std::string str);
 		bool isRedirectLimit();
 		void incrementRedirectCnt();
 		void appendReq(char *str);
@@ -60,6 +58,10 @@ class HttpReq {
         int port;
 		int redirect_cnt;
 		static const int kRedirectLimit = 10;
+
+		static const int RE_RECV = 1;
+		static const int OK = 0;
+		static const int ERROR = -1;
 		bool is_header_end;
 		bool is_req_end;
 
@@ -70,7 +72,6 @@ class HttpReq {
         std::map<std::string, std::string> header_fields;
         std::map<std::string, std::string> cgi_envs;
         std::string content_body;
-		bool parse_error;
         int keep_alive;
 		std::string query_string;
         size_t content_length;
@@ -90,8 +91,6 @@ class HttpReq {
 		void checkUri();
 		void parseScheme();
 		void parseHostPort();
-		void checkFieldsValue();
-		bool hasObsFold(std::string str);
 		void fixUp();
 		void absUrlParse();
 		void parseAuthorityAndPath();

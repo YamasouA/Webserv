@@ -30,7 +30,7 @@ std::vector<VirtualServer> ConfigParser::getServerConfs() const
 	return serve_confs;
 }
 
-void ConfigParser::set_buf(std::string strs) {
+void ConfigParser::setBuf(std::string strs) {
 	buf = strs;
 }
 
@@ -72,7 +72,7 @@ void ConfigParser::skip()
 	}
 }
 
-void ConfigParser::trim(std::string& str)
+static void trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t \n");
 	if (left != std::string::npos) {

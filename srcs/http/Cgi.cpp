@@ -302,7 +302,7 @@ void Cgi::setHeaderField(const std::string& name, const std::string value)
     this->header_fields.insert(std::make_pair(name, value));
 }
 
-void Cgi::trim(std::string& str)
+static void trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t ");
 	if (left != std::string::npos) {
@@ -382,8 +382,8 @@ void Cgi::fixUp() {
 }
 
 // util関数
-std::string Cgi::toLower(std::string str) {
-	std::string s="";
+static std::string toLower(std::string str) {
+	std::string s = "";
 	for (size_t i = 0; i < str.length(); i++) {
 		s += std::tolower(str[i]);
 	}

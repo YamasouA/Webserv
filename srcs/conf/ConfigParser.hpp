@@ -20,13 +20,12 @@ class ConfigParser {
 
 		void parseConf();
 		void skip();
-		void trim(std::string& str);
 		void expect(char c);
 		std::vector<VirtualServer> getServerConfs()const;
 		void fixUp();
 		void checkServer();
 		void checkLocation();
-		void set_buf(std::string strs);
+		void setBuf(std::string strs);
 	private:
 		std::string buf;
 		std::vector<VirtualServer> serve_confs;
@@ -52,16 +51,13 @@ class ConfigParser {
 		std::map<std::string, Location> uri2location;
 
 		void handleListenInServ(VirtualServer& v_serv);
-//		void handleServerNameInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleRootInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleIndexInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleReturnInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleMethodInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleAutoindexInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleUploadPathInServ(VirtualServer& v_serv);
-//		void handleUploadPathInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleMaxBodySizeInServ(VirtualServer& v_serv, int *which_one_exist);
-//		void handleLocationInServ(VirtualServer& v_serv, int *which_one_exist);
 		void handleErrorPageInServ(VirtualServer& v_serv);
 		void handleCgiExtInServ(VirtualServer& v_serv, int *which_one_exist);
 
@@ -73,9 +69,9 @@ class ConfigParser {
 		void handleUploadPathInLoc(Location& location, int *which_one_exist);
 		void handleMaxBodySizeInLoc(Location& location, int *which_one_exist);
 		void handleAliasInLoc(Location& location, int *which_one_exist);
-//		void handleLocationInLoc(Location& location, int *which_one_exist);
 		void handleErrorPageInLoc(Location& location, int *which_one_exist);
 		void handleCgiExtInLoc(Location& location, int *which_one_exist);
+
 		class SyntaxException: public std::exception {
 			public:
 				explicit SyntaxException(const std::string& what_arg);

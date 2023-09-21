@@ -5,7 +5,6 @@ HttpReq::HttpReq()
     redirect_cnt(0),
 	is_header_end(false),
 	is_req_end(false),
-	parse_error(false),
     keep_alive(0),
     content_length(0),
     err_status(0),
@@ -18,7 +17,6 @@ HttpReq::HttpReq(const std::string& request_msg)
     redirect_cnt(0),
 	is_header_end(false),
 	is_req_end(false),
-	parse_error(false),
     keep_alive(0),
     content_length(0),
     err_status(0),
@@ -40,7 +38,6 @@ HttpReq::HttpReq(const HttpReq& src)
     header_fields(src.getHeaderFields()),
     cgi_envs(src.get_meta_variables()),
     content_body(src.getContentBody()),
-	parse_error(false),
     keep_alive(src.getKeepAlive()),
 	query_string(src.getQueryString()),
     content_length(src.getContentLength()),
@@ -245,6 +242,14 @@ void HttpReq::skipSpace()
 	}
 }
 
+static std::string toLower(std::string str) {
+	std::string s = "";
+	for (size_t i = 0; i < str.length(); i++) {
+		s += std::tolower(str[i]);
+	}
+	return s;
+}
+
 static void trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t ");
@@ -254,7 +259,7 @@ static void trim(std::string& str)
 	}
 }
 
-bool HttpReq::isSpace(char c) {
+static bool isSpace(char c) {
 	if (c == '\f' || c == '\n' || c == ' '
 		|| c == '\r' || c == '\t' || c == '\v') {
 		return true;
@@ -355,11 +360,6 @@ std::string HttpReq::getTokenToEOL() {
 	}
 	return "";
 }
-
-static const int RE_RECV = 1;
-static const int OK = 0;
-static const int ERROR = -1;
-
 
 int HttpReq::getChunkSize() {
 	std::cout << "===getChunkSize===" << std::endl;
@@ -697,15 +697,6 @@ bool HttpReq::checkHeaderEnd()
     }
 }
 
-std::string HttpReq::toLower(std::string str) {
-	std::string s="";
-	for (size_t i = 0; i < str.length(); i++) {
-		s += std::tolower(str[i]);
-	}
-	return s;
-}
-
-
 static bool checkVCHAR(std::string str) {
 	for (size_t i = 0; i < str.length(); i++) {
 		if (str[i] <= 32 || 127 <= str[i]) {
@@ -808,7 +799,7 @@ std::string HttpReq::percentEncode() {
 	return rets.str();
 }
 
-void HttpReq::set_meta_variables(Location loc) {
+void HttpReq::setMetaVariables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
     if (header_fields.count("content-length") != 0) {
         cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"];

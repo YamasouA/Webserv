@@ -59,9 +59,7 @@ class Cgi {
 		bool checkHeaderEnd(size_t& idx);
 		void skipSpace(size_t& idx);
 		void setHeaderField(const std::string& name, const std::string value);
-		void trim(std::string& str);
 		bool expect(char c, size_t& idx);
-		std::string toLower(std::string str);
 
         bool isLocalRedirect();
         bool isClientRedirect();

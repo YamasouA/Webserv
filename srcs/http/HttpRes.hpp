@@ -75,7 +75,7 @@ class HttpRes {
 		size_t body_idx;
 		int status_code;
 		std::string status_string;
-		std::string status_line; 
+		std::string status_line;
 		size_t content_length_n;
 		std::string content_type;
 		static const std::string default_type;
@@ -111,8 +111,6 @@ class HttpRes {
         std::string createDate(std::string fieldName);
 		void createContentLength();
 		int setContentType();
-		void postEvent();
-		void evQueueInsert();
 		void headerFilter();
 		void createStatusLine();
 		void addAllowField();
@@ -157,8 +155,6 @@ class HttpRes {
 		HttpRes(const Client& source, Kqueue &kq);
 		HttpRes& operator=(const HttpRes& rhs);
 		~HttpRes();
-		Location longestMatchLocation(std::string request_path, std::vector<Location> locations);
-        bool isAllowMethod(std::string method);
         std::string joinPath();
         void setBody(std::string strs);
         void setCgi(Cgi cgi);

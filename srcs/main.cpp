@@ -56,7 +56,7 @@ ConfigParser handleConfig(int argc, char *argv[]) {
 	ConfigParser conf;
 	try {
 		std::string txt= readConfFile(config_path);
-		conf.set_buf(txt);
+		conf.setBuf(txt);
 		conf.parseConf();
 	} catch (const std::exception &e) {
 		std::cout << e.what() << std::endl;
