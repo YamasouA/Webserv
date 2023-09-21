@@ -32,6 +32,7 @@ class EventLoop {
 		void sendResponse(int acceptfd);
 		void checkRequestTimeOut();
 		void sendTimeOutResponse(int fd);
+		void closeConnection(int fd);
 };
 
 #endif

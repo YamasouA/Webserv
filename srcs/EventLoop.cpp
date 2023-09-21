@@ -32,12 +32,18 @@ EventLoop::~EventLoop() {
 
 }
 
+void EventLoop::closeConnection(int fd) {
+	std::cout << "Disconnect client fd: " << fd << std::endl;
+	acceptfd_to_config.erase(fd);
+	fd_client_map.erase(fd);
+	close(fd);
+}
 
 void EventLoop::sendResponse(int acceptfd) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	size_t send_cnt;
 	std::cout << "===== send response =====" << std::endl;
-	std::cout << "acceotfd: " << acceptfd << std::endl;
+	std::cout << "acceptfd: " << acceptfd << std::endl;
 	Client client = fd_client_map[acceptfd];
 	HttpRes res = client.getHttpRes();
 
@@ -46,20 +52,13 @@ void EventLoop::sendResponse(int acceptfd) {
 		std::cout << "=== send header ===" << std::endl;
 		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
 		if (send_cnt < 0 || send_cnt == 0) {
-			acceptfd_to_config.erase(acceptfd);
-			fd_client_map.erase(acceptfd);
-			close(acceptfd);
-			return;
+			return closeConnection(acceptfd);
 		}
 		res.setIsSendedHeader(true);
 	    client.setHttpRes(res);
 		fd_client_map[acceptfd] = client;
 		if (res.isHeaderOnly() && !res.getKeepAlive()) {
-			std::cout << "Disconnect client fd: " << acceptfd << std::endl;
-			acceptfd_to_config.erase(acceptfd);
-			fd_client_map.erase(acceptfd);
-			close(acceptfd);
-			return;
+			return closeConnection(acceptfd);
 		}
 		return;
 	}
@@ -67,10 +66,7 @@ void EventLoop::sendResponse(int acceptfd) {
 	if (res.getBodySize() > 0) {
 		send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
 		if (send_cnt < 0 || send_cnt == 0) {
-			acceptfd_to_config.erase(acceptfd);
-			fd_client_map.erase(acceptfd);
-			close(acceptfd);
-			return;
+			return closeConnection(acceptfd);
 		}
 	}
 	res.setIsSendedBody(true);
@@ -78,11 +74,7 @@ void EventLoop::sendResponse(int acceptfd) {
 	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
 	std::cout << "keep-alive: " << res.getKeepAlive() << std::endl;
 	if (!res.getKeepAlive()) {
-		std::cout << "Disconnect client fd: " << acceptfd << std::endl;
-		acceptfd_to_config.erase(acceptfd);
-		fd_client_map.erase(acceptfd);
-		close(acceptfd);
-		return;
+		return closeConnection(acceptfd);
 	}
 	HttpReq tmp = HttpReq();
 	client.setHttpReq(tmp);
@@ -148,11 +140,7 @@ void EventLoop::readRequest(int fd, Client& client) {
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 	client.setLastRecvTime(std::time(0));
 	if (recv_cnt < 0 || recv_cnt == 0) {
-		acceptfd_to_config.erase(fd);
-		fd_client_map.erase(fd);
-		close(fd);
-		std::cout << "ko" << std::endl;
-		return;
+		return closeConnection(fd);
 	} else {
 		buf[recv_cnt] = '\0';
 		httpreq.appendReq(buf);
@@ -252,11 +240,9 @@ void EventLoop::monitoringEvents() {
 			struct kevent* reciver_event = kq.getReciverEvent();
 			int event_fd = reciver_event[i].ident;
 			std::cout << "event_fd(): " << event_fd << std::endl;
-			if (reciver_event[i].flags & EV_EOF) {
+			if (reciver_event[i].flags & (EV_EOF | EV_ERROR)) {
 				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
-				acceptfd_to_config.erase(event_fd);
-				fd_client_map.erase(event_fd);
-				close(event_fd);
+				closeConnection(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
 				if (handleAccept(event_fd))
 					continue;
