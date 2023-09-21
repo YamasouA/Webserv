@@ -210,8 +210,10 @@ void EventLoop::readRequest(int fd, Client& client) {
 	}
 	if (!httpreq.isEndOfReq()) {
 		client.setHttpReq(httpreq);
+		client.setEndOfReq(false);
 		return;
     }
+	client.setEndOfReq(true);
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
 
@@ -244,7 +246,7 @@ void EventLoop::checkRequestTimeOut() {
 		while(it != fd_client_map.end()) {
 			std::cout << "hoge" << std::endl;
 			std::cout << "fd: " << it->second.getFd() << std::endl;
-			if (now - it->second.getLastRecvTime() > time_out) {
+			if (now - it->second.getLastRecvTime() > time_out && it->second.isEndOfReq() == false) {
 				int fd = it->second.getFd();
 				it++;
 				sendTimeOutResponse(fd);

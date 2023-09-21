@@ -19,6 +19,7 @@ class Client {
         std::string client_ip;
         int port;
 		time_t last_recv_time;
+		bool is_req_end;
 	public:
 		Client();
 		~Client();
@@ -35,6 +36,8 @@ class Client {
         void setClientIp(std::string client_ip);
         void setPort(int port);
 		void setLastRecvTime(time_t now);
+		void setEndOfReq(bool flag);
+		bool isEndOfReq() const;
 
 		int getFd() const;
 		httpReq getHttpReq() const;
