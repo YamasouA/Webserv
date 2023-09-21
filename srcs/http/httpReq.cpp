@@ -283,6 +283,9 @@ std::string httpReq::getToken(char delimiter)
 	while(idx < buf.length()) {
 		if (buf[idx] == delimiter) {
 			break;
+		} else if (buf[idx] == ' ' || buf[idx] == '\t') {
+			rejectReq(400);
+			return "";
 		}
 		token += buf[idx];
 		idx++;
@@ -295,10 +298,6 @@ std::string httpReq::getToken(char delimiter)
         return "";
 	}
 	if (expect(delimiter)) {
-		rejectReq(400);
-        return "";
-    }
-    if (token.find(' ') != std::string::npos) {
 		rejectReq(400);
         return "";
     }
@@ -598,6 +597,7 @@ static std::vector<std::string> fieldValueSplit(const std::string &strs, char de
 
 
 void httpReq::fixUp() {
+	std::cout << "=======req fixup ========" << std::endl;
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
 		return rejectReq(400);
@@ -733,39 +733,14 @@ std::string httpReq::toLower(std::string str) {
 	return s;
 }
 
-bool httpReq::hasObsFold(std::string str) {
+
+static bool checkVCHAR(std::string str) {
 	for (size_t i = 0; i < str.length(); i++) {
-		// OWS CRLF RWS
-		if (str[i] == '\015' && str[i + 1] && str[i + 1] == '\012') {
-			if (str[i + 2] && isSpace(str[i + 2])) {
-				return true;
-			}
-		}
+		if (str[i] <= 32 || 127 <= str[i]) {
+    	    return false;
+    	}
 	}
-	return false;
-}
-
-static bool isVCHAR(std::string str) {
-    for (std::string::const_iterator it = str.cbegin(); it != str.cend(); ++it) {
-        if (*it <= 32 && 127 <= *it) {
-            return false;
-        }
-    }
     return true;
-}
-
-void httpReq::checkFieldsValue() {
-	for (std::map<std::string, std::string>::iterator it = header_fields.begin();
-		it != header_fields.end(); it++) {
-		if (hasObsFold(it->second)) {
-			parse_error = true;
-			return;
-		}
-        if (!(isVCHAR(it->second))) {
-            parse_error = true;
-            return;
-        }
-	}
 }
 
 void httpReq::skipEmptyLines() {
@@ -807,22 +782,19 @@ void httpReq::parseHeader() {
 		}
 		std::string field_name = getToken(':');
 		if (getErrStatus() > 0) {
+			std::cout << "return (" << err_status << std::endl;
 			return;
 		}
 		skipSpace();
 		std::string field_value = getTokenToEOL();
 		trim(field_value);
+		checkVCHAR(field_value);
 		setHeaderField(toLower(field_name), field_value);
 		if (getErrStatus() > 0) {
+			std::cout << "return2 (" << err_status << std::endl;
 			return;
 		}
 	}
-//	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
-//		parseChunk();
-//        if (getErrStatus() > 0) {
-//            return;
-//        }
-//    }
 	fixUp();
 	// \r\n\r\nと一緒にbodyも全て送られてきた場合ここで判定しないといけない
 	if (getHeaderFields().count("content-length") == 1 && content_length <= body_buf.size())
