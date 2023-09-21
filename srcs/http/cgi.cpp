@@ -1,8 +1,8 @@
-#include "cgi.hpp"
+#include "Cgi.hpp"
 
 Cgi::Cgi() {}
 
-Cgi::Cgi(const httpReq& request, Location location)
+Cgi::Cgi(const HttpReq& request, Location location)
 :httpreq(request),
     target(location),
 	resType(NO_MATCH_TYPE),

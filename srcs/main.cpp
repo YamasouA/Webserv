@@ -10,7 +10,7 @@
 #include "Kqueue.hpp"
 #include "Client.hpp"
 #include "conf/configParser.hpp"
-#include "http/httpReq.hpp"
+#include "http/HttpReq.hpp"
 #include "EventLoop.hpp"
 #include <map>
 #include <set>

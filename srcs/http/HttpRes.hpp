@@ -9,14 +9,14 @@
 #include <ctime>
 #include "../conf/Location.hpp"
 #include "../conf/virtualServer.hpp"
-#include "httpReq.hpp"
+#include "HttpReq.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include "../Kqueue.hpp"
-#include "cgi.hpp"
+#include "Cgi.hpp"
 
 enum server_state {
     OK = 0,
@@ -89,7 +89,7 @@ class HttpRes {
 
         std::string location_field;
 
-		httpReq httpreq;
+		HttpReq httpreq;
 		virtualServer vServer;
         Kqueue* connection;
 		int fd;

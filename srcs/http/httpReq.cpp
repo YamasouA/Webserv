@@ -1,6 +1,6 @@
-#include "httpReq.hpp"
+#include "HttpReq.hpp"
 
-httpReq::httpReq()
+HttpReq::HttpReq()
 :idx(0),
     redirect_cnt(0),
 	is_header_end(false),
@@ -12,7 +12,7 @@ httpReq::httpReq()
 	is_in_chunk_data(false)
 {}
 
-httpReq::httpReq(const std::string& request_msg)
+HttpReq::HttpReq(const std::string& request_msg)
 :buf(request_msg),
     idx(0),
     redirect_cnt(0),
@@ -25,7 +25,7 @@ httpReq::httpReq(const std::string& request_msg)
 	is_in_chunk_data(false)
 {}
 
-httpReq::httpReq(const httpReq& src)
+HttpReq::HttpReq(const HttpReq& src)
 :body_buf(src.body_buf),
 	buf(src.buf),
 	idx(src.idx),
@@ -51,7 +51,7 @@ httpReq::httpReq(const httpReq& src)
     (void)src;
 }
 
-httpReq& httpReq::operator=(const httpReq& rhs)
+HttpReq& HttpReq::operator=(const HttpReq& rhs)
 {
     if (this == &rhs) {
         return *this;
@@ -80,15 +80,15 @@ httpReq& httpReq::operator=(const httpReq& rhs)
     return *this;
 }
 
-httpReq::~httpReq()
+HttpReq::~HttpReq()
 {
 }
 
-std::string httpReq::getBuf() const{
+std::string HttpReq::getBuf() const{
 	return this->buf;
 }
 
-void httpReq::appendReq(char *str) {
+void HttpReq::appendReq(char *str) {
 	if (isEndOfHeader()) {
 		appendBody(str);
 	} else {
@@ -96,7 +96,7 @@ void httpReq::appendReq(char *str) {
 	}
 }
 
-void httpReq::appendHeader(std::string str) {
+void HttpReq::appendHeader(std::string str) {
 	this->buf += str;
 	std::cout << buf << std::endl;
 	size_t nl_idx = buf.find("\r\n\r\n");
@@ -107,52 +107,52 @@ void httpReq::appendHeader(std::string str) {
 	}
 }
 
-void httpReq::appendBody(std::string str) {
+void HttpReq::appendBody(std::string str) {
 	body_buf += str;
 }
 
-bool httpReq::isEndOfHeader() const {
+bool HttpReq::isEndOfHeader() const {
 	return is_header_end;
 }
 
-bool httpReq::isEndOfReq() const {
+bool HttpReq::isEndOfReq() const {
 	return is_req_end;
 }
 
-void httpReq::setClientIP(std::string client_ip) {
+void HttpReq::setClientIP(std::string client_ip) {
     this->client_ip = client_ip;
 }
 
-void httpReq::setPort(int port) {
+void HttpReq::setPort(int port) {
     this->port = port;
 }
 
-void httpReq::setMethod(const std::string& token)
+void HttpReq::setMethod(const std::string& token)
 {
     this->method = token;
 }
 
-void httpReq::setUri(const std::string& token)
+void HttpReq::setUri(const std::string& token)
 {
     this->uri = token;
 }
 
-void httpReq::setVersion(const std::string& token)
+void HttpReq::setVersion(const std::string& token)
 {
     this->version = token;
 }
 
-void httpReq::setContentBody(const std::string& token)
+void HttpReq::setContentBody(const std::string& token)
 {
     this->content_body = token;
 }
 
-void httpReq::rejectReq(int err_status) {
+void HttpReq::rejectReq(int err_status) {
 	setErrStatus(err_status);
 	is_req_end = true;
 }
 
-void httpReq::setHeaderField(const std::string& name, const std::string value)
+void HttpReq::setHeaderField(const std::string& name, const std::string value)
 {
     if (name == "host" && header_fields.count("host") == 1) {
 		return rejectReq(400);
@@ -163,82 +163,82 @@ void httpReq::setHeaderField(const std::string& name, const std::string value)
     }
 }
 
-void httpReq::setErrStatus(int err_status) {
+void HttpReq::setErrStatus(int err_status) {
     this->err_status = err_status;
 }
 
-std::string httpReq::getClientIP() const {
+std::string HttpReq::getClientIP() const {
     return this->client_ip;
 }
 
-int httpReq::getPort() const {
+int HttpReq::getPort() const {
     return this->port;
 }
 
-std::string httpReq::getMethod() const
+std::string HttpReq::getMethod() const
 {
     return this->method;
 }
 
-std::string httpReq::getUri() const
+std::string HttpReq::getUri() const
 {
     return this->uri;
 }
 
-std::string httpReq::getVersion() const
+std::string HttpReq::getVersion() const
 {
     return this->version;
 }
 
-std::string httpReq::getContentBody() const
+std::string HttpReq::getContentBody() const
 {
 	return this->content_body;
 }
 
-std::map<std::string, std::string> httpReq::getHeaderFields() const
+std::map<std::string, std::string> HttpReq::getHeaderFields() const
 {
     return this->header_fields;
 }
 
-size_t httpReq::getContentLength() const
+size_t HttpReq::getContentLength() const
 {
     return this->content_length;
 }
 
-int httpReq::getKeepAlive() const
+int HttpReq::getKeepAlive() const
 {
     return this->keep_alive;
 }
 
-int httpReq::getRedirectCnt() const {
+int HttpReq::getRedirectCnt() const {
     return this->redirect_cnt;
 }
 
-std::string httpReq::getQueryString() const {
+std::string HttpReq::getQueryString() const {
     return this->query_string;
 }
 
-int httpReq::getErrStatus() const {
+int HttpReq::getErrStatus() const {
     return this->err_status;
 }
 
-bool httpReq::isRedirectLimit() {
+bool HttpReq::isRedirectLimit() {
 	return redirect_cnt >= kRedirectLimit;
 }
 
-void httpReq::incrementRedirectCnt() {
+void HttpReq::incrementRedirectCnt() {
 	redirect_cnt++;
 }
 
-size_t httpReq::getChunkedSize() const {
+size_t HttpReq::getChunkedSize() const {
 	return chunk_size;
 }
 
-bool httpReq::isInChunkData() const {
+bool HttpReq::isInChunkData() const {
 	return is_in_chunk_data;
 }
 
-void httpReq::skipSpace()
+void HttpReq::skipSpace()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t') {
 		++idx;
@@ -254,7 +254,7 @@ static void trim(std::string& str)
 	}
 }
 
-bool httpReq::isSpace(char c) {
+bool HttpReq::isSpace(char c) {
 	if (c == '\f' || c == '\n' || c == ' '
 		|| c == '\r' || c == '\t' || c == '\v') {
 		return true;
@@ -262,7 +262,7 @@ bool httpReq::isSpace(char c) {
 	return false;
 }
 
-int httpReq::expect(char c)
+int HttpReq::expect(char c)
 {
     if (buf[idx] != c) {
         std::cerr << "no expected Error" << c << std::endl;
@@ -273,7 +273,7 @@ int httpReq::expect(char c)
     return 0;
 }
 
-std::string httpReq::getToken(char delimiter)
+std::string HttpReq::getToken(char delimiter)
 {
 	std::string token = "";
 	while(idx < buf.length()) {
@@ -300,7 +300,7 @@ std::string httpReq::getToken(char delimiter)
 	return token;
 }
 
-std::string httpReq::getUriToken(char delimiter)
+std::string HttpReq::getUriToken(char delimiter)
 {
 	size_t uri_length = 0;
 	std::string token = "";
@@ -335,7 +335,7 @@ std::string httpReq::getUriToken(char delimiter)
 	return token;
 }
 
-std::string httpReq::getTokenToEOL() {
+std::string HttpReq::getTokenToEOL() {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -361,7 +361,7 @@ static const int OK = 0;
 static const int ERROR = -1;
 
 
-int httpReq::getChunkSize() {
+int HttpReq::getChunkSize() {
 	std::cout << "===getChunkSize===" << std::endl;
 	if (isInChunkData()) {
 		return OK;
@@ -408,7 +408,7 @@ int httpReq::getChunkSize() {
 	return RE_RECV;
 }
 
-int httpReq::getChunkData() {
+int HttpReq::getChunkData() {
 	std::cout << "===getChunkData===" << std::endl;
 	std::string tmp;
 	tmp = body_buf.substr(idx);
@@ -434,14 +434,14 @@ int httpReq::getChunkData() {
 	}
 }
 
-void httpReq::skipTokenToEOF() {
+void HttpReq::skipTokenToEOF() {
 	while (idx < body_buf.length()) {
 		++idx;
 	}
 	return;
 }
 
-void httpReq::parseChunk() {
+void HttpReq::parseChunk() {
     std::cout << "==================parse chunk==================" << body_buf << std::endl;
 	if (getChunkSize()) {
 		return;
@@ -464,7 +464,7 @@ void httpReq::parseChunk() {
     }
 }
 
-std::string httpReq::getTokenToEOF() {
+std::string HttpReq::getTokenToEOF() {
 	std::string body = "";
 	while (idx < buf.length()) {
 		body += buf[idx];
@@ -473,7 +473,7 @@ std::string httpReq::getTokenToEOF() {
 	return body;
 }
 
-void httpReq::checkUri() {
+void HttpReq::checkUri() {
 	std::string::size_type query_pos = uri.find("?");
     std::string::size_type fragment_pos = uri.find("#");
 	if (query_pos == std::string::npos) {
@@ -490,7 +490,7 @@ void httpReq::checkUri() {
     uri = uri.substr(0, query_pos);
 }
 
-void httpReq::parseScheme() {
+void HttpReq::parseScheme() {
 	if (toLower(uri.substr(0, 5)).compare(0, 5, "https") == 0) {
         uri = uri.substr(6);
 	} else if (toLower(uri.substr(0, 6)).compare(0, 4, "http") == 0) {
@@ -501,7 +501,7 @@ void httpReq::parseScheme() {
 	}
 }
 
-void httpReq::parseHostPort() {
+void HttpReq::parseHostPort() {
     std::string host;
 	size_t i = 0;
 	size_t path_pos;
@@ -544,11 +544,11 @@ void httpReq::parseHostPort() {
 	checkUri();
 }
 
-void httpReq::parseAuthorityAndPath() {
+void HttpReq::parseAuthorityAndPath() {
 	parseHostPort(); //関数に分けなくても良い?
 }
 
-void httpReq::absUrlParse() {
+void HttpReq::absUrlParse() {
 	parseScheme();
     if (getErrStatus() > 0) {
         return;
@@ -577,7 +577,7 @@ static std::vector<std::string> fieldValueSplit(const std::string &strs, char de
 }
 
 
-void httpReq::fixUp() {
+void HttpReq::fixUp() {
 	std::cout << "=======req fixup ========" << std::endl;
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
@@ -655,7 +655,7 @@ void httpReq::fixUp() {
 	}
 }
 
-void httpReq::parseReqLine()
+void HttpReq::parseReqLine()
 {
     method = getToken(' ');
     if (isSpace(buf[idx])) {
@@ -681,7 +681,7 @@ void httpReq::parseReqLine()
     }
 }
 
-bool httpReq::checkHeaderEnd()
+bool HttpReq::checkHeaderEnd()
 {
     if (buf[idx] == '\015') {
         ++idx;
@@ -697,7 +697,7 @@ bool httpReq::checkHeaderEnd()
     }
 }
 
-std::string httpReq::toLower(std::string str) {
+std::string HttpReq::toLower(std::string str) {
 	std::string s="";
 	for (size_t i = 0; i < str.length(); i++) {
 		s += std::tolower(str[i]);
@@ -715,7 +715,7 @@ static bool checkVCHAR(std::string str) {
     return true;
 }
 
-void httpReq::skipEmptyLines() {
+void HttpReq::skipEmptyLines() {
     while (1) {
         if (buf[idx] != ' ' && buf[idx] != '\t') {
             break;
@@ -736,7 +736,7 @@ void httpReq::skipEmptyLines() {
     }
 }
 
-void httpReq::parseHeader() {
+void HttpReq::parseHeader() {
 	if (!is_header_end) {
 		return;
 	}
@@ -774,7 +774,7 @@ void httpReq::parseHeader() {
 	idx = 0;
 }
 
-void httpReq::parseBody() {
+void HttpReq::parseBody() {
 	if (header_fields.count("transfer-encoding") == 1 && header_fields["transfer-encoding"] == "chunked") {
 		parseChunk();
 	} else if (header_fields.count("content-length") == 1) {
@@ -791,11 +791,11 @@ void httpReq::parseBody() {
 	}
 }
 
-std::map<std::string, std::string> httpReq::get_meta_variables() const {
+std::map<std::string, std::string> HttpReq::get_meta_variables() const {
     return cgi_envs;
 }
 
-std::string httpReq::percentEncode() {
+std::string HttpReq::percentEncode() {
 	std::ostringstream rets;
 	for(size_t n = 0; n < query_string.size(); n++) {
 	  unsigned char c = (unsigned char)query_string[n];
@@ -808,7 +808,7 @@ std::string httpReq::percentEncode() {
 	return rets.str();
 }
 
-void httpReq::set_meta_variables(Location loc) {
+void HttpReq::set_meta_variables(Location loc) {
     std::map<std::string, std::string> header_fields = getHeaderFields();
     if (header_fields.count("content-length") != 0) {
         cgi_envs["CONTENT_LENGTH"] = header_fields["content-length"];
@@ -849,7 +849,7 @@ void httpReq::set_meta_variables(Location loc) {
     cgi_envs["SERVER_SOFTWARE"] = "WebServe";
 }
 
-std::ostream& operator<<(std::ostream& stream, const httpReq& obj) {
+std::ostream& operator<<(std::ostream& stream, const HttpReq& obj) {
     const std::map<std::string, std::string> tmp = obj.getHeaderFields();
     stream << "method: " << obj.getMethod() << std::endl
     << "uri: " << obj.getUri() << std::endl

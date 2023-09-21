@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
-#include "httpReq.hpp"
+#include "HttpReq.hpp"
 #include "../conf/Location.hpp"
 
 
@@ -19,7 +19,7 @@ enum response_types {
 class Cgi {
     public:
         Cgi();
-        Cgi(const httpReq& request, Location location);
+        Cgi(const HttpReq& request, Location location);
         Cgi(const Cgi& src);
         Cgi& operator=(const Cgi& rhs);
         ~Cgi();
@@ -33,7 +33,7 @@ class Cgi {
         int getStatusCode() const;
 
     private:
-        httpReq httpreq;
+        HttpReq httpreq;
         Location target;
         std::string buf;
 		std::string cgi_body;

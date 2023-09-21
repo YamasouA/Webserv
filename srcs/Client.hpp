@@ -3,14 +3,14 @@
 
 #include "conf/virtualServer.hpp"
 #include "conf/Location.hpp"
-#include "http/httpReq.hpp"
+#include "http/HttpReq.hpp"
 #include "http/HttpRes.hpp"
 
 class HttpRes;
 
 class Client {
 	private:
-		httpReq httpreq;
+		HttpReq httpreq;
 		HttpRes httpres;
 
 		virtualServer vServer;
@@ -28,7 +28,7 @@ class Client {
 		void setFd(int fd);
 
 		void setHttpReq(const HttpRes& source);
-        void setHttpReq(httpReq httpreq);
+        void setHttpReq(HttpReq httpreq);
 		void setHttpRes(HttpRes source);
 		void setVserver(const virtualServer& source);
         void setClientIp(std::string client_ip);
@@ -38,7 +38,7 @@ class Client {
 		bool isEndOfReq() const;
 
 		int getFd() const;
-		httpReq getHttpReq() const;
+		HttpReq getHttpReq() const;
 		HttpRes getHttpRes() const;
         HttpRes* getHttpResp() const;
 		virtualServer getVserver() const;

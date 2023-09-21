@@ -42,7 +42,7 @@ void Client::setFd(int fd) {
 	this->fd = fd;
 }
 
-void Client::setHttpReq(httpReq httpreq){
+void Client::setHttpReq(HttpReq httpreq){
 	this->httpreq = httpreq;
 }
 
@@ -77,7 +77,7 @@ int Client::getFd() const{
 	return fd;
 }
 
-httpReq Client::getHttpReq() const
+HttpReq Client::getHttpReq() const
 {
     return httpreq;
 }

@@ -84,7 +84,7 @@ void EventLoop::sendResponse(int acceptfd) {
 		close(acceptfd);
 		return;
 	}
-	httpReq tmp = httpReq();
+	HttpReq tmp = HttpReq();
 	client.setHttpReq(tmp);
 	fd_client_map[acceptfd] = client;
 	std::cout << "=== DONE ===" << std::endl;
@@ -92,7 +92,7 @@ void EventLoop::sendResponse(int acceptfd) {
 
 void EventLoop::sendTimeOutResponse(int fd) {
 	Client client = fd_client_map[fd];
-	httpReq req;
+	HttpReq req;
     req.setClientIP(client.getClientIp());
     req.setPort(client.getPort());
 	client.setHttpReq(req);
@@ -143,7 +143,7 @@ void EventLoop::readRequest(int fd, Client& client) {
 	std::memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
 	std::cout << "read_request" << std::endl;
-	httpReq httpreq = client.getHttpReq();
+	HttpReq httpreq = client.getHttpReq();
 
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
 	client.setLastRecvTime(std::time(0));

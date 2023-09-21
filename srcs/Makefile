@@ -7,7 +7,7 @@ CONF_DIR = conf/
 CONF_FILES = Location.cpp configParser.cpp virtualServer.cpp
 CONF_SRCS = $(addprefix $(CONF_DIR), $(CONF_FILES))
 HTTP_DIR = http/
-HTTP_FILES = HttpRes.cpp httpReq.cpp cgi.cpp
+HTTP_FILES = HttpRes.cpp HttpReq.cpp Cgi.cpp
 HTTP_SRCS = $(addprefix $(HTTP_DIR), $(HTTP_FILES))
 
 OBJS = $(SRCS:.cpp=.o)

@@ -11,13 +11,13 @@
 #include <iomanip>
 #include "../conf/Location.hpp"
 
-class httpReq {
+class HttpReq {
     public:
-        httpReq();
-		httpReq(const std::string& request_msg);
-        httpReq(const httpReq& src);
-        httpReq& operator=(const httpReq& rhs);
-        ~httpReq();
+        HttpReq();
+		HttpReq(const std::string& request_msg);
+        HttpReq(const HttpReq& src);
+        HttpReq& operator=(const HttpReq& rhs);
+        ~HttpReq();
 
         void setClientIP(std::string client_ip);
         void setPort(int port);
@@ -107,6 +107,6 @@ class httpReq {
 		void rejectReq(int err_status);
 };
 
-std::ostream& operator<<(std::ostream& stream, const httpReq& obj);
+std::ostream& operator<<(std::ostream& stream, const HttpReq& obj);
 
 #endif
