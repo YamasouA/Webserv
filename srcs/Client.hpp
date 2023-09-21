@@ -1,7 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "conf/virtualServer.hpp"
+#include "conf/VirtualServer.hpp"
 #include "conf/Location.hpp"
 #include "http/HttpReq.hpp"
 #include "http/HttpRes.hpp"
@@ -13,7 +13,7 @@ class Client {
 		HttpReq httpreq;
 		HttpRes httpres;
 
-		virtualServer vServer;
+		VirtualServer vServer;
 		int fd;
         std::string client_ip;
         int port;
@@ -30,7 +30,7 @@ class Client {
 		void setHttpReq(const HttpRes& source);
         void setHttpReq(HttpReq httpreq);
 		void setHttpRes(HttpRes source);
-		void setVserver(const virtualServer& source);
+		void setVserver(const VirtualServer& source);
         void setClientIp(std::string client_ip);
         void setPort(int port);
 		void setLastRecvTime(time_t now);
@@ -41,7 +41,7 @@ class Client {
 		HttpReq getHttpReq() const;
 		HttpRes getHttpRes() const;
         HttpRes* getHttpResp() const;
-		virtualServer getVserver() const;
+		VirtualServer getVserver() const;
 		time_t getLastRecvTime() const;
         std::string getClientIp() const;
         int getPort() const;

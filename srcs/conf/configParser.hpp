@@ -5,31 +5,31 @@
 #include <sstream>
 #include <stdexcept>
 #include <exception>
-#include "virtualServer.hpp"
+#include "VirtualServer.hpp"
 #include "Location.hpp"
 #include <map>
 
 
-class configParser {
+class ConfigParser {
 	public:
-		explicit configParser(const std::string& strs);
-		explicit configParser();
-		configParser(const configParser& src);
-		configParser& operator=(const configParser& rhs);
-		~configParser();
+		explicit ConfigParser(const std::string& strs);
+		explicit ConfigParser();
+		ConfigParser(const ConfigParser& src);
+		ConfigParser& operator=(const ConfigParser& rhs);
+		~ConfigParser();
 
 		void parseConf();
 		void skip();
 		void trim(std::string& str);
 		void expect(char c);
-		std::vector<virtualServer> getServerConfs()const;
+		std::vector<VirtualServer> getServerConfs()const;
 		void fixUp();
 		void checkServer();
 		void checkLocation();
 		void set_buf(std::string strs);
 	private:
 		std::string buf;
-		std::vector<virtualServer> serve_confs;
+		std::vector<VirtualServer> serve_confs;
 		size_t idx;
 
         static const int kRootExist = 1;
@@ -43,27 +43,27 @@ class configParser {
         static const int kErrorPageExist = 256;
         static const int kCgiExtExist = 512;
 
-		virtualServer parseServe();
-		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv);
-		void uriToMap(virtualServer& vServer);
+		VirtualServer parseServe();
+		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const VirtualServer& v_serv);
+		void uriToMap(VirtualServer& vServer);
 		Location parseLocation();
 		std::string getToken(char delimiter);
 		std::string getTokenToEOL();
 		std::map<std::string, Location> uri2location;
 
-		void handleListenInServ(virtualServer& v_serv);
-//		void handleServerNameInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleRootInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleIndexInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleReturnInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleMethodInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleAutoindexInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleUploadPathInServ(virtualServer& v_serv);
-//		void handleUploadPathInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleMaxBodySizeInServ(virtualServer& v_serv, int *which_one_exist);
-//		void handleLocationInServ(virtualServer& v_serv, int *which_one_exist);
-		void handleErrorPageInServ(virtualServer& v_serv);
-		void handleCgiExtInServ(virtualServer& v_serv, int *which_one_exist);
+		void handleListenInServ(VirtualServer& v_serv);
+//		void handleServerNameInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleRootInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleIndexInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleReturnInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleMethodInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleAutoindexInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleUploadPathInServ(VirtualServer& v_serv);
+//		void handleUploadPathInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleMaxBodySizeInServ(VirtualServer& v_serv, int *which_one_exist);
+//		void handleLocationInServ(VirtualServer& v_serv, int *which_one_exist);
+		void handleErrorPageInServ(VirtualServer& v_serv);
+		void handleCgiExtInServ(VirtualServer& v_serv, int *which_one_exist);
 
 		void handleRootInLoc(Location& location, int *which_one_exist);
 		void handleIndexInLoc(Location& location, int *which_one_exist);

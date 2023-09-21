@@ -8,7 +8,7 @@
 #include <vector>
 #include <ctime>
 #include "../conf/Location.hpp"
-#include "../conf/virtualServer.hpp"
+#include "../conf/VirtualServer.hpp"
 #include "HttpReq.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -90,7 +90,7 @@ class HttpRes {
         std::string location_field;
 
 		HttpReq httpreq;
-		virtualServer vServer;
+		VirtualServer vServer;
         Kqueue* connection;
 		int fd;
         Cgi cgi;

@@ -3,7 +3,7 @@
 EventLoop::EventLoop()
 {}
 
-EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<virtualServer> >& fd_config_map, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
+EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<VirtualServer> >& fd_config_map, std::map<int, std::vector<VirtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
 :kq(kq),
 	last_check(last_check)
 {
@@ -114,8 +114,8 @@ static std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
 	return ip;
 }
 
-static void assignServer(std::vector<virtualServer> server_confs, Client& client) {
-	for (std::vector<virtualServer>::iterator it = server_confs.begin();
+static void assignServer(std::vector<VirtualServer> server_confs, Client& client) {
+	for (std::vector<VirtualServer>::iterator it = server_confs.begin();
 		it != server_confs.end(); it++) {
 
         std::map<std::string, std::string> tmp = client.getHttpReq().getHeaderFields();

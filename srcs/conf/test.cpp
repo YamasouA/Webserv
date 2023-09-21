@@ -1,4 +1,4 @@
-#include "configParser.hpp"
+#include "ConfigParser.hpp"
 #include <dirent.h>
 #include <stdio.h>
 
@@ -24,10 +24,10 @@ void test(const char *dirpath) {
 			<< std::endl;
 		try {
 			std::string txt = readConfFile(join(dirpath, dp->d_name));
-			configParser confParser(txt);
+			ConfigParser confParser(txt);
 			confParser.parseConf();
-			std::vector<virtualServer> conf_server = confParser.getServerConfs();
-			for (std::vector<virtualServer>::iterator it = conf_server.begin();
+			std::vector<VirtualServer> conf_server = confParser.getServerConfs();
+			for (std::vector<VirtualServer>::iterator it = conf_server.begin();
 				it != conf_server.end(); it++) {
 				std::cout << *it << std::endl;
 			}

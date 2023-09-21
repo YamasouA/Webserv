@@ -9,20 +9,20 @@
 #include "Client.hpp"
 #include "Socket.hpp"
 
-#define VecVServ std::vector<virtualServer>
+#define VecVServ std::vector<VirtualServer>
 
 class EventLoop {
 	public:
 		EventLoop();
-		EventLoop(Kqueue& kq, std::map<int, std::vector<virtualServer> >& fd_config_map, std::map<int, std::vector<virtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check);
+		EventLoop(Kqueue& kq, std::map<int, std::vector<VirtualServer> >& fd_config_map, std::map<int, std::vector<VirtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check);
 		EventLoop(const EventLoop& src);
 		EventLoop& operator=(const EventLoop& rhs);
 		~EventLoop();
 
 		void monitoringEvents();
 	private:
-		std::map<int, std::vector<virtualServer> > fd_config_map;
-		std::map<int, std::vector<virtualServer> > acceptfd_to_config;
+		std::map<int, std::vector<VirtualServer> > fd_config_map;
+		std::map<int, std::vector<VirtualServer> > acceptfd_to_config;
 		std::map<int, Client> fd_client_map;
 		Kqueue kq;
 		time_t last_check;

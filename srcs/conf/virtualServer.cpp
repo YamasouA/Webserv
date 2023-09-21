@@ -1,12 +1,12 @@
-#include "virtualServer.hpp"
+#include "VirtualServer.hpp"
 
-virtualServer::virtualServer()
+VirtualServer::VirtualServer()
 :whichOneExist(0),
 	autoindex(false),
 	max_body_size(0)
 {}
 
-virtualServer::virtualServer(const virtualServer& src)
+VirtualServer::VirtualServer(const VirtualServer& src)
 {
 	this->listen = src.listen;
 	this->server_names = src.server_names;
@@ -27,7 +27,7 @@ virtualServer::virtualServer(const virtualServer& src)
     this->cgi_ext = src.cgi_ext;
 }
 
-virtualServer& virtualServer::operator=(const virtualServer& rhs)
+VirtualServer& VirtualServer::operator=(const VirtualServer& rhs)
 {
 	if (this == &rhs) {
 		return *this;
@@ -52,99 +52,99 @@ virtualServer& virtualServer::operator=(const virtualServer& rhs)
 	return *this;
 }
 
-virtualServer::~virtualServer()
+VirtualServer::~VirtualServer()
 {}
 
-void virtualServer::setListen(int listen){
+void VirtualServer::setListen(int listen){
     this->listen.push_back(listen);
 }
 
-void virtualServer::setUri2location(std::map<std::string, Location> uri2location){
+void VirtualServer::setUri2location(std::map<std::string, Location> uri2location){
 	this->uri2location = uri2location;
 }
 
-void virtualServer::setServerName(std::vector<std::string> server_name){
+void VirtualServer::setServerName(std::vector<std::string> server_name){
 	this->server_names.insert(this->server_names.end(), server_name.begin(), server_name.end());
 }
 
-void virtualServer::setLocation(Location location){
+void VirtualServer::setLocation(Location location){
 	locations.push_back(location);
 }
 
-void virtualServer::setRoot(std::string root){
+void VirtualServer::setRoot(std::string root){
 	this->root = root;
 }
 
-std::map<std::string, Location> virtualServer::getUri2Location() const {
+std::map<std::string, Location> VirtualServer::getUri2Location() const {
 	return uri2location;
 }
 
-std::vector<int> virtualServer::getListen() const{
+std::vector<int> VirtualServer::getListen() const{
 	return listen;
 }
 
-std::vector<std::string> virtualServer::getServerNames() const{
+std::vector<std::string> VirtualServer::getServerNames() const{
 	return server_names;
 }
-std::vector<Location> virtualServer::getLocations() const{
+std::vector<Location> VirtualServer::getLocations() const{
 	return locations;
 }
 
-std::string virtualServer::getRoot() const{
+std::string VirtualServer::getRoot() const{
 	return root;
 }
 
 
 
-void virtualServer::setMethods(std::vector<std::string> methods)
+void VirtualServer::setMethods(std::vector<std::string> methods)
 {
 	this->methods = methods;
 }
 
-void virtualServer::setIsAutoindex(bool autoindex)
+void VirtualServer::setIsAutoindex(bool autoindex)
 {
 	this->autoindex = autoindex;
 }
 
-void virtualServer::setUploadPath(std::string upload_path)
+void VirtualServer::setUploadPath(std::string upload_path)
 {
 	this->upload_path = upload_path;
 }
 
-void virtualServer::setIndex(std::vector<std::string> index)
+void VirtualServer::setIndex(std::vector<std::string> index)
 {
 	this->index = index;
 }
 
-void virtualServer::setMaxBodySize(size_t max_body_size)
+void VirtualServer::setMaxBodySize(size_t max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
 
-void virtualServer::setCgiPath(std::string cgi_path)
+void VirtualServer::setCgiPath(std::string cgi_path)
 {
 	this->cgi_path = cgi_path;
 }
 
-void virtualServer::setReturn(std::string ret)
+void VirtualServer::setReturn(std::string ret)
 {
 	this->ret = ret;
 }
 
-void virtualServer::setDepth(int depth){
+void VirtualServer::setDepth(int depth){
 	this->depth = (depth);
 }
 
-void virtualServer::setAlias(std::string alias)
+void VirtualServer::setAlias(std::string alias)
 {
 	this->alias = alias;
 }
 
-void virtualServer::setCgiExt(std::vector<std::string> tokens) {
+void VirtualServer::setCgiExt(std::vector<std::string> tokens) {
 	this->cgi_ext = tokens;
 }
 
-void virtualServer::setErrorPages(std::vector<std::string> tokens)
+void VirtualServer::setErrorPages(std::vector<std::string> tokens)
 {
 	// status_codeとpathは必ず存在する
 	if (tokens.size() < 2) {
@@ -170,62 +170,62 @@ void virtualServer::setErrorPages(std::vector<std::string> tokens)
 }
 
 
-std::vector<std::string> virtualServer::get_methods() const{
+std::vector<std::string> VirtualServer::get_methods() const{
 	return methods;
 }
-bool virtualServer::getIsAutoindex() const{
+bool VirtualServer::getIsAutoindex() const{
 	return autoindex;
 }
-std::string virtualServer::getUploadPath() const{
+std::string VirtualServer::getUploadPath() const{
 	return upload_path;
 }
-std::vector<std::string> virtualServer::getIndex() const{
+std::vector<std::string> VirtualServer::getIndex() const{
 	return index;
 }
-size_t virtualServer::getMaxBodySize() const {
+size_t VirtualServer::getMaxBodySize() const {
 	return max_body_size;
 }
 
-std::string virtualServer::getCgiPath() const {
+std::string VirtualServer::getCgiPath() const {
 	return cgi_path;
 }
 
-std::string virtualServer::getReturn() const {
+std::string VirtualServer::getReturn() const {
 	return ret;
 }
 
-int virtualServer::getDepth() const{
+int VirtualServer::getDepth() const{
 	return depth;
 }
 
-std::string virtualServer::getAlias() const {
+std::string VirtualServer::getAlias() const {
 	return alias;
 }
 
-std::string virtualServer::getErrorPage(int status_code) const{
+std::string VirtualServer::getErrorPage(int status_code) const{
 	std::map<int, std::string>::const_iterator it = error_pages.find(status_code);
 	if (it != error_pages.end())
 		return it->second;
 	return "";
 }
 
-std::map<int, std::string> virtualServer::getErrorPages() const{
+std::map<int, std::string> VirtualServer::getErrorPages() const{
 	return error_pages;
 }
 
-std::vector<std::string> virtualServer::getCgiExt() const {
+std::vector<std::string> VirtualServer::getCgiExt() const {
 	return cgi_ext;
 }
 
-void virtualServer::appendIndex(std::vector<std::string> elems) {
+void VirtualServer::appendIndex(std::vector<std::string> elems) {
     index.insert(index.end(), elems.begin(), elems.end());
 }
 
-void virtualServer::appendCgiExt(std::vector<std::string> elems) {
+void VirtualServer::appendCgiExt(std::vector<std::string> elems) {
     cgi_ext.insert(cgi_ext.end(), elems.begin(), elems.end());
 }
 
-std::ostream& operator <<(std::ostream& stream, const virtualServer& obj) {
+std::ostream& operator <<(std::ostream& stream, const VirtualServer& obj) {
 		const std::vector<Location> tmp = obj.getLocations();
 		stream << "server root: " << obj.getRoot() << std::endl
 		<< "locations:" << tmp.size() << std::endl << std::endl;

@@ -49,7 +49,7 @@ void Client::setHttpReq(HttpReq httpreq){
 void Client::setHttpRes(HttpRes httpres){
 	this->httpres = httpres;
 }
-void Client::setVserver(const virtualServer& vServer){
+void Client::setVserver(const VirtualServer& vServer){
 	this->vServer = vServer;
 }
 
@@ -86,7 +86,7 @@ HttpRes Client::getHttpRes() const {
 	return httpres;
 }
 
-virtualServer Client::getVserver() const{
+VirtualServer Client::getVserver() const{
 	return vServer;
 }
 

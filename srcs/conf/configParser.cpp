@@ -1,20 +1,20 @@
-#include "configParser.hpp"
+#include "ConfigParser.hpp"
 
-configParser::configParser()
+ConfigParser::ConfigParser()
 :idx(0)
 {}
 
-configParser::configParser(const std::string& strs)
+ConfigParser::ConfigParser(const std::string& strs)
 :buf(strs),
 	idx(0)
 {}
 
-configParser::configParser(const configParser& src)
+ConfigParser::ConfigParser(const ConfigParser& src)
 {
 	this->serve_confs = src.getServerConfs();
 }
 
-configParser& configParser::operator=(const configParser& rhs)
+ConfigParser& ConfigParser::operator=(const ConfigParser& rhs)
 {
 	if (this == &rhs) {
 		return *this;
@@ -22,15 +22,15 @@ configParser& configParser::operator=(const configParser& rhs)
 	return *this;
 }
 
-configParser::~configParser()
+ConfigParser::~ConfigParser()
 {}
 
-std::vector<virtualServer> configParser::getServerConfs() const
+std::vector<VirtualServer> ConfigParser::getServerConfs() const
 {
 	return serve_confs;
 }
 
-void configParser::set_buf(std::string strs) {
+void ConfigParser::set_buf(std::string strs) {
 	buf = strs;
 }
 
@@ -46,7 +46,7 @@ const std::string readConfFile(const std::string& file_name)
 	return strs;
 }
 
-std::string configParser::getTokenToEOL() {
+std::string ConfigParser::getTokenToEOL() {
 	std::string line = "";
 	while (idx < buf.length()) {
 		if (buf[idx] == '\015') {
@@ -64,7 +64,7 @@ std::string configParser::getTokenToEOL() {
 	return line;
 }
 
-void configParser::skip()
+void ConfigParser::skip()
 {
 	while (buf[idx] == ' ' || buf[idx] == '\t'
 		|| buf[idx] == '\015' || buf[idx] == '\012') {
@@ -72,7 +72,7 @@ void configParser::skip()
 	}
 }
 
-void configParser::trim(std::string& str)
+void ConfigParser::trim(std::string& str)
 {
 	std::string::size_type left = str.find_first_not_of("\t \n");
 	if (left != std::string::npos) {
@@ -82,7 +82,7 @@ void configParser::trim(std::string& str)
 }
 
 
-std::string configParser::getToken(char delimiter)
+std::string ConfigParser::getToken(char delimiter)
 {
 	std::string token = "";
 
@@ -120,7 +120,7 @@ static std::vector<std::string> methodsSplit(const std::string &strs, char delim
 	return methods;
 }
 
-void configParser::handleRootInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleRootInLoc(Location& location, int *which_one_exist) {
 	if (location.getRoot() != "" || location.getAlias() != "") {
 		throw SyntaxException("Location: duplicate directive: root");
 	}
@@ -129,7 +129,7 @@ void configParser::handleRootInLoc(Location& location, int *which_one_exist) {
 	location.setRoot(getToken(';'));
 }
 
-void configParser::handleIndexInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleIndexInLoc(Location& location, int *which_one_exist) {
 	//can multiple
 	if (*which_one_exist & kIndexExist) {
 		location.appendIndex(methodsSplit(getToken(';'), ' '));
@@ -139,7 +139,7 @@ void configParser::handleIndexInLoc(Location& location, int *which_one_exist) {
 	*which_one_exist |= kIndexExist;
 }
 
-void configParser::handleReturnInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleReturnInLoc(Location& location, int *which_one_exist) {
 	//can multiple, but first one is used
 	if (*which_one_exist & kReturnExist) {
 		getToken(';');
@@ -150,7 +150,7 @@ void configParser::handleReturnInLoc(Location& location, int *which_one_exist) {
 	*which_one_exist |= kReturnExist;
 }
 
-void configParser::handleMethodInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleMethodInLoc(Location& location, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kMethodExist) {
 		throw SyntaxException("Location: duplicate directive: method");
@@ -160,7 +160,7 @@ void configParser::handleMethodInLoc(Location& location, int *which_one_exist) {
 	location.setMethods(methodsSplit(methods, ' '));
 }
 
-void configParser::handleAutoindexInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleAutoindexInLoc(Location& location, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kAutoIndexExist) {
 		throw SyntaxException("Location: duplicate directive: autoindex");
@@ -169,7 +169,7 @@ void configParser::handleAutoindexInLoc(Location& location, int *which_one_exist
 	location.setIsAutoindex(getToken(';')=="on");
 }
 
-void configParser::handleUploadPathInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleUploadPathInLoc(Location& location, int *which_one_exist) {
 	if (location.getUploadPath() != "") {
 		throw SyntaxException("Location: duplicate directive: upload_path");
 	}
@@ -177,7 +177,7 @@ void configParser::handleUploadPathInLoc(Location& location, int *which_one_exis
 	location.setUploadPath(getToken(';'));
 }
 
-void configParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kMaxSizeExist) {
 		throw SyntaxException("Location: duplicate directive: max_body_size");
@@ -197,7 +197,7 @@ void configParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 	location.setMaxBodySize(result);
 }
 
-void configParser::handleAliasInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleAliasInLoc(Location& location, int *which_one_exist) {
 	if (location.getAlias() != "" || location.getRoot() != "") {
 		throw SyntaxException("Location: duplicate directive: alias");
 	}
@@ -205,13 +205,13 @@ void configParser::handleAliasInLoc(Location& location, int *which_one_exist) {
 	location.setAlias(getToken(';'));
 }
 
-void configParser::handleErrorPageInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleErrorPageInLoc(Location& location, int *which_one_exist) {
 	*which_one_exist |= kErrorPageExist;
 	const std::string pages = getToken(';');
 	location.setErrorPages(methodsSplit(pages, ' '));
 }
 
-void configParser::handleCgiExtInLoc(Location& location, int *which_one_exist) {
+void ConfigParser::handleCgiExtInLoc(Location& location, int *which_one_exist) {
 	const std::string exts = getToken(';');
 	if (*which_one_exist & kCgiExtExist) {
 		location.appendCgiExt(methodsSplit(exts, ' '));
@@ -221,7 +221,7 @@ void configParser::handleCgiExtInLoc(Location& location, int *which_one_exist) {
 	*which_one_exist |= kCgiExtExist;
 }
 
-Location configParser::parseLocation() {
+Location ConfigParser::parseLocation() {
 	Location location;
     int which_one_exist = 0;
 
@@ -280,7 +280,7 @@ Location configParser::parseLocation() {
 	return location;
 }
 
-void configParser::setUriToMap(std::string prefix, std::string prefix_root, Location location, const virtualServer& v_serv) {
+void ConfigParser::setUriToMap(std::string prefix, std::string prefix_root, Location location, const VirtualServer& v_serv) {
 	std::string location_root = location.getRoot();;
 	std::string location_uri = location.getUri();
 	std::string path = prefix + location_uri;
@@ -333,7 +333,7 @@ void configParser::setUriToMap(std::string prefix, std::string prefix_root, Loca
 	uri2location[path] = location;
 }
 
-void configParser::uriToMap(virtualServer& vServer) {
+void ConfigParser::uriToMap(VirtualServer& vServer) {
 	std::vector<Location> locations = vServer.getLocations();
 //	std::string server_root = vServer.getRoot();
 
@@ -345,7 +345,7 @@ void configParser::uriToMap(virtualServer& vServer) {
 	std::cout << "vServer: " << vServer << std::endl;
 }
 
-void configParser::handleListenInServ(virtualServer& v_serv) {
+void ConfigParser::handleListenInServ(VirtualServer& v_serv) {
 	//can multiple
 	const std::string tmp(getToken(';'));
 	if (tmp.find_first_not_of("0123456789") != std::string::npos) {
@@ -356,12 +356,12 @@ void configParser::handleListenInServ(virtualServer& v_serv) {
 	int result;
 	sstream >> result;
 	if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > 65535) {
-		throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+		throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
 	}
 	v_serv.setListen(result);
 }
 
-void configParser::handleRootInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleRootInServ(VirtualServer& v_serv, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kRootExist) {
 		throw SyntaxException("Server: duplicate directive: root");
@@ -370,7 +370,7 @@ void configParser::handleRootInServ(virtualServer& v_serv, int *which_one_exist)
 	v_serv.setRoot(getToken(';'));
 }
 
-void configParser::handleIndexInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleIndexInServ(VirtualServer& v_serv, int *which_one_exist) {
 	//can multiple
 	if (*which_one_exist & kIndexExist) {
 		v_serv.appendIndex(methodsSplit(getToken(';'), ' '));
@@ -380,7 +380,7 @@ void configParser::handleIndexInServ(virtualServer& v_serv, int *which_one_exist
 	*which_one_exist |= kIndexExist;
 }
 
-void configParser::handleReturnInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleReturnInServ(VirtualServer& v_serv, int *which_one_exist) {
 	//can multiple, but first one is used
 	if (*which_one_exist & kReturnExist) {
 		return;
@@ -390,7 +390,7 @@ void configParser::handleReturnInServ(virtualServer& v_serv, int *which_one_exis
 	*which_one_exist |= kReturnExist;
 }
 
-void configParser::handleMethodInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleMethodInServ(VirtualServer& v_serv, int *which_one_exist) {
 	//must single
 	if (*which_one_exist & kMethodExist) {
 		throw SyntaxException("v_serv: duplicate directive: method");
@@ -400,7 +400,7 @@ void configParser::handleMethodInServ(virtualServer& v_serv, int *which_one_exis
 	v_serv.setMethods(methodsSplit(methods, ' '));
 }
 
-void configParser::handleAutoindexInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleAutoindexInServ(VirtualServer& v_serv, int *which_one_exist) {
 	if (*which_one_exist & kAutoIndexExist) { //bool -> int
 		throw SyntaxException("v_serv: duplicate directive: autoindex");
 	}
@@ -408,14 +408,14 @@ void configParser::handleAutoindexInServ(virtualServer& v_serv, int *which_one_e
 	v_serv.setIsAutoindex(getToken(';')=="on");
 }
 
-void configParser::handleUploadPathInServ(virtualServer& v_serv) {
+void ConfigParser::handleUploadPathInServ(VirtualServer& v_serv) {
 	if (v_serv.getUploadPath() != "") {
 		throw SyntaxException("v_serv: duplicate directive: upload_path");
 	}
 	v_serv.setUploadPath(getToken(';'));
 }
 
-void configParser::handleMaxBodySizeInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleMaxBodySizeInServ(VirtualServer& v_serv, int *which_one_exist) {
 	if (*which_one_exist & kMaxSizeExist) {
 		throw SyntaxException("v_serv: duplicate directive: max_body_size");
 	}
@@ -434,12 +434,12 @@ void configParser::handleMaxBodySizeInServ(virtualServer& v_serv, int *which_one
 	v_serv.setMaxBodySize(result);
 }
 
-void configParser::handleErrorPageInServ(virtualServer& v_serv) {
+void ConfigParser::handleErrorPageInServ(VirtualServer& v_serv) {
 	const std::string pages = getToken(';');
 	v_serv.setErrorPages(methodsSplit(pages, ' '));
 }
 
-void configParser::handleCgiExtInServ(virtualServer& v_serv, int *which_one_exist) {
+void ConfigParser::handleCgiExtInServ(VirtualServer& v_serv, int *which_one_exist) {
 	const std::string exts = getToken(';');
 	if (*which_one_exist & kCgiExtExist) {
 		v_serv.appendCgiExt(methodsSplit(exts, ' '));
@@ -449,9 +449,9 @@ void configParser::handleCgiExtInServ(virtualServer& v_serv, int *which_one_exis
 	*which_one_exist |= kCgiExtExist;
 }
 
-virtualServer configParser::parseServe() {
+VirtualServer ConfigParser::parseServe() {
 	std::string directive;
-	virtualServer v_serv;
+	VirtualServer v_serv;
     int which_one_exist = 0;
 
 	while (idx < buf.size()) {
@@ -504,7 +504,7 @@ virtualServer configParser::parseServe() {
 	return v_serv;
 }
 
-void configParser::expect(char c)
+void ConfigParser::expect(char c)
 {
 	if (buf[idx] != c) {
 		throw SyntaxException(std::string("expected ") + c + std::string(" but ") + buf[idx]);
@@ -512,12 +512,12 @@ void configParser::expect(char c)
 	++idx;
 }
 
-void configParser::checkLocation() {
-	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
+void ConfigParser::checkLocation() {
+	std::vector<VirtualServer>::iterator v_it = serve_confs.begin();
 	for (; v_it != serve_confs.end(); v_it++) {
 		std::vector<Location> locations = v_it->getLocations();
 		if (locations.size() == 0) {
-			throw ConfigValueException("virtualServer derective should have more than 1 Location derective");
+			throw ConfigValueException("VirtualServer derective should have more than 1 Location derective");
 		}
 		std::vector<Location>::iterator l_it = locations.begin();
 		for (; l_it != locations.end(); l_it++) {
@@ -528,39 +528,39 @@ void configParser::checkLocation() {
 	}
 }
 
-void configParser::checkServer() {
+void ConfigParser::checkServer() {
 	if (serve_confs.size() == 0) {
-		throw ConfigValueException("http derective should have more than 1 virtualServer derective");
+		throw ConfigValueException("http derective should have more than 1 VirtualServer derective");
 	}
-	std::vector<virtualServer>::iterator v_it = serve_confs.begin();
+	std::vector<VirtualServer>::iterator v_it = serve_confs.begin();
 	for (; v_it != serve_confs.end(); v_it++) {
         std::vector<int> listen = v_it->getListen();
         if (listen.size() == 0) {
-            throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+            throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
         }
         for (std::vector<int>::iterator l_it = listen.begin(); l_it != listen.end(); ++l_it) {
             if (*l_it == 0) {
-                throw ConfigValueException("virtualServer derective should have 0 ~ 65535 port number");
+                throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
             }
         }
         std::vector<std::string> server_names = v_it->getServerNames();
         if (server_names.size() == 0) {
-            throw ConfigValueException("virtualServer derective should have servername");
+            throw ConfigValueException("VirtualServer derective should have servername");
         }
         for (std::vector<std::string>::iterator n_it = server_names.begin(); n_it != server_names.end(); ++n_it) {
             if (*n_it == "") {
-                throw ConfigValueException("virtualServer derective should have servername");
+                throw ConfigValueException("VirtualServer derective should have servername");
             }
         }
 	}
 }
 
-void configParser::fixUp() {
+void ConfigParser::fixUp() {
 	checkServer();
 	checkLocation();
 }
 
-void configParser::parseConf()
+void ConfigParser::parseConf()
 {
 	std::string directive;
 
@@ -583,38 +583,38 @@ void configParser::parseConf()
 	fixUp();
 }
 
-configParser::SyntaxException::SyntaxException(const std::string& what_arg)
+ConfigParser::SyntaxException::SyntaxException(const std::string& what_arg)
 :msg(what_arg)
 {}
 
-configParser::SyntaxException::~SyntaxException() throw()
+ConfigParser::SyntaxException::~SyntaxException() throw()
 {}
 
-configParser::DupulicateException::DupulicateException(const std::string& what_arg)
+ConfigParser::DupulicateException::DupulicateException(const std::string& what_arg)
 :msg(what_arg)
 {}
 
-configParser::DupulicateException::~DupulicateException() throw()
+ConfigParser::DupulicateException::~DupulicateException() throw()
 {}
 
-configParser::ConfigValueException::ConfigValueException(const std::string& what_arg)
+ConfigParser::ConfigValueException::ConfigValueException(const std::string& what_arg)
 :msg(what_arg)
 {}
 
-configParser::ConfigValueException::~ConfigValueException() throw()
+ConfigParser::ConfigValueException::~ConfigValueException() throw()
 {}
 
-const char* configParser::SyntaxException::what(void) const throw() //noexcept c++11~
+const char* ConfigParser::SyntaxException::what(void) const throw() //noexcept c++11~
 {
 	return msg.c_str();
 }
 
-const char* configParser::DupulicateException::what(void) const throw() //noexcept c++11~
+const char* ConfigParser::DupulicateException::what(void) const throw() //noexcept c++11~
 {
 	return msg.c_str();
 }
 
-const char* configParser::ConfigValueException::what(void) const throw() //noexcept c++11~
+const char* ConfigParser::ConfigValueException::what(void) const throw() //noexcept c++11~
 {
 	return msg.c_str();
 }

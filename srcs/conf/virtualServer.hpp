@@ -6,12 +6,12 @@
 #include <string>
 #include "Location.hpp"
 
-class virtualServer {
+class VirtualServer {
 	public:
-		virtualServer();
-		virtualServer(const virtualServer& src);
-		virtualServer& operator=(const virtualServer& rhs);
-		~virtualServer();
+		VirtualServer();
+		VirtualServer(const VirtualServer& src);
+		VirtualServer& operator=(const VirtualServer& rhs);
+		~VirtualServer();
 
 		void parseVserv();
 		void setListen(int listen);
@@ -77,5 +77,5 @@ class virtualServer {
 		std::vector<std::string> cgi_ext;
 };
 
-std::ostream& operator <<(std::ostream& stream, const virtualServer& obj);
+std::ostream& operator <<(std::ostream& stream, const VirtualServer& obj);
 #endif
