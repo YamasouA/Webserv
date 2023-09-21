@@ -57,7 +57,8 @@ std::string getContentExtension(std::string content_type) {
 HttpRes::HttpRes() {
 }
 
-HttpRes::HttpRes(const Client& source, Kqueue &kq)
+//HttpRes::HttpRes(const Client& source, Kqueue &kq)
+HttpRes::HttpRes(const Client& source)
 :content_length_n(0),
     is_posted(0),
     err_status(0),
@@ -66,7 +67,7 @@ HttpRes::HttpRes(const Client& source, Kqueue &kq)
 {
 	this->httpreq = source.getHttpReq();
 	this->vServer = source.getVserver();
-    this->connection = &kq;
+//    this->connection = &kq;
 	this->fd = source.getFd();
 	this->keep_alive = httpreq.getKeepAlive();
 }
@@ -78,7 +79,7 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->body_size = src.body_size;
     this->is_sended_header = src.getIsSendedHeader();
     this->is_sended_body = src.getIsSendedBody();
-    this->connection = src.getConnection();
+//    this->connection = src.getConnection();
 	this->keep_alive = src.keep_alive;
 
 }
@@ -93,7 +94,7 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->body_size = rhs.body_size;
     this->is_sended_header = rhs.getIsSendedHeader();
     this->is_sended_body = rhs.getIsSendedBody();
-    this->connection = rhs.getConnection();
+//    this->connection = rhs.getConnection();
 	this->keep_alive = rhs.keep_alive;
 	return *this;
 }
@@ -152,9 +153,9 @@ bool HttpRes::isHeaderOnly() const {
 	return header_only;
 }
 
-Kqueue* HttpRes::getConnection() const {
-    return connection;
-}
+//Kqueue* HttpRes::getConnection() const {
+//    return connection;
+//}
 
 Location HttpRes::getUri2Location(std::string uri) const
 {

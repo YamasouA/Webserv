@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-#include "../Kqueue.hpp"
+//#include "../Kqueue.hpp"
 #include "Cgi.hpp"
 
 enum server_state {
@@ -91,7 +91,7 @@ class HttpRes {
 
 		HttpReq httpreq;
 		VirtualServer vServer;
-        Kqueue* connection;
+//        Kqueue* connection;
 		int fd;
         Cgi cgi;
 
@@ -152,7 +152,8 @@ class HttpRes {
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
-		HttpRes(const Client& source, Kqueue &kq);
+//		HttpRes(const Client& source, Kqueue &kq);
+		HttpRes(const Client& source);
 		HttpRes& operator=(const HttpRes& rhs);
 		~HttpRes();
         std::string joinPath();
@@ -166,7 +167,7 @@ class HttpRes {
         size_t getHeaderSize() const;
         std::string getResBody() const;
         size_t getBodySize() const;
-		Kqueue* getConnection() const;
+//		Kqueue* getConnection() const;
 		std::string redirect_path;
 
 		void setIsSendedHeader(bool b);

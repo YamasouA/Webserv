@@ -88,7 +88,8 @@ void EventLoop::sendTimeOutResponse(int fd) {
     req.setClientIP(client.getClientIp());
     req.setPort(client.getPort());
 	client.setHttpReq(req);
-	HttpRes res(client, kq);
+//	HttpRes res(client, kq);
+	HttpRes res(client);
 	res.handleReqErr(408);
 	client.setHttpRes(res);
 	fd_client_map[fd] = client;
@@ -163,7 +164,8 @@ void EventLoop::readRequest(int fd, Client& client) {
 
     client.setHttpReq(httpreq);
     assignServer(acceptfd_to_config[fd], client);
-    HttpRes respons(client, kq);
+//    HttpRes respons(client, kq);
+    HttpRes respons(client);
     if (httpreq.getErrStatus() > 0) {
         respons.handleReqErr(httpreq.getErrStatus());
     } else {
