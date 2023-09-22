@@ -187,7 +187,7 @@ void EventLoop::checkRequestTimeOut() {
 		while(it != fd_client_map.end()) {
 			std::cout << "hoge" << std::endl;
 			std::cout << "fd: " << it->second.getFd() << std::endl;
-			if (now - it->second.getLastRecvTime() > time_out && it->second.isEndOfReq() == false) {
+			if (now - it->second.getLastRecvTime() > time_out && it->second.isEndOfReq() == false && it->second.getHttpRes().getStatusCode() != 504) {
 				int fd = it->second.getFd();
 				it++;
 				sendTimeOutResponse(fd);

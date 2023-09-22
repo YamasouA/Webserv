@@ -52,6 +52,8 @@ class HttpRes {
 
         int err_status;
 
+		int redirect_cnt;
+
         std::string location_field;
 
 		HttpReq httpreq;
@@ -70,6 +72,9 @@ class HttpRes {
         std::string out_buf;
         size_t body_size;
 
+		bool isRedirectLimit();
+		void incrementRedirectCnt();
+	
 		void createResponseHeader(struct stat sb);
 		std::string getStatusString();
 		void createControlData();
@@ -142,6 +147,7 @@ class HttpRes {
 		void setLocationField(std::string loc);
     std::string getLocationField() const;
 		int getKeepAlive() const;
+		int getStatusCode() const;
 		bool isHeaderOnly() const;
 };
 
