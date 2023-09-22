@@ -8,7 +8,8 @@ HttpReq::HttpReq()
     keep_alive(0),
     content_length(0),
     err_status(0),
-	is_in_chunk_data(false)
+	is_in_chunk_data(false),
+	is_absolute_form(false)
 {}
 
 HttpReq::HttpReq(const std::string& request_msg)
@@ -20,7 +21,8 @@ HttpReq::HttpReq(const std::string& request_msg)
     keep_alive(0),
     content_length(0),
     err_status(0),
-	is_in_chunk_data(false)
+	is_in_chunk_data(false),
+	is_absolute_form(false)
 {}
 
 HttpReq::HttpReq(const HttpReq& src)
@@ -43,7 +45,8 @@ HttpReq::HttpReq(const HttpReq& src)
     content_length(src.getContentLength()),
     err_status(src.getErrStatus()),
 	chunk_size(src.getChunkedSize()),
-	is_in_chunk_data(src.isInChunkData())
+	is_in_chunk_data(src.isInChunkData()),
+	is_absolute_form(src.is_absolute_form)
 {
     (void)src;
 }
@@ -74,6 +77,7 @@ HttpReq& HttpReq::operator=(const HttpReq& rhs)
 	this->is_req_end = rhs.isEndOfReq();
 	this->chunk_size = rhs.getChunkedSize();
 	this->is_in_chunk_data = rhs.isInChunkData();
+	this->is_absolute_form = rhs.is_absolute_form;
     return *this;
 }
 
@@ -151,6 +155,9 @@ void HttpReq::rejectReq(int err_status) {
 
 void HttpReq::setHeaderField(const std::string& name, const std::string value)
 {
+	if (name == "host" && is_absolute_form) {
+		return;
+	}
     if (name == "host" && header_fields.count("host") == 1) {
 		return rejectReq(BAD_REQUEST);
     } else if (header_fields.count(name) == 1) {
@@ -538,6 +545,7 @@ void HttpReq::parseHostPort() {
 		return rejectReq(BAD_REQUEST);
     }
     header_fields["host"] = host;
+	is_absolute_form = true;
 	uri = uri.substr(i);
 	std::cout << "final uri: " << uri << std::endl;
 	checkUri();
