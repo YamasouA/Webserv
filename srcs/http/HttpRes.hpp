@@ -15,6 +15,7 @@
 #include "../conf/VirtualServer.hpp"
 #include "HttpReq.hpp"
 #include "Cgi.hpp"
+#include "../Logger.hpp"
 
 enum server_state {
     OK = 0,
@@ -35,6 +36,8 @@ class HttpRes {
 		static const std::string kServerName;
 		std::string header;
 		std::string body;
+
+		Logger logger;
 
 		size_t header_idx;
 		size_t body_idx;
