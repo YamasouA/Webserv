@@ -61,13 +61,13 @@ HttpRes::HttpRes() {
 HttpRes::HttpRes(const Client& source)
 :content_length_n(0),
     is_posted(0),
+	header_only(false),
     err_status(0),
     is_sended_header(false),
     is_sended_body(false)
 {
 	this->httpreq = source.getHttpReq();
 	this->vServer = source.getVserver();
-//    this->connection = &kq;
 	this->fd = source.getFd();
 	this->keep_alive = httpreq.getKeepAlive();
 }
@@ -79,9 +79,8 @@ HttpRes::HttpRes(const HttpRes& src) {
     this->body_size = src.body_size;
     this->is_sended_header = src.getIsSendedHeader();
     this->is_sended_body = src.getIsSendedBody();
-//    this->connection = src.getConnection();
 	this->keep_alive = src.keep_alive;
-
+	this->header_only = src.header_only;
 }
 
 HttpRes& HttpRes::operator=(const HttpRes& rhs) {

@@ -109,19 +109,27 @@ def response_test(url, expected_status, expected_headers, file_path):
 
 	print(url + " test done")
 
-def set_up(file_list):
+def create_file(file_list):
 	for filename in file_list:
 		with open(filename, "w") as f:
 			f.write("HELLO WORLD")
 
+def create_dir(dir_list):
+	for dirname in dir_list:
+		os.makedirs(dirname, exist_ok=True)
+
 def DELETE_test():
 	file_list = ["delete.html"]
-	set_up(file_list)
+	dir_list = ["tmp"]
+	create_file(file_list)
+	create_dir(dir_list)
 	try:
 		# 正常系
 		response_test(create_path("/delete.html"), 204, SIMPLE_HEADERS, "delete.html")
 		# 存在しないファイル
 		response_test(create_path("/wwwwwwwwwwwwww.html"), 404, NOT_FOUND_HEADERS, "")
+		# ディレクトリの削除
+		response_test(create_path("/tmp"), 204, SIMPLE_HEADERS, "tmp")
 
 	except:
 		traceback.print_exc()
