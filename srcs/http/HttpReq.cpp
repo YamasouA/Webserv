@@ -380,6 +380,10 @@ int HttpReq::getChunkSize() {
 				}
 				std::stringstream ss(tmp);
 				ss >> std::hex >> chunk_size;
+				if (ss.bad()) {
+					rejectReq(INTERNAL_SERVER_ERROR);
+					return ERROR;
+				}
 				if (ss.fail() && chunk_size == std::numeric_limits<size_t>::max()) {
 					setErrStatus(BAD_REQUEST);
 					is_req_end = true;
@@ -528,6 +532,9 @@ void HttpReq::parseHostPort() {
 			if (ss.bad()) {
 				setErrStatus(INTERNAL_SERVER_ERROR);
 				return;
+			}
+			if (ss.fail()) {
+				return rejectReq(BAD_REQUEST);
 			}
 			if (port_num < 0 || kMaxPortNum < port_num) {
         	    std::cerr << "invalid port Error" << std::endl;

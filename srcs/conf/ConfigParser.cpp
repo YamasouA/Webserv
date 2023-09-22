@@ -190,7 +190,11 @@ void ConfigParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 	std::stringstream sstream(tmp);
 	size_t result;
 	sstream >> result;
-	if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
+	if (sstream.bad()) {
+		std::cerr << "stream is broken" << std::endl;
+		std::exit(1);
+	}
+	if (sstream.fail()) {
 		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("Location: invalid value: max_body_size");
 	}
@@ -355,7 +359,11 @@ void ConfigParser::handleListenInServ(VirtualServer& v_serv) {
 	std::stringstream sstream(tmp);
 	int result;
 	sstream >> result;
-	if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > kMaxPortNum) {
+	if (sstream.bad()) {
+		std::cerr << "stream is broken" << std::endl;
+		std::exit(1);
+	}
+	if (sstream.fail() || result < 0 || result > kMaxPortNum) {
 		throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
 	}
 	v_serv.setListen(result);
@@ -427,7 +435,11 @@ void ConfigParser::handleMaxBodySizeInServ(VirtualServer& v_serv, int *which_one
 	std::stringstream sstream(tmp);
 	size_t result;
 	sstream >> result;
-	if (sstream.fail() && std::numeric_limits<size_t>::max() == result) {
+	if (sstream.bad()) {
+		std::cerr << "stream is broken" << std::endl;
+		std::exit(1);
+	}
+	if (sstream.fail()) {
 		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("v_serv: invalid value: max_body_size");
 	}
