@@ -6,7 +6,6 @@
 #include <sys/time.h>
 #include <iostream>
 #include <vector>
-#include <unistd.h>
 
 class Kqueue {
 	private:

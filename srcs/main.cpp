@@ -1,20 +1,18 @@
-#include "Socket.hpp"
 #include <iostream>
+#include <map>
+#include <set>
+#include <utility>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include "Socket.hpp"
 #include "Logger.hpp"
 #include "Kqueue.hpp"
 #include "Client.hpp"
 #include "conf/ConfigParser.hpp"
 #include "http/HttpReq.hpp"
 #include "EventLoop.hpp"
-#include <map>
-#include <set>
-#include <utility>
 
 void initializeFd(ConfigParser conf, Kqueue &kqueue, std::map<int, std::vector<VirtualServer> >& fd_config_map) {
 	std::vector<VirtualServer> server_confs = conf.getServerConfs();

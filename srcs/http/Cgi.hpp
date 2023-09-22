@@ -1,6 +1,7 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
+#include <cstdlib>
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>

@@ -2,6 +2,8 @@
 #define SOCKET_HPP
 
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
