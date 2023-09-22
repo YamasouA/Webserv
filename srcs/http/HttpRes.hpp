@@ -1,21 +1,19 @@
 #ifndef HTTPRES_HPP
 #define HTTPRES_HPP
 
-#include <stdio.h>
 #include <string>
 #include <sstream>
 #include <fstream>
 #include <vector>
 #include <ctime>
-#include "../conf/Location.hpp"
-#include "../conf/VirtualServer.hpp"
-#include "HttpReq.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-//#include "../Kqueue.hpp"
+#include "../conf/Location.hpp"
+#include "../conf/VirtualServer.hpp"
+#include "HttpReq.hpp"
 #include "Cgi.hpp"
 
 enum server_state {

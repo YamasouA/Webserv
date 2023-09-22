@@ -1,5 +1,4 @@
 #include "Client.hpp"
-#include "http/HttpRes.hpp"
 
 Client::Client()
 : httpreq(),
