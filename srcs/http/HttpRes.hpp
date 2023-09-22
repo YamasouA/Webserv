@@ -90,7 +90,6 @@ class HttpRes {
 
 		int deleteHandler();
 		int deletePath(bool is_dir);
-		int dav_depth();
         int deleteError();
         std::string joinDirPath(const std::string& dir_path, const std::string& elem_name);
         void divingThroughDir(const std::string& path);

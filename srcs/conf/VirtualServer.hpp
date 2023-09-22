@@ -33,7 +33,6 @@ class VirtualServer {
 		void setMaxBodySize(size_t max_body_size);
 		void setCgiPath(std::string cgi_path);
 		void setReturn(std::string ret);
-		void setDepth(int depth);
 		void setAlias(std::string alias);
 		void setErrorPages(std::vector<std::string> tokens);
 		void setCgiExt(std::vector<std::string> tokens);
@@ -47,7 +46,6 @@ class VirtualServer {
 		std::string getReturn() const;
 		std::string getErrorPage(int status_code) const;
 		std::map<int, std::string> getErrorPages() const;
-		int getDepth() const;
 		std::string getAlias() const;
 		std::vector<std::string> getCgiExt() const;
 
@@ -70,7 +68,6 @@ class VirtualServer {
 		std::string upload_path;
 		std::string cgi_path;
 		std::map<int, std::string > error_pages;
-		int depth;
 		std::string alias;
 		bool autoindex;
 		size_t max_body_size;

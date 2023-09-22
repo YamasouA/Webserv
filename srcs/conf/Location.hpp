@@ -19,7 +19,6 @@ class Location {
 		void setCgiPath(std::string cgi_path);
 		void setReturn(std::string ret);
 		void setLocation(Location location);
-		void setDepth(int depth);
 		void setAlias(std::string alias);
 		void setErrorPages(std::vector<std::string> tokens);
 		void setErrorPages(std::map<int, std::string> error_pages);
@@ -38,7 +37,6 @@ class Location {
 		std::string getReturn() const;
 		std::string getErrorPage(int status_code) const;
 		std::map<int, std::string> getErrorPages() const;
-		int getDepth() const;
 		std::string getAlias() const;
 		std::vector<std::string> getCgiExt() const;
         int getWhichOneExist() const;
@@ -58,7 +56,6 @@ class Location {
 		std::string upload_path;
 		std::string cgi_path;
 		std::map<int, std::string > error_pages;
-		int depth;
 		std::string alias;
 		bool autoindex;
 		size_t max_body_size;

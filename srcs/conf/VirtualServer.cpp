@@ -20,7 +20,6 @@ VirtualServer::VirtualServer(const VirtualServer& src)
     this->upload_path = src.upload_path;
     this->cgi_path = src.cgi_path;
     this->error_pages = src.error_pages;
-    this->depth = src.depth;
     this->alias = src.alias;
     this->autoindex = src.autoindex;
     this->max_body_size = src.max_body_size;
@@ -44,7 +43,6 @@ VirtualServer& VirtualServer::operator=(const VirtualServer& rhs)
     this->upload_path = rhs.upload_path;
     this->cgi_path = rhs.cgi_path;
     this->error_pages = rhs.error_pages;
-    this->depth = rhs.depth;
     this->alias = rhs.alias;
     this->autoindex = rhs.autoindex;
     this->max_body_size = rhs.max_body_size;
@@ -131,10 +129,6 @@ void VirtualServer::setReturn(std::string ret)
 	this->ret = ret;
 }
 
-void VirtualServer::setDepth(int depth){
-	this->depth = (depth);
-}
-
 void VirtualServer::setAlias(std::string alias)
 {
 	this->alias = alias;
@@ -192,10 +186,6 @@ std::string VirtualServer::getCgiPath() const {
 
 std::string VirtualServer::getReturn() const {
 	return ret;
-}
-
-int VirtualServer::getDepth() const{
-	return depth;
 }
 
 std::string VirtualServer::getAlias() const {

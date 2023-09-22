@@ -1,8 +1,7 @@
 #include "Location.hpp"
 
 Location::Location()
-: depth(-1),
-	autoindex(false),
+: autoindex(false),
 	max_body_size(0),
 	which_one_exist(0)
 {}
@@ -17,7 +16,6 @@ Location::Location(const Location& src) {
 	this->autoindex = src.autoindex;
 	this->max_body_size = src.max_body_size;
 	this->locations = src.locations;
-	this->depth = src.depth;
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
@@ -39,7 +37,6 @@ Location& Location::operator=(const Location& src)
 	this->autoindex = src.autoindex;
 	this->max_body_size = src.max_body_size;
 	this->locations = src.locations;
-	this->depth = src.depth;
 	this->alias = src.alias;
 	this->error_pages = src.error_pages;
 	this->cgi_ext = src.cgi_ext;
@@ -94,10 +91,6 @@ void Location::setReturn(std::string ret)
 
 void Location::setLocation(Location location){
 	locations.push_back(location);
-}
-
-void Location::setDepth(int depth){
-	this->depth = (depth);
 }
 
 void Location::setAlias(std::string alias)
@@ -175,10 +168,6 @@ std::string Location::getReturn() const {
 
 std::vector<Location> Location::getLocations() const{
 	return locations;
-}
-
-int Location::getDepth() const{
-	return depth;
 }
 
 std::string Location::getAlias() const {

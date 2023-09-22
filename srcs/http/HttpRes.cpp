@@ -366,13 +366,6 @@ std::map<int, std::string> create_status_msg(){
 	return m;
 }
 
-int HttpRes::dav_depth() {
-	int depth = target.getDepth();
-	return depth;
-}
-
-
-
 std::string HttpRes::joinDirPath(const std::string& dir_path, const std::string& elem_name) {
 	return dir_path + '/' + elem_name;
 }
@@ -498,7 +491,6 @@ int HttpRes::deleteHandler() {
 
 	struct stat sb;
 	bool is_dir;
-	int depth;
 	std::string method = httpreq.getMethod();
 	if (method != "DELETE") {
 		return DECLINED;
@@ -519,18 +511,8 @@ int HttpRes::deleteHandler() {
 	}
 	if (S_ISDIR(sb.st_mode)) {
 		std::string uri = httpreq.getUri();
-		depth = dav_depth();
-		if (depth != -1) {
-			status_code = BAD_REQUEST;
-			return status_code;
-		}
 		is_dir = true;
 	} else {
-		depth = dav_depth();
-		if (depth != 0 && depth != -1) {
-			status_code = BAD_REQUEST;
-			return status_code;
-		}
 		is_dir = false;
 	}
 	return deletePath(is_dir);
