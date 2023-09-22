@@ -309,7 +309,7 @@ std::string HttpReq::getUriToken(char delimiter)
 {
 	size_t uri_length = 0;
 	std::string token = "";
-	while(idx < buf.length() || uri_length <= 8000) {
+	while(idx < buf.length() || uri_length <= kMaxUriLength) {
 		if (buf[idx] == delimiter) {
 			break;
 		}
@@ -324,7 +324,7 @@ std::string HttpReq::getUriToken(char delimiter)
         setErrStatus(400);
         return "";
 	}
-	if (uri_length > 8000) {
+	if (uri_length > kMaxUriLength) {
 		setErrStatus(414);
 		is_req_end = true;
 		return "";
@@ -529,7 +529,7 @@ void HttpReq::parseHostPort() {
 				setErrStatus(500);
 				return;
 			}
-			if (port_num < 0 || 65535 < port_num) {
+			if (port_num < 0 || kMaxPortNum < port_num) {
         	    std::cerr << "invalid port Error" << std::endl;
 				return rejectReq(400);
         	}

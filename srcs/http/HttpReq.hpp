@@ -58,6 +58,8 @@ class HttpReq {
         int port;
 		int redirect_cnt;
 		static const int kRedirectLimit = 10;
+		static const int kMaxPortNum = 65535;
+		static const int kMaxUriLength = 8000;
 
 		static const int RE_RECV = 1;
 		static const int OK = 0;
