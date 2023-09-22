@@ -609,7 +609,7 @@ void HttpRes::addConnectionField() {
 }
 
 void HttpRes::addLocationField() {
-	if (status_code == 201 && getLocationField() != "") {
+	if (status_code == CREATED && getLocationField() != "") {
 		std::string loc_field_value = getLocationField();
 		if (loc_field_value[0] == '.') {
 			loc_field_value = loc_field_value.substr(1);
@@ -637,7 +637,7 @@ void HttpRes::headerFilter() {
 		addContentTypeField();
 	} if (content_length_n > 0) {
 		addContentLengthField();
-    } else if (status_code != 204) {
+    } else if (status_code != NO_CONTENT) {
 		buf += "Content-Length: 0";
 	    buf += "\r\n";
 	}

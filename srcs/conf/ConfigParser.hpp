@@ -43,6 +43,8 @@ class ConfigParser {
         static const int kErrorPageExist = 256;
         static const int kCgiExtExist = 512;
 
+		static const int kMaxPortNum = 65535;
+
 		VirtualServer parseServe();
 		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const VirtualServer& v_serv);
 		void uriToMap(VirtualServer& vServer);

@@ -93,31 +93,31 @@ void Cgi::envsFixUp() {
     }
     if (envs.count("PATH_INFO") != envs.count("PATH_TRANSLATED")) {
 		// PATH_INFOとPATH_TRANSLATEDはどちらも存在するかどちらも存在しない
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("REMOTE_ADDR") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("REMOTE_HOST") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("REQUEST_METHOD") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("SCRIPT_NAME") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("SERVER_NAME") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("SERVER_PORT") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("SERVER_PROTOCOL") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (envs.count("SERVER_SOFTWARE") == 0) {
-		status = 502;
+		setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	envs.erase("HTTP_HOST");
 	envs.erase("HTTP_CONTENT_LENGTH");
@@ -180,10 +180,10 @@ void Cgi::forkProcess() {
 
 
 	if (pipe(fd) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	if (pipe(fd2) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	setEnv();
 
@@ -191,7 +191,7 @@ void Cgi::forkProcess() {
 		return;
 	pid = fork();
     if (pid == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	if (pid == 0) {
 		close(fd[1]);
@@ -209,10 +209,10 @@ void Cgi::forkProcess() {
 	close(fd[0]);
 	close(fd2[1]);
 	if (dup2(fd[1], 1) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	if (dup2(fd2[0], 0) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	sendBodyToChild();
 	pid_t pid2 = 0;
@@ -221,17 +221,17 @@ void Cgi::forkProcess() {
 	while (pid2 != -1) {
 		pid2 = waitpid(pid, &st, WNOHANG);
 		if (!WIFEXITED(st)) {
-			status = 502; // or 500
+			setStatusCode(HTTP_BAD_GATEWAY); // or INTERNAL_SERVER_ERROR
 		}
 		if (std::time(NULL) - before_wait >= 3) {
 			kill(pid, SIGKILL);
-			status = 504;
+			setStatusCode(HTTP_GATEWAY_TIME_OUT);
 			break;
 		}
 	}
 	close(fd[1]);
     char tmp_buf;
-    while (read(0, &tmp_buf, 1) > 0 && status != 504) {
+    while (read(0, &tmp_buf, 1) > 0 && status != HTTP_GATEWAY_TIME_OUT) {
         buf += tmp_buf;
     }
 	close(fd2[0]);
@@ -340,7 +340,7 @@ std::string Cgi::getTokenToEOL(size_t& idx) {
 				idx += 2;
 				return line;
 			} else {
-				setStatusCode(500);
+				setStatusCode(INTERNAL_SERVER_ERROR);
 				return "";
 			}
 		} else if (buf[idx] == '\012') {
@@ -364,7 +364,7 @@ std::string Cgi::getTokenToEOF(size_t& idx) {
 
 void Cgi::fixUp() {
     if (header_fields.size() == 0) {
-		return setStatusCode(502);
+		return setStatusCode(HTTP_BAD_GATEWAY);
     }
     if (header_fields.count("status") == 1) {
 		// ここもutil関数使いたい
@@ -372,13 +372,13 @@ void Cgi::fixUp() {
         ss << header_fields["status"];
         ss >> status;
         if (status < 100 || 600 <= status) {
-			setStatusCode(502);
+			setStatusCode(HTTP_BAD_GATEWAY);
         }
 		header_fields.erase("status");
     }
     detectResType();
 	if (resType == NO_MATCH_TYPE)
-		setStatusCode(502);
+		setStatusCode(HTTP_BAD_GATEWAY);
 }
 
 // util関数
@@ -402,7 +402,7 @@ bool Cgi::expect(char c, size_t& idx)
 
 int Cgi::parseCgiResponse() {
     size_t idx = 0;
-	if (status != 200)
+	if (status != HTTP_OK)
 		return status;
 
 	while (idx < buf.length()) {
@@ -411,7 +411,7 @@ int Cgi::parseCgiResponse() {
         }
         std::string field_name = getToken(':', idx);
 		if (field_name == "") {
-			setStatusCode(502);
+			setStatusCode(HTTP_BAD_GATEWAY);
 			std::cout << "cgi_body: " << cgi_body << std::endl;
 			std::map<std::string, std::string>::iterator it = header_fields.begin();
 			for (; it != header_fields.end(); it++) {
@@ -435,20 +435,20 @@ void Cgi::runCgi() {
 
 	int backup_stdin = dup(STDIN_FILENO);
     if (backup_stdin == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	int backup_stdout = dup(STDOUT_FILENO);
     if (backup_stdout == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 
 	forkProcess();
 
 	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
     if (dup2(backup_stdout, STDOUT_FILENO) == -1) {
-		return setStatusCode(500);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	close(backup_stdin);
 	close(backup_stdout);

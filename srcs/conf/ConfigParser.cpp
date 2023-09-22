@@ -355,7 +355,7 @@ void ConfigParser::handleListenInServ(VirtualServer& v_serv) {
 	std::stringstream sstream(tmp);
 	int result;
 	sstream >> result;
-	if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > 65535) {
+	if ((sstream.fail() && std::numeric_limits<int>::max() == result) || result < 0 || result > kMaxPortNum) {
 		throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
 	}
 	v_serv.setListen(result);
