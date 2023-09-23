@@ -1212,8 +1212,24 @@ void HttpRes::cgiHandler() {
     	out_buf = cgi.getCgiBody();
     	if (cgi.getHeaderFields().count("content-length")) {
 			  // ここもutil関数
-    	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
+		  std::string content_length_str = cgi.getHeaderFields()["content-length"];
+		  if (content_length_str.find_first_not_of("0123456789") != std::string::npos) {
+			status_code = HTTP_BAD_GATEWAY;
+			return finalizeRes(status_code);
+		  }
+
+    	  std::stringstream ss(content_length_str);
+//    	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
     	  ss >> body_size;
+		  if (ss.bad()) {
+			  std::cerr << "stream is broken" << std::endl;
+			  status_code = INTERNAL_SERVER_ERROR;
+			  return finalizeRes(status_code);
+		  }
+		  if (ss.fail() && body_size == std::numeric_limits<size_t>::max()) {
+			status_code = HTTP_BAD_GATEWAY;
+			return finalizeRes(status_code);
+		  }
     	} else {
     	  body_size = out_buf.length();
     	}

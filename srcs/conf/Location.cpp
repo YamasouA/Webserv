@@ -121,6 +121,10 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;
+		if (ss.bad()) {
+			std::cerr << "stream is broken" << std::endl;
+			std::exit(1);
+		}
 		if (ss.fail() || status_code > 999) {
 			continue;
 		}
