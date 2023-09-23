@@ -451,6 +451,16 @@ void Cgi::runCgi() {
 		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 
+	
+    std::string path = joinPath();
+	if (access(path.c_str(), R_OK) < 0) {
+		if (errno == EACCES) {
+			return setStatusCode(FORBIDDEN);
+		} else {
+			return setStatusCode(NOT_FOUND);
+		}
+	}
+
 	forkProcess();
 
 	if (dup2(backup_stdin, STDIN_FILENO) == -1) {
