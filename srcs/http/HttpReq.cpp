@@ -13,8 +13,7 @@ HttpReq::HttpReq()
 {}
 
 HttpReq::HttpReq(const std::string& request_msg)
-:buf(request_msg),
-    idx(0),
+:idx(0),
     redirect_cnt(0),
 	is_header_end(false),
 	is_req_end(false),
@@ -22,30 +21,31 @@ HttpReq::HttpReq(const std::string& request_msg)
     content_length(0),
     err_status(0),
 	is_in_chunk_data(false),
+	buf(request_msg),
 	is_absolute_form(false)
 {}
 
 HttpReq::HttpReq(const HttpReq& src)
-:body_buf(src.body_buf),
-	buf(src.buf),
-	idx(src.idx),
-	client_ip(src.getClientIP()),
-    port(src.getPort()),
+:idx(src.idx),
     redirect_cnt(src.getRedirectCnt()),
 	is_header_end(src.isEndOfHeader()),
 	is_req_end(src.isEndOfReq()),
+    keep_alive(src.getKeepAlive()),
+    content_length(src.getContentLength()),
+    err_status(src.getErrStatus()),
+	is_in_chunk_data(src.isInChunkData()),
+	chunk_size(src.getChunkedSize()),
+    port(src.getPort()),
+	client_ip(src.getClientIP()),
+	body_buf(src.body_buf),
+	buf(src.buf),
     method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
+    content_body(src.getContentBody()),
+	query_string(src.getQueryString()),
     header_fields(src.getHeaderFields()),
     cgi_envs(src.get_meta_variables()),
-    content_body(src.getContentBody()),
-    keep_alive(src.getKeepAlive()),
-	query_string(src.getQueryString()),
-    content_length(src.getContentLength()),
-    err_status(src.getErrStatus()),
-	chunk_size(src.getChunkedSize()),
-	is_in_chunk_data(src.isInChunkData()),
 	is_absolute_form(src.is_absolute_form)
 {
     (void)src;

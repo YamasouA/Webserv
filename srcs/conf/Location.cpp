@@ -44,6 +44,8 @@ Location& Location::operator=(const Location& src)
 	return *this;
 }
 
+Location::~Location(){}
+
 void Location::setUri(std::string uri)
 {
 	this->uri = uri;

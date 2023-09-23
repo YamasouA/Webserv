@@ -22,19 +22,21 @@ class EventLoop {
 
 		void monitoringEvents();
 	private:
-		std::map<int, std::vector<VirtualServer> > fd_config_map;
-		std::map<int, std::vector<VirtualServer> > acceptfd_to_config;
-		std::map<int, Client> fd_client_map;
 		Kqueue kq;
 		time_t last_check;
+
+		std::map<int, std::vector<VirtualServer> >	fd_config_map;
+		std::map<int, std::vector<VirtualServer> >	acceptfd_to_config;
+		std::map<int, Client>						fd_client_map;
 		Logger logger;
 
-		int handleAccept(int event_fd);
-		void readRequest(int fd, Client& client);
-		void sendResponse(int acceptfd);
-		void checkRequestTimeOut();
-		void sendTimeOutResponse(int fd);
-		void closeConnection(int fd);
+
+		int		handleAccept(int event_fd);
+		void	readRequest(int fd, Client& client);
+		void	sendResponse(int acceptfd);
+		void	checkRequestTimeOut();
+		void	sendTimeOutResponse(int fd);
+		void	closeConnection(int fd);
 };
 
 #endif

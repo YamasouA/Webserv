@@ -28,9 +28,6 @@ class ConfigParser {
 		void checkLocation();
 		void setBuf(std::string strs);
 	private:
-		std::string buf;
-		std::vector<VirtualServer> serve_confs;
-		size_t idx;
 
         static const int kRootExist = 1;
         static const int kAliasExist = 2;
@@ -45,13 +42,18 @@ class ConfigParser {
 
 		static const int kMaxPortNum = 65535;
 
-		VirtualServer parseServe();
+		std::string						buf;
+		size_t							idx;
+		std::vector<VirtualServer>		serve_confs;
+		std::map<std::string, Location> uri2location;
+
+		std::string		getToken(char delimiter);
+		std::string		getTokenToEOL();
+		VirtualServer	parseServe();
+		Location		parseLocation();
+
 		void setUriToMap(std::string prefix, std::string prefix_root, Location location, const VirtualServer& v_serv);
 		void uriToMap(VirtualServer& vServer);
-		Location parseLocation();
-		std::string getToken(char delimiter);
-		std::string getTokenToEOL();
-		std::map<std::string, Location> uri2location;
 
 		void handleListenInServ(VirtualServer& v_serv);
 		void handleRootInServ(VirtualServer& v_serv, int *which_one_exist);
