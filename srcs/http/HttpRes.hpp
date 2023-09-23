@@ -34,13 +34,9 @@ class Client;
 class HttpRes {
 	private:
 		static const std::string kServerName;
-
-		std::string body;
-
-		Logger logger;
-
 		static const std::string default_type;
 
+		Logger logger;
 		std::string body; //maybe unnecessary, but use in cgiHnadler
 
 		int				status_code;

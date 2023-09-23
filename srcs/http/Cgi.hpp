@@ -43,7 +43,7 @@ class Cgi {
         std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
 
-        void		sendBodyToChild();
+        ssize_t		sendBodyToChild();
         void		setEnv();
 		void		setStatusCode(int status);
         void		forkProcess();

@@ -39,14 +39,14 @@ HttpReq::HttpReq(const HttpReq& src)
 	client_ip(src.getClientIP()),
 	body_buf(src.body_buf),
 	buf(src.buf),
+	is_absolute_form(src.is_absolute_form),
     method(src.getMethod()),
     uri(src.getUri()),
     version(src.getVersion()),
     content_body(src.getContentBody()),
 	query_string(src.getQueryString()),
     header_fields(src.getHeaderFields()),
-    cgi_envs(src.get_meta_variables()),
-	is_absolute_form(src.is_absolute_form)
+    cgi_envs(src.get_meta_variables())
 {
     (void)src;
 }

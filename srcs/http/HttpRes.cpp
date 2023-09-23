@@ -159,9 +159,9 @@ int HttpRes::getKeepAlive() const {
 	return keep_alive;
 }
 
-int HttpRes::getStatusCode() const {
-	return status_code;
-}
+//int HttpRes::getStatusCode() const {
+//	return status_code;
+//}
 
 bool HttpRes::isHeaderOnly() const {
 	return header_only;

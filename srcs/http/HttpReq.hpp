@@ -110,7 +110,7 @@ class HttpReq {
         std::string client_ip;
 		std::string body_buf;
         std::string buf;
-    bool is_absolute_form;
+		bool		is_absolute_form;
 		Logger logger;
 
         std::string method;
