@@ -776,6 +776,8 @@ void HttpReq::parseBody() {
 		} else {
 			return;
 		}
+	} else if (header_fields.count("content-length") == 0 && header_fields.count("transfer-encoding") == 0 && body_buf != "") {
+		return rejectReq(LENGTH_REQUIRED);
 	} else {
 		is_req_end = true;
 		return;
