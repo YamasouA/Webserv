@@ -33,48 +33,46 @@ class Client;
 class HttpRes {
 	private:
 		static const std::string kServerName;
-		std::string header;
-		std::string body;
-
-		size_t header_idx;
-		size_t body_idx;
-		int status_code;
-		std::string status_string;
-		std::string status_line;
-		size_t content_length_n;
-		std::string content_type;
 		static const std::string default_type;
-		bool is_posted;
-		std::string location;
-		bool header_only;
-        std::string charset;
-        int keep_alive;
 
-        int err_status;
+//		std::string	header;
+		std::string body; //maybe unnecessary, but use in cgiHnadler
 
-        std::string location_field;
+//		size_t		header_idx;
+//		size_t		body_idx;
+		int				status_code;
+//		std::string status_string;
+		size_t			content_length_n;
+//		bool is_posted;
+//		std::string location;
+		bool			header_only;
+        int				keep_alive;
+        int				err_status;
+		bool			is_sended_header;
+		bool			is_sended_body;
+        size_t			header_size;
+        size_t			body_size;
 
-		HttpReq httpreq;
-		VirtualServer vServer;
+		std::string		status_line;
+		std::string		content_type;
+        std::string		charset;
+        std::string		location_field;
+		std::string		buf;
+        std::string		out_buf;
+
+		HttpReq			httpreq;
+		VirtualServer	vServer;
 //        Kqueue* connection;
-		int fd;
-        Cgi cgi;
+//		int fd;
+        Cgi				cgi;
+		Location		target;
 
-		bool is_sended_header;
-		bool is_sended_body;
 
-		Location target;
-
-		std::string buf;
-        size_t header_size;
-        std::string out_buf;
-        size_t body_size;
-
-		void createResponseHeader(struct stat sb);
-		std::string getStatusString();
-		void createControlData();
+//		void createResponseHeader(struct stat sb);
+//		std::string getStatusString();
+//		void createControlData();
         std::string createDate(std::string fieldName);
-		void createContentLength();
+//		void createContentLength();
 		int setContentType();
 		void headerFilter();
 		void createStatusLine();
@@ -93,7 +91,8 @@ class HttpRes {
         int deleteError();
         std::string joinDirPath(const std::string& dir_path, const std::string& elem_name);
         void divingThroughDir(const std::string& path);
-        void finalizeRes(int handler_status);
+
+		void finalizeRes(int handler_status);
         std::string createErrPage();
         int redirectHandle();
 		int returnRedirect();
@@ -101,6 +100,7 @@ class HttpRes {
         int autoindexHandler();
         std::string createAutoIndexHtml(std::map<std::string, dir_t> index_of);
 		bool isCgi();
+        std::string joinPath();
         std::string joinPathAutoindex();
 
         int checkClientBodySize();
@@ -120,29 +120,29 @@ class HttpRes {
 		HttpRes(const Client& source);
 		HttpRes& operator=(const HttpRes& rhs);
 		~HttpRes();
-        std::string joinPath();
-        void setBody(std::string strs);
-        void setCgi(Cgi cgi);
-        Cgi getCgi() const;
-		void createResponse();
-        void runHandlers();
-        void handleReqErr(int req_err_status);
-        std::string getBuf() const;
-        size_t getHeaderSize() const;
-        std::string getResBody() const;
-        size_t getBodySize() const;
-//		Kqueue* getConnection() const;
-		std::string redirect_path;
 
-		void setIsSendedHeader(bool b);
-		void setIsSendedBody(bool b);
-		bool getIsSendedBody() const;
-		bool getIsSendedHeader() const;
-		void createErrorResponse(int status);
-		void setLocationField(std::string loc);
-    std::string getLocationField() const;
-		int getKeepAlive() const;
-		bool isHeaderOnly() const;
+        Cgi			getCgi() const;
+        size_t		getHeaderSize() const;
+        std::string getResBody() const;
+        size_t		getBodySize() const;
+		bool		getIsSendedBody() const;
+		bool		getIsSendedHeader() const;
+		std::string getLocationField() const;
+		int			getKeepAlive() const;
+        std::string getBuf() const;
+//		Kqueue* getConnection() const;
+        void		setBody(std::string strs);
+        void		setCgi(Cgi cgi);
+		void		setIsSendedHeader(bool b);
+		void		setIsSendedBody(bool b);
+		void		setLocationField(std::string loc);
+		bool		isHeaderOnly() const;
+        void		runHandlers();
+        void		handleReqErr(int req_err_status);
+//		void		createResponse();
+//		void		createErrorResponse(int status);
+
+		std::string redirect_path;
 };
 
 #endif

@@ -54,21 +54,34 @@ std::string getContentExtension(std::string content_type) {
     }
 }
 
-HttpRes::HttpRes() {
-}
+HttpRes::HttpRes()
+:status_code(0),
+	content_length_n(0),
+//    is_posted(0),
+	header_only(false),
+	keep_alive(0),
+    err_status(0),
+    is_sended_header(false),
+    is_sended_body(false),
+	header_size(0),
+	body_size(0)
+{}
 
 //HttpRes::HttpRes(const Client& source, Kqueue &kq)
 HttpRes::HttpRes(const Client& source)
-:content_length_n(0),
-    is_posted(0),
+:status_code(0),
+	content_length_n(0),
+//    is_posted(0),
 	header_only(false),
     err_status(0),
     is_sended_header(false),
-    is_sended_body(false)
+    is_sended_body(false),
+	header_size(0),
+	body_size(0)
 {
 	this->httpreq = source.getHttpReq();
 	this->vServer = source.getVserver();
-	this->fd = source.getFd();
+//	this->fd = source.getFd();
 	this->keep_alive = httpreq.getKeepAlive();
 }
 
@@ -95,6 +108,7 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->is_sended_body = rhs.getIsSendedBody();
 //    this->connection = rhs.getConnection();
 	this->keep_alive = rhs.keep_alive;
+	this->header_only = rhs.header_only;
 	return *this;
 }
 
@@ -283,13 +297,13 @@ std::string HttpRes::createDate(std::string fieldName)
     return str;
 }
 
-void HttpRes::createContentLength() {
-	std::stringstream ss;
-	std::string code;
-	ss << body.length();
-	header += "Content-Length: ";
-	header += ss.str();
-}
+//void HttpRes::createContentLength() {
+//	std::stringstream ss;
+//	std::string code;
+//	ss << body.length();
+//	header += "Content-Length: ";
+//	header += ss.str();
+//}
 
 int HttpRes::setContentType() {
 	std::string ext;
@@ -662,7 +676,7 @@ int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { /
                 return DECLINED;
             } else if (target.getIndex().size() > 0 && uri[uri.length() - 1] == '/') {
                 std::cout << "FORBIDDEN1" << std::endl;
-				std::cout << location << std::endl;
+//				std::cout << location << std::endl;
                 std::cout << uri << std::endl;
 				status_code = NOT_FOUND;
                 return FORBIDDEN;
@@ -911,9 +925,9 @@ int HttpRes::sendErrorPage() {
     std::string path = target.getErrorPage(status_code);
     if (path[0] == '/') {
         std::string method = httpreq.getMethod();
-        if (method != "HEAD") { //we non-supported HEAD
-            method = "GET";
-        }
+//        if (method != "HEAD") { //we non-supported HEAD
+//            method = "GET";
+//        }
         httpreq.setUri(path);
         if (buf.length()) {
             buf.erase();
@@ -1272,7 +1286,7 @@ void HttpRes::cgiHandler() {
 		std::cout << "===OTHER===" << std::endl;
 		status_code = MOVED_TEMPORARILY;
 		redirect_path = cgi.getHeaderFields()["Location"];
-		body = cgi.getCgiBody();
+		body = cgi.getCgiBody(); //body? out_buf?
 		headerFilter();
 
 		return finalizeRes(status_code);
