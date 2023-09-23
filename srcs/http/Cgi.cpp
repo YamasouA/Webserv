@@ -221,7 +221,6 @@ void Cgi::forkProcess() {
 		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 	if (sendBodyToChild() <= 0 && httpreq.getContentBody().length() > 0) {
-		std::cout << "wowo" << std::endl;
 		kill(pid, SIGKILL);
 		return setStatusCode(INTERNAL_SERVER_ERROR);
 	}
@@ -230,7 +229,7 @@ void Cgi::forkProcess() {
 	time_t before_wait = std::time(NULL);
 	while (pid2 != -1) {
 		pid2 = waitpid(pid, &st, WNOHANG);
-		if (WIFEXITED(st) && !WEXITSTATUS(st)) {
+		if (WIFEXITED(st) && WEXITSTATUS(st) != 0) {
 			setStatusCode(INTERNAL_SERVER_ERROR);
 		}
 		if (std::time(NULL) - before_wait >= 3) {
