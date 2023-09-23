@@ -135,7 +135,6 @@ void EventLoop::readRequest(int fd, Client& client) {
 		httpreq.appendReq(buf);
 		if (httpreq.isEndOfHeader() && httpreq.getHeaderFields().size() == 0) {
 			httpreq.parseHeader();
-			std::cout << httpreq << std::endl;
 		}
 		if ((httpreq.isEndOfHeader() && httpreq.getHeaderFields().size() != 0)) {
 			httpreq.parseBody();
