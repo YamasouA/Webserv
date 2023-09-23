@@ -152,6 +152,8 @@ def GET_test():
 		# URIが長すぎる
 		#response_test(create_path("/" + 'a'*100000), [414], SIMPLE_HEADERS, "")
 		response_test(create_path("/error_exit.py"), [500], CLOSE_HEADERS, "")
+		response_test(create_path("/permission.py"), [403], SIMPLE_HEADERS, "")
+		response_test(create_path("/hoge.py"), [404], SIMPLE_HEADERS, "")
 		print("========= test done!!!!! ==========")
 	except:
 		traceback.print_exc()
