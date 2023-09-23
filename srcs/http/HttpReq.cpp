@@ -292,8 +292,6 @@ std::string HttpReq::getToken(char delimiter)
 		idx++;
 	}
 	if (idx == buf.length()) {
-		std::cout << "delimiter: " << delimiter << std::endl;
-		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
 		rejectReq(BAD_REQUEST);
         return "";
@@ -318,8 +316,6 @@ std::string HttpReq::getUriToken(char delimiter)
 		++uri_length;
 	}
 	if (idx == buf.length()) {
-		std::cout << "delimiter: " << delimiter << std::endl;
-		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
         setErrStatus(BAD_REQUEST);
         return "";
@@ -362,7 +358,6 @@ std::string HttpReq::getTokenToEOL() {
 }
 
 int HttpReq::getChunkSize() {
-	std::cout << "===getChunkSize===" << std::endl;
 	if (isInChunkData()) {
 		return OK;
 	}
@@ -409,7 +404,6 @@ int HttpReq::getChunkSize() {
 }
 
 int HttpReq::getChunkData() {
-	std::cout << "===getChunkData===" << std::endl;
 	std::string tmp;
 	tmp = body_buf.substr(idx);
 	if (tmp.length() < chunk_size) {
@@ -442,7 +436,6 @@ void HttpReq::skipTokenToEOF() {
 }
 
 void HttpReq::parseChunk() {
-    std::cout << "==================parse chunk==================" << body_buf << std::endl;
 	if (getChunkSize()) {
 		return;
 	}
@@ -578,7 +571,6 @@ static std::vector<std::string> fieldValueSplit(const std::string &strs, char de
 
 
 void HttpReq::fixUp() {
-	std::cout << "=======req fixup ========" << std::endl;
 	if (header_fields.count("host") != 1) {
 		std::cerr << "no host Error" << std::endl;
 		return rejectReq(BAD_REQUEST);
@@ -604,7 +596,6 @@ void HttpReq::fixUp() {
 		keep_alive = 1;
 	}
 
-	std::cout << "keep_alive: " << keep_alive << std::endl;
 	if (header_fields.count("content-length") != 1 && header_fields.count("transfer-encoding") != 1 && content_body != "") {
 		std::cerr << "no content-length " << std::endl;
         std::cerr << "411(Length Required)" << std::endl;
@@ -745,7 +736,6 @@ void HttpReq::parseHeader() {
 		}
 		std::string field_name = getToken(':');
 		if (getErrStatus() > 0) {
-			std::cout << "return (" << err_status << std::endl;
 			return;
 		}
 		skipSpace();
@@ -754,7 +744,6 @@ void HttpReq::parseHeader() {
 		checkVCHAR(field_value);
 		setHeaderField(toLower(field_name), field_value);
 		if (getErrStatus() > 0) {
-			std::cout << "return2 (" << err_status << std::endl;
 			return;
 		}
 	}
@@ -771,7 +760,6 @@ void HttpReq::parseBody() {
 	} else if (header_fields.count("content-length") == 1) {
 		if (header_fields.size() > 0 && content_length <= body_buf.size()) {
 			content_body += body_buf.substr(0, content_length);
-			std::cout << "content_body_buf: " << body_buf << std::endl;
 			is_req_end = true;
 		} else {
 			return;
@@ -816,7 +804,6 @@ void HttpReq::setMetaVariables(Location loc) {
 		if (idx == std::string::npos)
 			continue;
 		if ((uri[idx + len] != '\0' && uri[idx + len] == '/') || uri[idx + len] == '\0') {
-			std::cout << "SET_SCRIPT_NAME" << std::endl;
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
 			if (cgi_envs["PATH_INFO"] != "")

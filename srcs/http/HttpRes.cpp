@@ -56,7 +56,6 @@ std::string getContentExtension(std::string content_type) {
 HttpRes::HttpRes() {
 }
 
-//HttpRes::HttpRes(const Client& source, Kqueue &kq)
 HttpRes::HttpRes(const Client& source)
 :content_length_n(0),
     is_posted(0),
@@ -92,7 +91,6 @@ HttpRes& HttpRes::operator=(const HttpRes& rhs) {
     this->body_size = rhs.body_size;
     this->is_sended_header = rhs.getIsSendedHeader();
     this->is_sended_body = rhs.getIsSendedBody();
-//    this->connection = rhs.getConnection();
 	this->keep_alive = rhs.keep_alive;
 	return *this;
 }
@@ -154,10 +152,6 @@ int HttpRes::getStatusCode() const {
 bool HttpRes::isHeaderOnly() const {
 	return header_only;
 }
-
-//Kqueue* HttpRes::getConnection() const {
-//    return connection;
-//}
 
 Location HttpRes::getUri2Location(std::string uri) const
 {

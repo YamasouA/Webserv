@@ -33,7 +33,6 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::closeConnection(int fd) {
-	std::cout << "Disconnect client fd: " << fd << std::endl;
 	acceptfd_to_config.erase(fd);
 	fd_client_map.erase(fd);
 	close(fd);
@@ -42,14 +41,12 @@ void EventLoop::closeConnection(int fd) {
 void EventLoop::sendResponse(int acceptfd) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	size_t send_cnt;
-	std::cout << "===== send response =====" << std::endl;
-	std::cout << "acceptfd: " << acceptfd << std::endl;
 	Client client = fd_client_map[acceptfd];
 	HttpRes res = client.getHttpRes();
 
-	std::cout << "is sended header: " << res.getIsSendedHeader() << std::endl;
 	if (!res.getIsSendedHeader()) {
-		std::cout << "=== send header ===" << std::endl;
+		logger.logging("=== HTTP Response Header ===");
+		logger.logging(res.getBuf());
 		send_cnt = write(acceptfd, res.getBuf().c_str(), res.getHeaderSize());
 		if (send_cnt < 0 || send_cnt == 0) {
 			return closeConnection(acceptfd);
@@ -62,8 +59,9 @@ void EventLoop::sendResponse(int acceptfd) {
 		}
 		return;
 	}
-	std::cout << "=== send body ===" << std::endl;
 	if (res.getBodySize() > 0) {
+		logger.logging("=== HTTP Response Body===");
+		logger.logging(res.getResBody());
 		send_cnt = write(acceptfd, res.getResBody().c_str(), res.getBodySize());
 		if (send_cnt < 0 || send_cnt == 0) {
 			return closeConnection(acceptfd);
@@ -72,14 +70,12 @@ void EventLoop::sendResponse(int acceptfd) {
 	res.setIsSendedBody(true);
 	client.setHttpRes(res);
 	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
-	std::cout << "keep-alive: " << res.getKeepAlive() << std::endl;
 	if (!res.getKeepAlive()) {
 		return closeConnection(acceptfd);
 	}
 	HttpReq tmp = HttpReq();
 	client.setHttpReq(tmp);
 	fd_client_map[acceptfd] = client;
-	std::cout << "=== DONE ===" << std::endl;
 }
 
 void EventLoop::sendTimeOutResponse(int fd) {
@@ -88,7 +84,6 @@ void EventLoop::sendTimeOutResponse(int fd) {
     req.setClientIP(client.getClientIp());
     req.setPort(client.getPort());
 	client.setHttpReq(req);
-//	HttpRes res(client, kq);
 	HttpRes res(client);
 	res.handleReqErr(408);
 	client.setHttpRes(res);
@@ -114,28 +109,21 @@ static void assignServer(std::vector<VirtualServer> server_confs, Client& client
         std::map<std::string, std::string> tmp = client.getHttpReq().getHeaderFields();
         std::string host_name;
 		host_name = client.getHttpReq().getHeaderFields()["host"];
-		std::cout << "host name: " << host_name << std::endl;
         std::vector<std::string> vec = it->getServerNames();
         for (std::vector<std::string>::iterator vit = vec.begin(); vit != vec.end(); ++vit) {
-            std::cout << "name: " << *vit << std::endl;
             if (*vit == host_name) {
-                std::cout << "match name" << std::endl;
                 client.setVserver(*it);
                 return;
             }
         }
 	}
-	std::cout << "no match" << std::endl;
-	std::cout << "ok" << std::endl;
 	client.setVserver(server_confs[0]);
-	std::cout << "ok" << std::endl;
 }
 
 void EventLoop::readRequest(int fd, Client& client) {
 	char buf[1024];
 	std::memset(buf, 0, sizeof(buf));
 	ssize_t recv_cnt = 0;
-	std::cout << "read_request" << std::endl;
 	HttpReq httpreq = client.getHttpReq();
 
 	recv_cnt = recv(fd, buf, sizeof(buf) - 1, 0);
@@ -158,13 +146,14 @@ void EventLoop::readRequest(int fd, Client& client) {
 		client.setEndOfReq(false);
 		return;
     }
+	logger.logging("=== HTTP Request ===");
+	logger.logging(httpreq.getBuf());
 	client.setEndOfReq(true);
     httpreq.setClientIP(client.getClientIp());
     httpreq.setPort(client.getPort());
 
     client.setHttpReq(httpreq);
     assignServer(acceptfd_to_config[fd], client);
-//    HttpRes respons(client, kq);
     HttpRes respons(client);
     if (httpreq.getErrStatus() > 0) {
         respons.handleReqErr(httpreq.getErrStatus());
@@ -185,8 +174,6 @@ void EventLoop::checkRequestTimeOut() {
 	if (now - last_check > time_check_span) {
 		std::map<int, Client>::iterator it = fd_client_map.begin();
 		while(it != fd_client_map.end()) {
-			std::cout << "hoge" << std::endl;
-			std::cout << "fd: " << it->second.getFd() << std::endl;
 			if (now - it->second.getLastRecvTime() > time_out && it->second.isEndOfReq() == false && it->second.getHttpRes().getStatusCode() != 504) {
 				int fd = it->second.getFd();
 				it++;
@@ -200,7 +187,6 @@ void EventLoop::checkRequestTimeOut() {
 }
 
 int EventLoop::handleAccept(int event_fd) {
-	std::cout << "================handle accept===================" << std::endl;
 	Client client;
 	struct sockaddr_in client_addr;
 	socklen_t sock_len = sizeof(client_addr);
@@ -209,7 +195,7 @@ int EventLoop::handleAccept(int event_fd) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
 	acceptfd_to_config[acceptfd] = fd_config_map[event_fd];
 	if (acceptfd == -1) {
-		std::cerr << "Accept socket Error" << std::endl;
+		logger.logging("Accept socket Error");
 		return 1;
 	}
 	std::string client_ip = my_inet_ntop(&(client_addr.sin_addr), NULL, 0);
@@ -231,7 +217,7 @@ void EventLoop::monitoringEvents() {
 		checkRequestTimeOut();
 		int events_num = kq.getEventsNum();
 		if (events_num == -1) {
-			perror("kevent");
+			logger.logging("Events num: -1");
 			std::exit(1);
 		} else if (events_num == 0) {
 			std::cout << "time over" << std::endl;
@@ -241,20 +227,16 @@ void EventLoop::monitoringEvents() {
 		for (int i = 0; i < events_num; ++i) {
 			struct kevent* reciver_event = kq.getReciverEvent();
 			int event_fd = reciver_event[i].ident;
-			std::cout << "event_fd(): " << event_fd << std::endl;
 			if (reciver_event[i].flags & (EV_EOF | EV_ERROR)) {
-				std::cout << "Client " << event_fd << " has disconnected" << std::endl;
 				closeConnection(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
 				if (handleAccept(event_fd))
 					continue;
 			} else if (reciver_event[i].filter ==  EVFILT_READ) {
-                std::cout << "==================READ_EVENT==================" << std::endl;
 				char buf[1024];
 				std::memset(buf, 0, sizeof(buf));
 				readRequest(event_fd, fd_client_map[event_fd]);
 			} else if (reciver_event[i].filter == EVFILT_WRITE) {
-				std::cout << "==================WRITE_EVENT==================" << std::endl;
                 HttpRes res = fd_client_map[event_fd].getHttpRes();
 				sendResponse(event_fd);
 			}
