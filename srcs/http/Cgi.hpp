@@ -34,37 +34,37 @@ class Cgi {
         int getStatusCode() const;
 
     private:
-        HttpReq httpreq;
-        Location target;
+        HttpReq		httpreq;
+        Location	target;
         std::string buf;
 		std::string cgi_body;
-        int resType;
-		int status;
-
-        void forkProcess();
-        void runHandler();
-        ssize_t sendBodyToChild();
-        void setEnv();
-        void envsFixUp();
-        std::string encodeUri();
-        bool checkMetaVar(std::string var1, std::string var2);
-        std::string joinPath();
-		void setStatusCode(int status);
-
+        int			resType;
+		int			status;
         std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
-		void fixUp();
+
+        void		sendBodyToChild();
+        void		setEnv();
+		void		setStatusCode(int status);
+        void		forkProcess();
+        void		runHandler();
+        void		envsFixUp();
+        std::string encodeUri();
+        bool		checkMetaVar(std::string var1, std::string var2);
+        std::string joinPath();
+
+		void		fixUp();
 		std::string getTokenToEOF(size_t& idx);
 		std::string getTokenToEOL(size_t& idx);
 		std::string getToken(char delimiter, size_t& idx);
-		bool checkHeaderEnd(size_t& idx);
-		void skipSpace(size_t& idx);
-		void setHeaderField(const std::string& name, const std::string value);
-		bool expect(char c, size_t& idx);
+		bool		checkHeaderEnd(size_t& idx);
+		void		skipSpace(size_t& idx);
+		void		setHeaderField(const std::string& name, const std::string value);
+		bool		expect(char c, size_t& idx);
 
-        bool isLocalRedirect();
-        bool isClientRedirect();
-        void detectResType();
+        bool		isLocalRedirect();
+        bool		isClientRedirect();
+        void		detectResType();
 };
 
 #endif

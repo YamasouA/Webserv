@@ -141,19 +141,19 @@ def GET_test():
 		response_test(create_path("/redirect/hoge.txt"), [301, 200], SIMPLE_HEADERS, "index.html")
 		# CGI
 		response_test(create_path("/CGI/cgi.py"), [200], SIMPLE_HEADERS, "")
-		# CGIヘッダーのみ
-		#response_test(create_path("/CGI/cgi_only_header.py"), [204], SIMPLE_HEADERS, "")
 		# CGIタイムアウト
 		response_test(create_path("/CGI/cgi_time_out.py"), [504], SIMPLE_HEADERS, "")
 		# CGI設定されていない(cgiを実行するのではなく、staticHandlerに入る)
 		response_test(create_path("/CGI_DENIED/cgi.py"), [200], SIMPLE_HEADERS, "./CGI_DENIED/cgi.py")
 		# CGI自体がエラー(ステータスコードは幾つになるかわからん)
 		response_test(create_path("/CGI/syntax_error_cgi.py"), [502], SIMPLE_HEADERS, "")
-		# URIが長すぎる
-		#response_test(create_path("/" + 'a'*100000), [414], SIMPLE_HEADERS, "")
 		response_test(create_path("/error_exit.py"), [500], CLOSE_HEADERS, "")
 		response_test(create_path("/permission.py"), [403], SIMPLE_HEADERS, "")
 		response_test(create_path("/hoge.py"), [404], SIMPLE_HEADERS, "")
+    # URIが長すぎる
+		#response_test(create_path("/" + 'a'*100000), [414], SIMPLE_HEADERS, "")
+		response_test(create_path("/" + 'a'*100000), [414], CLOSE_HEADERS, "")
+
 		print("========= test done!!!!! ==========")
 	except:
 		traceback.print_exc()
