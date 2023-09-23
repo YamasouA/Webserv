@@ -35,16 +35,10 @@ class HttpRes {
 		static const std::string kServerName;
 		static const std::string default_type;
 
-//		std::string	header;
 		std::string body; //maybe unnecessary, but use in cgiHnadler
 
-//		size_t		header_idx;
-//		size_t		body_idx;
 		int				status_code;
-//		std::string status_string;
 		size_t			content_length_n;
-//		bool is_posted;
-//		std::string location;
 		bool			header_only;
         int				keep_alive;
         int				err_status;
@@ -62,17 +56,11 @@ class HttpRes {
 
 		HttpReq			httpreq;
 		VirtualServer	vServer;
-//        Kqueue* connection;
-//		int fd;
         Cgi				cgi;
 		Location		target;
 
 
-//		void createResponseHeader(struct stat sb);
-//		std::string getStatusString();
-//		void createControlData();
         std::string createDate(std::string fieldName);
-//		void createContentLength();
 		int setContentType();
 		void headerFilter();
 		void createStatusLine();
@@ -116,7 +104,6 @@ class HttpRes {
 	public:
         HttpRes();
         HttpRes(const HttpRes& src);
-//		HttpRes(const Client& source, Kqueue &kq);
 		HttpRes(const Client& source);
 		HttpRes& operator=(const HttpRes& rhs);
 		~HttpRes();
@@ -130,7 +117,6 @@ class HttpRes {
 		std::string getLocationField() const;
 		int			getKeepAlive() const;
         std::string getBuf() const;
-//		Kqueue* getConnection() const;
         void		setBody(std::string strs);
         void		setCgi(Cgi cgi);
 		void		setIsSendedHeader(bool b);
@@ -139,8 +125,6 @@ class HttpRes {
 		bool		isHeaderOnly() const;
         void		runHandlers();
         void		handleReqErr(int req_err_status);
-//		void		createResponse();
-//		void		createErrorResponse(int status);
 
 		std::string redirect_path;
 };
