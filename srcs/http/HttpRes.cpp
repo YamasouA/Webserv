@@ -910,6 +910,7 @@ int HttpRes::redirectHandle() {
         case BAD_REQUEST:
         case REQUEST_ENTITY_TOO_LARGE:
 		case REQUEST_TIME_OUT:
+		case LENGTH_REQUIRED:
         case REQUEST_URI_TOO_LARGE:
         case INTERNAL_SERVER_ERROR:
         case HTTP_NOT_IMPLEMENTED:

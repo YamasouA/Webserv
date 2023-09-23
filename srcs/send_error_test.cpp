@@ -43,6 +43,11 @@ const char *OBS_HEADER = "GET / HTTP/1.1\r\n"
 			"	chunked\r\n"
 			"chunkedUser-Agent: Test-Client\r\n\r\n";
 
+const char *NO_CONTENT_LENGTH_WITH_BODY = "GET / HTTP/1.1\r\n"
+			"Host: localhost:8000\r\n"
+			"chunkedUser-Agent: Test-Client\r\n\r\n"
+			"hogehgoehogehogehoge\r\n";
+
 int send_http_request(const char *host, int port, const char *request) {
     struct sockaddr_in server_addr;
     int sockfd, bytes_sent, bytes_received;
@@ -117,6 +122,10 @@ int main() {
 	printf("expected 400\n");
 	// 400 BAD Request
     send_http_request(host, port, OBS_HEADER);
+
+	printf("\n\n");
+	printf("expected 411\n");
+	send_http_request(host, port, NO_CONTENT_LENGTH_WITH_BODY);
 
     return 0;
 }
