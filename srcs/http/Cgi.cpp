@@ -140,10 +140,12 @@ void Cgi::setEnv() {
 	envsFixUp();
 }
 
-void Cgi::sendBodyToChild() {
+ssize_t Cgi::sendBodyToChild() {
+	ssize_t cnt = 0;
     if (httpreq.getContentBody().length() > 0) {
-	    write(1, httpreq.getContentBody().c_str(), httpreq.getContentBody().length());
+	    cnt = write(1, httpreq.getContentBody().c_str(), httpreq.getContentBody().length());
     }
+	return cnt;
 }
 
 void Cgi::runHandler() {
@@ -167,7 +169,11 @@ void Cgi::runHandler() {
     }
 	envs_ptr[envs.size()] = 0;
     std::string path = joinPath();
-	if (execve(path.c_str(), NULL, envs_ptr) < 0) {
+	char *argv[2];
+	argv[0] = new char[path.size() + 1];
+	std::strcpy(argv[0], path.c_str());
+	argv[1] = NULL;
+	if (execve(path.c_str(), argv, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
 		delete [] envs_ptr;
     }
@@ -214,14 +220,18 @@ void Cgi::forkProcess() {
 	if (dup2(fd2[0], 0) == -1) {
 		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
-	sendBodyToChild();
+	if (sendBodyToChild() <= 0 && httpreq.getContentBody().length() > 0) {
+		std::cout << "wowo" << std::endl;
+		kill(pid, SIGKILL);
+		return setStatusCode(INTERNAL_SERVER_ERROR);
+	}
 	pid_t pid2 = 0;
 	int st = 0;
 	time_t before_wait = std::time(NULL);
 	while (pid2 != -1) {
 		pid2 = waitpid(pid, &st, WNOHANG);
-		if (!WIFEXITED(st)) {
-			setStatusCode(HTTP_BAD_GATEWAY); // or INTERNAL_SERVER_ERROR
+		if (WIFEXITED(st) && !WEXITSTATUS(st)) {
+			setStatusCode(INTERNAL_SERVER_ERROR);
 		}
 		if (std::time(NULL) - before_wait >= 3) {
 			kill(pid, SIGKILL);

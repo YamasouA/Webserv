@@ -43,7 +43,7 @@ class Cgi {
 
         void forkProcess();
         void runHandler();
-        void sendBodyToChild();
+        ssize_t sendBodyToChild();
         void setEnv();
         void envsFixUp();
         std::string encodeUri();
