@@ -176,7 +176,7 @@ void Cgi::runHandler() {
 	if (execve(path.c_str(), argv, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
 		delete [] envs_ptr;
-		delete argv[0];
+		delete [] argv[0];
     }
 }
 
@@ -454,7 +454,7 @@ void Cgi::runCgi() {
 		return setStatusCode(INTERNAL_SERVER_ERROR);
     }
 
-	
+
     std::string path = joinPath();
 	if (access(path.c_str(), R_OK) < 0) {
 		if (errno == EACCES) {
