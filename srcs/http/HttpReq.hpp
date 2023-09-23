@@ -115,6 +115,7 @@ class HttpReq {
         int err_status;
 		size_t chunk_size;
 		bool is_in_chunk_data;
+		bool is_absolute_form;
 
         void skipEmptyLines();
 		void skipSpace();

@@ -8,7 +8,8 @@ HttpReq::HttpReq()
     keep_alive(0),
     content_length(0),
     err_status(0),
-	is_in_chunk_data(false)
+	is_in_chunk_data(false),
+	is_absolute_form(false)
 {}
 
 HttpReq::HttpReq(const std::string& request_msg)
@@ -20,7 +21,8 @@ HttpReq::HttpReq(const std::string& request_msg)
     keep_alive(0),
     content_length(0),
     err_status(0),
-	is_in_chunk_data(false)
+	is_in_chunk_data(false),
+	is_absolute_form(false)
 {}
 
 HttpReq::HttpReq(const HttpReq& src)
@@ -43,7 +45,8 @@ HttpReq::HttpReq(const HttpReq& src)
     content_length(src.getContentLength()),
     err_status(src.getErrStatus()),
 	chunk_size(src.getChunkedSize()),
-	is_in_chunk_data(src.isInChunkData())
+	is_in_chunk_data(src.isInChunkData()),
+	is_absolute_form(src.is_absolute_form)
 {
     (void)src;
 }
@@ -74,6 +77,7 @@ HttpReq& HttpReq::operator=(const HttpReq& rhs)
 	this->is_req_end = rhs.isEndOfReq();
 	this->chunk_size = rhs.getChunkedSize();
 	this->is_in_chunk_data = rhs.isInChunkData();
+	this->is_absolute_form = rhs.is_absolute_form;
     return *this;
 }
 
@@ -151,6 +155,9 @@ void HttpReq::rejectReq(int err_status) {
 
 void HttpReq::setHeaderField(const std::string& name, const std::string value)
 {
+	if (name == "host" && is_absolute_form) {
+		return;
+	}
     if (name == "host" && header_fields.count("host") == 1) {
 		return rejectReq(BAD_REQUEST);
     } else if (header_fields.count(name) == 1) {
@@ -321,20 +328,19 @@ std::string HttpReq::getUriToken(char delimiter)
 		std::cout << "delimiter: " << delimiter << std::endl;
 		std::cout << "token: " << token<< std::endl;
 		std::cout << "ko getToken" << std::endl;
-        setErrStatus(BAD_REQUEST);
+        rejectReq(BAD_REQUEST);
         return "";
 	}
 	if (uri_length > kMaxUriLength) {
-		setErrStatus(REQUEST_URI_TOO_LARGE);
-		is_req_end = true;
+		rejectReq(REQUEST_URI_TOO_LARGE);
 		return "";
 	}
 	if (expect(delimiter)) {
-        setErrStatus(BAD_REQUEST);
+        rejectReq(BAD_REQUEST);
         return "";
     }
     if (token.find(' ') != std::string::npos) {
-        setErrStatus(BAD_REQUEST);
+        rejectReq(BAD_REQUEST);
         return "";
     }
 	return token;
@@ -381,13 +387,11 @@ int HttpReq::getChunkSize() {
 				std::stringstream ss(tmp);
 				ss >> std::hex >> chunk_size;
 				if (ss.fail() && chunk_size == std::numeric_limits<size_t>::max()) {
-					setErrStatus(BAD_REQUEST);
-					is_req_end = true;
+					rejectReq(BAD_REQUEST);
 					return ERROR;
 				}
 				if (chunk_size + content_length > std::numeric_limits<size_t>::max()) {
-					setErrStatus(REQUEST_ENTITY_TOO_LARGE);
-					is_req_end = true;
+					rejectReq(REQUEST_ENTITY_TOO_LARGE);
 					return ERROR;
 				}
 				content_length += chunk_size;
@@ -491,14 +495,15 @@ void HttpReq::checkUri() {
 }
 
 void HttpReq::parseScheme() {
-	if (toLower(uri.substr(0, 5)).compare(0, 5, "https") == 0) {
+	if (uri.length() >= 6 && toLower(uri.substr(0, 6)).compare(0, 6, "https:") == 0) {
         uri = uri.substr(6);
-	} else if (toLower(uri.substr(0, 6)).compare(0, 4, "http") == 0) {
+	} else if (uri.length() >= 5 && toLower(uri.substr(0, 5)).compare(0, 5, "http:") == 0) {
         uri = uri.substr(5);
 	} else {
         std::cerr << "invalid scheme Error" << std::endl;
 		rejectReq(BAD_REQUEST);
 	}
+	std::cout << "uri: " << uri << std::endl;
 }
 
 void HttpReq::parseHostPort() {
@@ -508,10 +513,10 @@ void HttpReq::parseHostPort() {
 	std::string port_str;
 
     for (; uri[i]; ++i) {
-        host += uri[i];
         if (uri[i] == ':' || uri[i] == '/') {
             break;
         }
+        host += uri[i];
     }
     if (host.length() <= 0) {
         std::cerr << "invalid host Error" << std::endl;
@@ -526,7 +531,7 @@ void HttpReq::parseHostPort() {
             int port_num;
             ss >> port_num;
 			if (ss.bad()) {
-				setErrStatus(INTERNAL_SERVER_ERROR);
+				rejectReq(INTERNAL_SERVER_ERROR);
 				return;
 			}
 			if (port_num < 0 || kMaxPortNum < port_num) {
@@ -540,7 +545,9 @@ void HttpReq::parseHostPort() {
 		return rejectReq(BAD_REQUEST);
     }
     header_fields["host"] = host;
+	is_absolute_form = true;
 	uri = uri.substr(i);
+	std::cout << "final uri: " << uri << std::endl;
 	checkUri();
 }
 
@@ -554,7 +561,7 @@ void HttpReq::absUrlParse() {
         return;
     }
     if (uri[0] && uri[0] == '/' && uri[1] == '/') {
-        uri.substr(2);
+        uri = uri.substr(2);
 	    parseAuthorityAndPath();
     } else {
 		rejectReq(BAD_REQUEST);
@@ -622,11 +629,11 @@ void HttpReq::fixUp() {
         std::stringstream ss(content_length_s);
         ss >> content_length;
 		if (ss.bad()) {
-			setErrStatus(INTERNAL_SERVER_ERROR);
+			rejectReq(INTERNAL_SERVER_ERROR);
 			return;
 		}
 		if (ss.fail() && (content_length == std::numeric_limits<size_t>::max())) {
-            setErrStatus(REQUEST_ENTITY_TOO_LARGE); //or 400
+			rejectReq(REQUEST_ENTITY_TOO_LARGE); //or 400
 			return;
 		}
     }
@@ -658,6 +665,9 @@ void HttpReq::fixUp() {
 void HttpReq::parseReqLine()
 {
     method = getToken(' ');
+	if (method.length() == 0) {
+		return;
+	}
     if (isSpace(buf[idx])) {
         std::cerr << "status 400" << std::endl;
 		return rejectReq(BAD_REQUEST);
@@ -675,6 +685,9 @@ void HttpReq::parseReqLine()
 		return rejectReq(BAD_REQUEST);
     }
     version = getTokenToEOL();
+	if (version.length() == 0) {
+		return;
+	}
     if (version != "HTTP/1.1") { //tmp fix version
         std::cerr << "version Error" << std::endl;
 		return rejectReq(HTTP_VERSION_NOT_SUPPORTED);
