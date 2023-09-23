@@ -15,3 +15,5 @@ cp syntax_error_cgi.py ./CGI/
 cp cgi.py ./CGI_DENIED/
 cp cgi_post.py ./CGI_DENIED/
 mkdir redirect
+touch permission.py
+chmod 000 permission.py
