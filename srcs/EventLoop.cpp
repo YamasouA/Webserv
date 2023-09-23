@@ -69,10 +69,10 @@ void EventLoop::sendResponse(int acceptfd) {
 	}
 	res.setIsSendedBody(true);
 	client.setHttpRes(res);
-	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
 	if (!res.getKeepAlive()) {
 		return closeConnection(acceptfd);
 	}
+	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
 	HttpReq tmp = HttpReq();
 	client.setHttpReq(tmp);
 	fd_client_map[acceptfd] = client;

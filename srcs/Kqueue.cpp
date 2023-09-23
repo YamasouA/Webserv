@@ -35,12 +35,6 @@ int Kqueue::setEvent(int fd, short ev_filter, u_int fflags) {
 	struct kevent register_event;
 	EV_SET(&register_event, fd, ev_filter, fflags, 0, 0, NULL);
 	changes.push_back(register_event);
-	if (kevent(kq, &register_event, 1, NULL, 0, NULL) == -1) {
-		std::cout << errno << std::endl;
-		std::cout << "ev_filter: " << ev_filter << std::endl;
-		perror("kevent Error(register)");
-        return -1;
-    }
     return 0;
 }
 
@@ -49,7 +43,13 @@ int Kqueue::getKq() {
 }
 
 int Kqueue::getEventsNum() {
-	int event_num = kevent(kq, NULL, 0, reciver_event, 100, &time_over);
+	struct kevent *register_event = new struct kevent[changes.size()];
+	for (size_t i = 0; i < changes.size(); ++i) {
+		register_event[i] = changes[i];
+	}
+	int event_num = kevent(kq, register_event, changes.size(), reciver_event, 100, &time_over);
+	changes.clear();
+	delete [] register_event;
 	std::cout << "event_num: " << event_num << std::endl;
 	return event_num;
 }
