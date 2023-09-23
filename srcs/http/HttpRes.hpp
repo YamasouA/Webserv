@@ -15,6 +15,7 @@
 #include "../conf/VirtualServer.hpp"
 #include "HttpReq.hpp"
 #include "Cgi.hpp"
+#include "../Logger.hpp"
 
 enum server_state {
     OK = 0,
@@ -33,6 +34,11 @@ class Client;
 class HttpRes {
 	private:
 		static const std::string kServerName;
+
+		std::string body;
+
+		Logger logger;
+
 		static const std::string default_type;
 
 		std::string body; //maybe unnecessary, but use in cgiHnadler
@@ -47,6 +53,8 @@ class HttpRes {
         size_t			header_size;
         size_t			body_size;
 
+		int redirect_cnt;
+
 		std::string		status_line;
 		std::string		content_type;
         std::string		charset;
@@ -59,7 +67,8 @@ class HttpRes {
         Cgi				cgi;
 		Location		target;
 
-
+		bool isRedirectLimit();
+		void incrementRedirectCnt();
         std::string createDate(std::string fieldName);
 		int setContentType();
 		void headerFilter();
