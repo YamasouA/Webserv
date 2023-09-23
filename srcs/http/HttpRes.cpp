@@ -858,7 +858,8 @@ int HttpRes::staticHandler() {
 			return status_code;
 		} else if (handler_status == DECLINED) {
 			return DECLINED;
-
+		} else if (handler_status == OK) {
+			return OK;
 		}
     } else if (method == "POST") {
 		if (handlePost(file_name) != OK) {
