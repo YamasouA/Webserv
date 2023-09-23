@@ -176,7 +176,7 @@ void Cgi::runHandler() {
 	if (execve(path.c_str(), argv, envs_ptr) < 0) {
         std::cerr << "failed exec errno: " << errno << std::endl;
 		delete [] envs_ptr;
-		delete [] argv;
+		delete argv[0];
     }
 }
 
