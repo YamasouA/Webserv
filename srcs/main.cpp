@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 #include "Socket.hpp"
 #include "Logger.hpp"
 #include "Kqueue.hpp"
@@ -74,6 +75,10 @@ int main(int argc, char *argv[]) {
 	initializeFd(conf, kqueue, fd_config_map);
 	std::cout << fd_config_map.size() << std::endl;
 
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+		std::cerr << "signal faild" << std::endl;
+		std::exit(1);
+	}
 	time_t last_check = std::time(0);
 
 	EventLoop ev_loop(kqueue, fd_config_map, acceptfd_to_config, fd_client_map, last_check);
