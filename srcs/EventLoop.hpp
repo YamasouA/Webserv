@@ -8,6 +8,7 @@
 #include "Kqueue.hpp"
 #include "Client.hpp"
 #include "Socket.hpp"
+#include "Logger.hpp"
 
 #define VecVServ std::vector<VirtualServer>
 
@@ -26,6 +27,7 @@ class EventLoop {
 		std::map<int, Client> fd_client_map;
 		Kqueue kq;
 		time_t last_check;
+		Logger logger;
 
 		int handleAccept(int event_fd);
 		void readRequest(int fd, Client& client);

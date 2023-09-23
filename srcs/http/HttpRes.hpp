@@ -15,6 +15,7 @@
 #include "../conf/VirtualServer.hpp"
 #include "HttpReq.hpp"
 #include "Cgi.hpp"
+#include "../Logger.hpp"
 
 enum server_state {
     OK = 0,
@@ -36,6 +37,8 @@ class HttpRes {
 		std::string header;
 		std::string body;
 
+		Logger logger;
+
 		size_t header_idx;
 		size_t body_idx;
 		int status_code;
@@ -51,6 +54,8 @@ class HttpRes {
         int keep_alive;
 
         int err_status;
+
+		int redirect_cnt;
 
         std::string location_field;
 
@@ -70,6 +75,9 @@ class HttpRes {
         std::string out_buf;
         size_t body_size;
 
+		bool isRedirectLimit();
+		void incrementRedirectCnt();
+	
 		void createResponseHeader(struct stat sb);
 		std::string getStatusString();
 		void createControlData();
@@ -142,6 +150,7 @@ class HttpRes {
 		void setLocationField(std::string loc);
     std::string getLocationField() const;
 		int getKeepAlive() const;
+		int getStatusCode() const;
 		bool isHeaderOnly() const;
 };
 

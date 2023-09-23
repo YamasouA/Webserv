@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include "../conf/Location.hpp"
+#include "../Logger.hpp"
 
 enum Status {
 	HTTP_OK = 200,
@@ -101,6 +102,8 @@ class HttpReq {
 		static const int ERROR = -1;
 		bool is_header_end;
 		bool is_req_end;
+
+		Logger logger;
 
         std::string method;
         std::string uri;
