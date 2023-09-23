@@ -779,36 +779,37 @@ int HttpRes::handlePost(std::string& file_name) {
 			status_code = UNSUPPORTED_MEDIA_TYPE;
 			return status_code;
 		}
+
+		if (S_ISDIR(sb.st_mode)) {
+			if (createDestFile(file_name) != OK) {
+				return status_code;
+			}
+			status_code = CREATED;
+			setLocationField(file_name);
+		}
+		if (!S_ISREG(sb.st_mode) && status_code != CREATED) {
+			logger.logging("INTERNAL_SERVER_ERROR(stat faile)");
+			return INTERNAL_SERVER_ERROR;
+		} else {
+			content_length_n = sb.st_size;
+		}
     }
-    if (S_ISDIR(sb.st_mode)) {
-		if (createDestFile(file_name) != OK) {
-			return status_code;
-		}
-        status_code = CREATED;
-        setLocationField(file_name);
-    }
-    content_length_n = sb.st_size;
-    if (!S_ISREG(sb.st_mode) && status_code != CREATED) {
-		logger.logging("INTERNAL_SERVER_ERROR(stat faile)");
-        return INTERNAL_SERVER_ERROR;
-    } else {
-		if (checkAccessToPOST(file_name.c_str()) != OK) {
-			return status_code;
-		}
-        std::ofstream ofs(file_name.c_str(), std::ios::app);
-		if (!ofs) {
-			logger.logging("INTERNAL_SERVER_ERROR(POST open faile)");
-            status_code = INTERNAL_SERVER_ERROR;
-            return INTERNAL_SERVER_ERROR;
-		}
-		std::string body = httpreq.getContentBody();
-		if (body.length() == 0 && content_length_n == 0 && status_code != CREATED) {
-			status_code = NO_CONTENT;
-			header_only = 1;
-		}
-        ofs << body;
-        ofs.close();
+	if (checkAccessToPOST(file_name.c_str()) != OK) {
+		return status_code;
 	}
+	std::ofstream ofs(file_name.c_str(), std::ios::app);
+	if (!ofs) {
+		logger.logging("INTERNAL_SERVER_ERROR(POST open faile)");
+		status_code = INTERNAL_SERVER_ERROR;
+		return INTERNAL_SERVER_ERROR;
+	}
+	std::string body = httpreq.getContentBody();
+	if (body.length() == 0 && content_length_n == 0 && status_code != CREATED) {
+		status_code = NO_CONTENT;
+		header_only = 1;
+	}
+	ofs << body;
+	ofs.close();
 	return OK;
 }
 
