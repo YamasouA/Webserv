@@ -357,7 +357,6 @@ void ConfigParser::handleListenInServ(VirtualServer& v_serv) {
 	}
 	std::vector<int> tmp2 = v_serv.getListen();
 	size_t cnt = std::count(tmp2.begin(), tmp2.end(), result);
-	std::cout << cnt << std::endl;
 	if (cnt == 0)
 		v_serv.setListen(result);
 	else
