@@ -150,7 +150,7 @@ def GET_test():
 		response_test(create_path("/error_exit.py"), [500], CLOSE_HEADERS, "")
 		response_test(create_path("/permission.py"), [403], SIMPLE_HEADERS, "")
 		response_test(create_path("/hoge.py"), [404], SIMPLE_HEADERS, "")
-    # URIが長すぎる
+                # URIが長すぎる
 		#response_test(create_path("/" + 'a'*100000), [414], SIMPLE_HEADERS, "")
 		response_test(create_path("/" + 'a'*100000), [414], CLOSE_HEADERS, "")
 
