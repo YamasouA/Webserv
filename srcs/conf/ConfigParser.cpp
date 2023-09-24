@@ -355,7 +355,13 @@ void ConfigParser::handleListenInServ(VirtualServer& v_serv) {
 	if (sstream.fail() || result < 0 || result > kMaxPortNum) {
 		throw ConfigValueException("VirtualServer derective should have 0 ~ 65535 port number");
 	}
-	v_serv.setListen(result);
+	std::vector<int> tmp2 = v_serv.getListen();
+	size_t cnt = std::count(tmp2.begin(), tmp2.end(), result);
+	std::cout << cnt << std::endl;
+	if (cnt == 0)
+		v_serv.setListen(result);
+	else
+		throw ConfigValueException("VirtualServer dupulicated listen port");
 }
 
 void ConfigParser::handleRootInServ(VirtualServer& v_serv, int *which_one_exist) {
