@@ -330,7 +330,7 @@ std::string HttpReq::getUriToken(char delimiter)
 	}
 	if (uri_length > kMaxUriLength) {
 		logger.logging("REQUEST_URI_TOO_LARGE(getUriToken)");
-    rejectReq(BAD_REQUEST);
+    rejectReq(REQUEST_URI_TOO_LARGE);
 		return "";
 	}
 	if (expect(delimiter)) {
@@ -395,7 +395,7 @@ int HttpReq::getChunkSize() {
 					rejectReq(BAD_REQUEST);
 					return ERROR;
 				}
-				if (chunk_size + content_length > std::numeric_limits<size_t>::max()) {
+				if (std::numeric_limits<size_t>::max() - chunk_size < content_length) {
 					logger.logging("REQUEST_ENTITY_TOO_LARGE");
 					rejectReq(REQUEST_ENTITY_TOO_LARGE);
 					return ERROR;
