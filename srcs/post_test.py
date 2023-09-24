@@ -171,7 +171,7 @@ def POST_test():
 		# CGI設定されていない
 		response_test(create_path("/CGI_DENIED/cgi_post.py"), [405], SIMPLE_HEADERS, REQUEST_BODY, "")
 		# CGI自体がエラー
-		response_test(create_path("/CGI/syntax_errro.py"), [502], SIMPLE_HEADERS, REQUEST_BODY, "")
+		response_test(create_path("/CGI/syntax_error_cgi.py"), [502], SIMPLE_HEADERS, REQUEST_BODY, "")
 
 	except:
 		traceback.print_exc()
