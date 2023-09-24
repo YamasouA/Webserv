@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <sys/stat.h>
+#include <errno.h>
 class Logger {
 	public:
 		static void logging(std::string msg);

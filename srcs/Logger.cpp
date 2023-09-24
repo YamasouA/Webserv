@@ -7,7 +7,10 @@ void Logger::logging(std::string msg) {
 		std::cerr << "mkdir() Error" << std::endl;
 		return;
 	}
-	std::ofstream ofs("logs/" + get_filename(), std::ios::app);
+	std::string log_path;
+	log_path = "logs/" + get_filename();
+//	std::ofstream ofs("logs/" + get_filename(), std::ios::app);
+	std::ofstream ofs(log_path.c_str(), std::ios::app);
 	if (!ofs.is_open()) {
 		std::cerr << "Log file can't open" << std::endl;
 	}

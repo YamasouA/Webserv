@@ -1,7 +1,7 @@
 CXX = c++
 CXXFLAGS = -g -Werror -Wextra -Wall -std=c++98 -pedantic-errors -MMD -MP
 NAME = server
-SRCS = main.cpp Socket.cpp Logger.cpp Kqueue.cpp Client.cpp EventLoop.cpp
+SRCS = main.cpp Socket.cpp Logger.cpp Client.cpp EventLoop.cpp Epoll.cpp
 
 CONF_DIR = conf/
 CONF_FILES = Location.cpp ConfigParser.cpp VirtualServer.cpp

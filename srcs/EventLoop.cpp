@@ -3,8 +3,10 @@
 EventLoop::EventLoop()
 {}
 
-EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<VirtualServer> >& fd_config_map, std::map<int, std::vector<VirtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
-:kq(kq),
+//EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<VirtualServer> >& fd_config_map, std::map<int, std::vector<VirtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
+EventLoop::EventLoop(Epoll& ep, std::map<int, std::vector<VirtualServer> >& fd_config_map, std::map<int, std::vector<VirtualServer> >& acceptfd_to_config, std::map<int, Client>& fd_client_map, time_t last_check)
+//:kq(kq),
+:ep(ep),
 	last_check(last_check)
 {
 	this->fd_config_map = fd_config_map;
@@ -13,7 +15,8 @@ EventLoop::EventLoop(Kqueue& kq, std::map<int, std::vector<VirtualServer> >& fd_
 }
 
 EventLoop::EventLoop(const EventLoop& src)
-:kq(src.kq),
+:ep(src.ep),
+//:kq(src.kq),
 	last_check(src.last_check)
 {
 	this->fd_config_map = src.fd_config_map;
@@ -40,7 +43,7 @@ void EventLoop::closeConnection(int fd) {
 
 void EventLoop::sendResponse(int acceptfd) {
 	fcntl(acceptfd, F_SETFL, O_NONBLOCK);
-	size_t send_cnt;
+	ssize_t send_cnt;
 	Client client = fd_client_map[acceptfd];
 	HttpRes res = client.getHttpRes();
 
@@ -72,7 +75,8 @@ void EventLoop::sendResponse(int acceptfd) {
 	if (!res.getKeepAlive()) {
 		return closeConnection(acceptfd);
 	}
-	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
+//	kq.setEvent(acceptfd, EVFILT_WRITE, EV_DISABLE);
+	ep.setEvent(acceptfd, EPOLLIN, EPOLL_CTL_MOD);
 	HttpReq tmp = HttpReq();
 	client.setHttpReq(tmp);
 	fd_client_map[acceptfd] = client;
@@ -88,7 +92,8 @@ void EventLoop::sendTimeOutResponse(int fd) {
 	res.handleReqErr(408);
 	client.setHttpRes(res);
 	fd_client_map[fd] = client;
-	kq.setEvent(fd, EVFILT_WRITE, EV_ADD | EV_ENABLE);
+//	kq.setEvent(fd, EVFILT_WRITE, EV_ADD | EV_ENABLE);
+	ep.setEvent(fd, EPOLLOUT, EPOLL_CTL_MOD);
 }
 
 static std::string my_inet_ntop(struct in_addr *addr, char *buf, size_t len) {
@@ -170,7 +175,8 @@ void EventLoop::readRequest(int fd, Client& client) {
     }
 
     client.setHttpRes(respons);
-	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
+//	kq.setEvent(fd, EVFILT_WRITE, EV_ENABLE);
+	ep.setEvent(fd, EPOLLOUT, EPOLL_CTL_MOD);
 }
 
 void EventLoop::checkRequestTimeOut() {
@@ -215,15 +221,17 @@ int EventLoop::handleAccept(int event_fd) {
 	client.setPort(port_num);
 	client.setFd(acceptfd);
 	fd_client_map[acceptfd] =  client;
-	kq.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
-	kq.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
+//	kq.setEvent(acceptfd, EVFILT_READ, EV_ADD | EV_ENABLE);
+//	kq.setEvent(acceptfd, EVFILT_WRITE, EV_ADD | EV_DISABLE);
+	ep.setEvent(acceptfd, EPOLLIN | EPOLLRDHUP, EPOLL_CTL_ADD);
 	return 0;
 }
 
 void EventLoop::monitoringEvents() {
 	while (1) {
 		checkRequestTimeOut();
-		int events_num = kq.getEventsNum();
+//		int events_num = kq.getEventsNum();
+		int events_num = ep.getEventsNum();
 		if (events_num == -1) {
 			logger.logging("Events num: -1");
 			std::exit(1);
@@ -232,20 +240,27 @@ void EventLoop::monitoringEvents() {
 		}
 
 		for (int i = 0; i < events_num; ++i) {
-			struct kevent* reciver_event = kq.getReciverEvent();
-			int event_fd = reciver_event[i].ident;
-			if (reciver_event[i].flags & (EV_EOF | EV_ERROR)) {
+//			struct kevent* reciver_event = kq.getReciverEvent();
+			struct epoll_event* reciver_event = ep.getReciverEvent();
+//			int event_fd = reciver_event[i].ident;
+			int event_fd = reciver_event[i].data.fd;
+//			if (reciver_event[i].flags & (EV_EOF | EV_ERROR)) {
+			if (reciver_event[i].events & EPOLLERR) {
 				closeConnection(event_fd);
 			} else if (fd_config_map.count(event_fd) == 1) {
 				if (handleAccept(event_fd))
 					continue;
-			} else if (reciver_event[i].filter ==  EVFILT_READ) {
+//			} else if (reciver_event[i].filter ==  EVFILT_READ) {
+			} else if (reciver_event[i].events ==  EPOLLIN) {
 				char buf[1024];
 				std::memset(buf, 0, sizeof(buf));
 				readRequest(event_fd, fd_client_map[event_fd]);
-			} else if (reciver_event[i].filter == EVFILT_WRITE) {
+//			} else if (reciver_event[i].filter == EVFILT_WRITE) {
+			} else if (reciver_event[i].events == EPOLLOUT) {
                 HttpRes res = fd_client_map[event_fd].getHttpRes();
 				sendResponse(event_fd);
+			} else if (reciver_event[i].events & (EPOLLRDHUP | EPOLLHUP)) {
+				closeConnection(event_fd);
 			}
 		}
 	}
