@@ -26,7 +26,7 @@ $(NAME): $(OBJS)
 
 clean:
 	$(RM) $(OBJS)
-	$(RM) *.d
+	$(RM) **/*.d
 
 fclean: clean
 	$(RM) $(NAME)
