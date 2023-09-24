@@ -146,6 +146,10 @@ ssize_t Cgi::sendBodyToChild() {
 void Cgi::runHandler() {
 	char **envs_ptr;
 
+	bool ret = changeDir();
+	if (!ret) {
+		std::exit(1);
+	}
 	envs_ptr = new char *[envs.size() + 1];
 	std::map<std::string, std::string>::iterator it = envs.begin();
     std::vector<std::string> tmp_vec;
@@ -423,8 +427,22 @@ int Cgi::parseCgiResponse() {
     return status;
 }
 
-void Cgi::runCgi() {
+bool Cgi::changeDir() {
+	std::string path = joinPath();
+	if (path[path.length() - 1] != '/') {
+		size_t slash_pos = path.rfind('/');
+		if (slash_pos != std::string::npos) {
+			path = path.substr(0, slash_pos);
+		}
+	}
+	int i = chdir(path.c_str());
+	if (i == -1) {
+		return false;
+	}
+	return true;
+}
 
+void Cgi::runCgi() {
 	int backup_stdin = dup(STDIN_FILENO);
     if (backup_stdin == -1) {
 		return setStatusCode(INTERNAL_SERVER_ERROR);
