@@ -107,11 +107,20 @@ static void assignServer(std::vector<VirtualServer> server_confs, Client& client
 		it != server_confs.end(); it++) {
 
         std::map<std::string, std::string> tmp = client.getHttpReq().getHeaderFields();
+        std::string host_name_and_port;
         std::string host_name;
-		host_name = client.getHttpReq().getHeaderFields()["host"];
+		host_name_and_port = client.getHttpReq().getHeaderFields()["host"];
+		std::string::size_type pos = host_name_and_port.find(':');
+		if (pos != std::string::npos) {
+			host_name = host_name_and_port.substr(0, pos);
+		}
         std::vector<std::string> vec = it->getServerNames();
         for (std::vector<std::string>::iterator vit = vec.begin(); vit != vec.end(); ++vit) {
-            if (*vit == host_name) {
+			if (*vit == host_name_and_port) {
+				client.setVserver(*it);
+				return;
+			}
+			else if (*vit == host_name) {
                 client.setVserver(*it);
                 return;
             }
