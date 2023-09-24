@@ -232,8 +232,6 @@ void Cgi::forkProcess() {
 		pid2 = waitpid(pid, &st, WNOHANG);
 		if (WIFEXITED(st) && WEXITSTATUS(st) != 0) {
 			setStatusCode(INTERNAL_SERVER_ERROR);
-		} else {
-			std::exit(1);
 		}
 		if (std::time(NULL) - before_wait >= 3) {
 			kill(pid, SIGKILL);
