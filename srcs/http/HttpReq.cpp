@@ -276,7 +276,7 @@ static bool isSpace(char c) {
 int HttpReq::expect(char c)
 {
     if (buf[idx] != c) {
-        std::cerr << "no expected Error" << c << std::endl;
+		logger.logging("BAD_REQUEST(no expected Error)");
 		rejectReq(BAD_REQUEST);
         return 1;
     }
@@ -505,7 +505,6 @@ void HttpReq::parseScheme() {
 		logger.logging("BAD_REQUEST(invalid scheme Error)");
 		rejectReq(BAD_REQUEST);
 	}
-	std::cout << "uri: " << uri << std::endl;
 }
 
 void HttpReq::parseHostPort() {
@@ -553,7 +552,6 @@ void HttpReq::parseHostPort() {
     header_fields["host"] = host;
 	is_absolute_form = true;
 	uri = uri.substr(i);
-	std::cout << "final uri: " << uri << std::endl;
 	checkUri();
 }
 
@@ -622,7 +620,6 @@ void HttpReq::fixUp() {
 		return rejectReq(LENGTH_REQUIRED);
 	}
     if (header_fields.count("content-length") == 1 && header_fields.count("transfer-encoding") == 1) {
-        std::cerr << "400 (Bad Request)" << std::endl;
 		logger.logging("BAD_REQUEST(request have content-length and transfer-encoding)");
 		return rejectReq(BAD_REQUEST);
     }

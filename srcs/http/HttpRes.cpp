@@ -387,7 +387,7 @@ void HttpRes::divingThroughDir(const std::string& path) {
 				status_code = INTERNAL_SERVER_ERROR;
             }
             if (closedir(dir_info.dir) == -1) {
-                std::cerr << "closedir Error" << std::endl;
+				logger.logging("closedir Error");
             }
             return;
         }
@@ -410,7 +410,7 @@ void HttpRes::divingThroughDir(const std::string& path) {
 				logger.logging("INTERNAL_SERVER_ERROR(remove faile)");
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir Error" << std::endl;
+					logger.logging("closedir Error");
                 }
                 return;
             }
@@ -418,7 +418,7 @@ void HttpRes::divingThroughDir(const std::string& path) {
             divingThroughDir(abs_path);
             if (status_code == INTERNAL_SERVER_ERROR) {
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir Error" << std::endl;
+					logger.logging("closedir Error");
                 }
                 return;
             }
@@ -426,7 +426,7 @@ void HttpRes::divingThroughDir(const std::string& path) {
 				logger.logging("INTERNAL_SERVER_ERROR(rmdir faile)");
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir Error" << std::endl;
+					logger.logging("closedir Error");
                 }
                 return;
             }
@@ -435,7 +435,7 @@ void HttpRes::divingThroughDir(const std::string& path) {
 				logger.logging("INTERNAL_SERVER_ERROR(remove faile)");
                 status_code = INTERNAL_SERVER_ERROR;
                 if (closedir(dir_info.dir) == -1) {
-                    std::cerr << "closedir Error" << std::endl;
+					logger.logging("closedir Error");
                 }
                 return;
             }
@@ -708,7 +708,6 @@ int HttpRes::HandleSafeMethod(const char *file_name, std::string& uri) {
 
 int HttpRes::checkAccessToPOST(const char *file_name) {
     if (access(file_name, W_OK) < 0) {
-		std::cerr << "POST open Error" << std::endl;
 		if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
 			logger.logging("NOT_FOUND(checkAccessToPost)");
 			status_code = NOT_FOUND;
@@ -1107,7 +1106,6 @@ int HttpRes::autoindexHandler() {
     }
 	std::string method = httpreq.getMethod();
 	if (method != "GET" && method != "HEAD") {
-        std::cerr << "not allow method in auto_index handler" << std::endl;
 		return DECLINED;
 	}
 
@@ -1169,7 +1167,7 @@ int HttpRes::autoindexHandler() {
         index_of[file_name] = dir_info;
     }
     if (closedir(dir_info.dir) == -1) {
-        std::cerr << "closedir Error" << std::endl;
+		logger.logging("closedir Errror");
 		return status_code;
     }
 
@@ -1238,7 +1236,7 @@ void HttpRes::cgiHandler() {
 //    	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
     	  ss >> body_size;
 		  if (ss.bad()) {
-			  std::cerr << "stream is broken" << std::endl;
+			  logger.logging("INTERNAL_SERVER_ERROR(stream is broken)");
 			  status_code = INTERNAL_SERVER_ERROR;
 			  return finalizeRes(status_code);
 		  }
