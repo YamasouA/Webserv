@@ -24,7 +24,7 @@ void Socket::setListenFd() {
 	this->listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	fcntl(listenfd, F_SETFL, O_NONBLOCK);
 	if (this->listenfd == -1) {
-		std::cout << "socket() failed Error" << std::endl;
+		logger.logging("socket() failed Error");
         std::exit(1);
 	}
 }
@@ -45,19 +45,19 @@ int Socket::setSocket() {
 	Socket::setListenFd();
 	int optval = 1;
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		std::cout << "setsockopt() failed Error" << std::endl;
+		logger.logging("setsockopt() failed Error");
 		close(listenfd);
 		return -1;
 	}
 
 	Socket::setServerAddr();
 	if (bind(this->listenfd, (struct sockaddr*)&this->serv_addr, sizeof(this->serv_addr)) == -1) {
-		std::cout << "bind() faild.(" << errno << ") Error" << std::endl;
+		logger.logging("bind() faile");
 		close(this->listenfd);
 		return -1;
 	}
 	if (listen(this->listenfd, SOMAXCONN) ==  -1) {
-		std::cout << "listen() failed Error" << std::endl;
+		logger.logging("listen() faile");
 		close(this->listenfd);
 		return -1;
 	}

@@ -111,10 +111,6 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 	}
 	std::string path = tokens[tokens.size() - 1];
 	tokens.pop_back();
-	// pathとして正しくない
-//	if (path[0] != '/') {
-//		return;
-//	}
 	if (path[0] != '/') {
 		path = '/' + path;
 	}
@@ -131,7 +127,6 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 			continue;
 		}
 		error_pages[status_code] = path;
-		std::cout << error_pages.size() << std::endl;
 	}
 }
 

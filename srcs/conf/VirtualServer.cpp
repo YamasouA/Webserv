@@ -163,7 +163,6 @@ void VirtualServer::setErrorPages(std::vector<std::string> tokens)
 			continue;
 		}
 		error_pages[status_code] = path;
-		std::cout << error_pages.size() << std::endl;
 	}
 }
 

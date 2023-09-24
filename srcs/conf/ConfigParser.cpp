@@ -195,7 +195,6 @@ void ConfigParser::handleMaxBodySizeInLoc(Location& location, int *which_one_exi
 		std::exit(1);
 	}
 	if (sstream.fail()) {
-		std::cerr << "overflow" << std::endl;
 		throw ConfigValueException("Location: invalid value: max_body_size");
 	}
 	location.setMaxBodySize(result);

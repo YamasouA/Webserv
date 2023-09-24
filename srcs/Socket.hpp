@@ -10,12 +10,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "Logger.hpp"
 
 class Socket {
 	private:
 		int listenfd;
 		int port;
 		struct sockaddr_in serv_addr;
+		Logger logger;
 	public:
 		Socket();
 		Socket(int port);
