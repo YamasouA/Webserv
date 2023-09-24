@@ -729,6 +729,12 @@ int HttpRes::createDestFile(std::string& file_name) {
     std::stringstream ss;
     ss << tm;
     std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+	// 対応していない拡張子かつcontent-typeが存在する場合
+	if (ext == "" && httpreq.getHeaderFields()["content-type"] != "") {
+		logger.logging("UNSUPPORTED_MEDIA_TYPE");
+		status_code = UNSUPPORTED_MEDIA_TYPE;
+		return status_code;
+	}
     if (file_name[file_name.length() - 1] != '/') {
         file_name = file_name + '/' + ss.str() + ext;
     } else {
@@ -751,6 +757,13 @@ int HttpRes::handlePost(std::string& file_name) {
     struct stat sb;
     if (stat(file_name.c_str(), &sb) == -1) {
 		if (errno == ENOENT) {
+			std::string ext = getContentExtension(httpreq.getHeaderFields()["content-type"]);
+			// 対応していない拡張子かつcontent-typeが存在する場合
+			if (ext == "" && httpreq.getHeaderFields()["content-type"] != "") {
+				logger.logging("UNSUPPORTED_MEDIA_TYPE");
+				status_code = UNSUPPORTED_MEDIA_TYPE;
+				return status_code;
+			}
 		    status_code = CREATED;
             setLocationField(file_name);
 			std::ofstream tmp_ofs(file_name);
