@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "HttpReq.hpp"
 #include "../conf/Location.hpp"
+#include "../Logger.hpp"
 
 
 enum response_types {
@@ -43,6 +44,7 @@ class Cgi {
 		int			status;
         std::map<std::string, std::string> envs;
         std::map<std::string, std::string> header_fields;
+		Logger		logger;
 
         ssize_t		sendBodyToChild();
         void		setEnv();

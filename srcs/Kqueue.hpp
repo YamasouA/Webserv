@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <iostream>
 #include <vector>
+#include "Logger.hpp"
 
 class Kqueue {
 	private:
@@ -13,6 +14,7 @@ class Kqueue {
 		struct kevent reciver_event[100];
 		int kq;
 		struct timespec time_over;
+		Logger logger;
 	public:
 		Kqueue();
         Kqueue(const Kqueue& src);

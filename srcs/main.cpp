@@ -24,7 +24,6 @@ void initializeFd(ConfigParser conf, Kqueue &kqueue, std::map<int, std::vector<V
 
             Socket socket;
             if (m.find(*it_listen) == m.end()) {
-                std::cout << "listen: " << *it_listen << std::endl;
                 socket = Socket(*it_listen);
 
                 if (socket.setSocket() != 0) {
@@ -37,14 +36,13 @@ void initializeFd(ConfigParser conf, Kqueue &kqueue, std::map<int, std::vector<V
 
             }
             fd_config_map[m[*it_listen]].push_back(*it);
-            std::cout << "size: " << fd_config_map[m[*it_listen]].size() << std::endl;
         }
 	}
 }
 
 ConfigParser handleConfig(int argc, char *argv[]) {
 	if (argc != 1 && argc != 2) {
-		std::cout << "usage: ./webserv *(path_to_config_file)" << std::endl;
+		std::cerr << "usage: ./webserv *(path_to_config_file)" << std::endl;
 		std::exit(1);
 	}
 	std::string config_path = (argc == 1? "conf/valid_test/tmp.conf": argv[1]);
@@ -58,7 +56,7 @@ ConfigParser handleConfig(int argc, char *argv[]) {
 		conf.setBuf(txt);
 		conf.parseConf();
 	} catch (const std::exception &e) {
-		std::cout << e.what() << std::endl;
+		std::cerr << e.what() << std::endl;
 		std::exit(1);
 	}
 	return conf;
@@ -73,7 +71,6 @@ int main(int argc, char *argv[]) {
 	ConfigParser conf = handleConfig(argc, argv);
 
 	initializeFd(conf, kqueue, fd_config_map);
-	std::cout << fd_config_map.size() << std::endl;
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		std::cerr << "signal faild" << std::endl;

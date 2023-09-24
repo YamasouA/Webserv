@@ -4,7 +4,7 @@ Kqueue::Kqueue()
 {
 	kq = kqueue();
 	if (kq < -1) {
-		std::cerr << "kqueue Error" << std::endl;
+		logger.logging("kqueue Error");
         std::exit(1);
 	}
 	time_over.tv_sec = 10;
@@ -50,7 +50,6 @@ int Kqueue::getEventsNum() {
 	int event_num = kevent(kq, register_event, changes.size(), reciver_event, 100, &time_over);
 	changes.clear();
 	delete [] register_event;
-	std::cout << "event_num: " << event_num << std::endl;
 	return event_num;
 }
 

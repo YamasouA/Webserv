@@ -261,7 +261,6 @@ Location ConfigParser::parseLocation() {
 		} else if (directive == "alias") {
 			handleAliasInLoc(location, &which_one_exist);
 		} else if (directive == "location") {
-			std::cout << "location-location" << std::endl;
 			location.setLocation(parseLocation());
 		} else if (directive == "error_page") {
 			handleErrorPageInLoc(location, &which_one_exist);
@@ -296,29 +295,22 @@ void ConfigParser::setUriToMap(std::string prefix, std::string prefix_root, Loca
 	}
 	location.setRoot(root);
 	int whichOneExist = location.getWhichOneExist();
-    std::cout << "which: " << whichOneExist << std::endl;
     if (!(whichOneExist & kRootExist)) {
-        std::cout << "set root " << std::endl;
         location.setRoot(v_serv.getRoot());
     }
     if (!(whichOneExist & kMethodExist)) {
-        std::cout << "set method " << std::endl;
         location.setMethods(v_serv.get_methods());
     }
     if (!(whichOneExist & kAutoIndexExist)) {
-        std::cout << "set autoindex " << std::endl;
         location.setIsAutoindex(v_serv.getIsAutoindex());
     }
     if (!(whichOneExist & kUploadPathExist)) {
-        std::cout << "set upload path " << std::endl;
         location.setUploadPath(v_serv.getUploadPath());
     }
     if (!(whichOneExist & kMaxSizeExist)) {
-        std::cout << "set max body " << std::endl;
         location.setMaxBodySize(v_serv.getMaxBodySize());
     }
     if (!(whichOneExist & kAliasExist)) {
-        std::cout << "set alias " << std::endl;
         location.setAlias(v_serv.getAlias());
     }
     if (!(whichOneExist & kIndexExist)) {
@@ -333,7 +325,6 @@ void ConfigParser::setUriToMap(std::string prefix, std::string prefix_root, Loca
     if (!(whichOneExist & kCgiExtExist)) {
         location.setCgiExt(v_serv.getCgiExt());
     }
-    std::cout << "in setUriToMap: " << location << std::endl;
 	uri2location[path] = location;
 }
 
@@ -346,7 +337,6 @@ void ConfigParser::uriToMap(VirtualServer& vServer) {
 		setUriToMap("", "", *it, vServer);
 	}
 	vServer.setUri2location(uri2location);
-	std::cout << "vServer: " << vServer << std::endl;
 }
 
 void ConfigParser::handleListenInServ(VirtualServer& v_serv) {

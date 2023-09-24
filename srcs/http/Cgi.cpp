@@ -54,7 +54,6 @@ void Cgi::setStatusCode(int status) {
 }
 
 std::string Cgi::joinPath() {
-    std::cerr << "===== joinPath(cgi) =====" << std::endl;
 	std::string path_root = target.getRoot();
 	if (path_root == "" || path_root[0] != '/') {
 		path_root = "./" + path_root;
@@ -75,8 +74,6 @@ std::string Cgi::joinPath() {
 		if (config_path.size() >= 1)
 			config_path = config_path.substr(1);
 	}
-	std::cerr << "joinPath: " << path_root + config_path + script_name << std::endl;
-    std::cerr << "===== End joinPath =====" << std::endl;
 	return path_root + config_path + script_name;
 }
 
@@ -130,9 +127,7 @@ void Cgi::setEnv() {
 	for (; it != header_fields.end(); it++) {
 		std::string envs_var = "HTTP_";
 		std::string http_req_field;
-		std::cout << "it->first: " << it->first << " it->second: " << it->second << std::endl;
 		std::transform(it->first.begin(), it->first.end(), std::back_inserter(http_req_field), ::toupper);
-		std::cout << "fix: " << http_req_field<< std::endl;
 		std::replace(http_req_field.begin(), http_req_field.end(), '-', '_');
 		envs_var += http_req_field;
 		envs[envs_var] = it->second;
@@ -150,10 +145,6 @@ ssize_t Cgi::sendBodyToChild() {
 
 void Cgi::runHandler() {
 	char **envs_ptr;
-    std::map<std::string, std::string>::iterator its = envs.begin();
-    for (; its != envs.end(); ++its) {
-        std::cerr << its->first << "=" << its->second << std::endl;;
-    }
 
 	envs_ptr = new char *[envs.size() + 1];
 	std::map<std::string, std::string>::iterator it = envs.begin();
@@ -174,7 +165,7 @@ void Cgi::runHandler() {
 	std::strcpy(argv[0], path.c_str());
 	argv[1] = NULL;
 	if (execve(path.c_str(), argv, envs_ptr) < 0) {
-        std::cerr << "failed exec errno: " << errno << std::endl;
+		logger.logging("failed exec error");
 		delete [] envs_ptr;
 		delete [] argv[0];
     }
@@ -281,7 +272,6 @@ void Cgi::detectResType() {
 	} else {
 	    resType = NO_MATCH_TYPE;
     }
-	std::cout << "resType: " << resType << std::endl;
 }
 
 bool Cgi::checkHeaderEnd(size_t& idx)
@@ -403,7 +393,6 @@ static std::string toLower(std::string str) {
 bool Cgi::expect(char c, size_t& idx)
 {
     if (buf[idx] != c) {
-        std::cerr << "no expected " << c << std::endl;
 		return false;
     }
     ++idx;
@@ -422,17 +411,10 @@ int Cgi::parseCgiResponse() {
         std::string field_name = getToken(':', idx);
 		if (field_name == "") {
 			setStatusCode(HTTP_BAD_GATEWAY);
-			std::cout << "cgi_body: " << cgi_body << std::endl;
-			std::map<std::string, std::string>::iterator it = header_fields.begin();
-			for (; it != header_fields.end(); it++) {
-				std::cout << it->first << ": " << it->second << std::endl;
-			}
 			return status;
 		}
-		std::cout << "field_name: " << field_name << std::endl;
         skipSpace(idx);
         std::string field_value = getTokenToEOL(idx);
-		std::cout << "field_value: " << field_value<< std::endl;
         trim(field_value);
         setHeaderField(toLower(field_name), field_value);
     }

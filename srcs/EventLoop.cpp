@@ -219,7 +219,6 @@ void EventLoop::monitoringEvents() {
 			logger.logging("Events num: -1");
 			std::exit(1);
 		} else if (events_num == 0) {
-			std::cout << "time over" << std::endl;
 			continue;
 		}
 
