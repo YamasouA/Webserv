@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sys/epoll.h>
 

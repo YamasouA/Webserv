@@ -27,6 +27,7 @@ Epoll::~Epoll() {
 int Epoll::setEvent(int fd, uint32_t event, int op) {
 	struct epoll_event register_event;
 
+	std::memset(&register_event, 0, sizeof(register_event));
 	register_event.data.fd = fd;
 	register_event.events = event;
 	if (epoll_ctl(epfd, op, fd, &register_event)) {
