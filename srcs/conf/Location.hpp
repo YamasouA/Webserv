@@ -58,7 +58,7 @@ class Location {
 		std::vector<std::string>	methods;
 		std::string					upload_path;
 		std::string					cgi_path;
-		std::map<int, std::string > error_pages;
+		std::map<int, std::string>	error_pages;
 		std::string					alias;
 		bool						autoindex;
 		size_t						max_body_size;

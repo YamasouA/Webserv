@@ -466,16 +466,6 @@ bool Cgi::changeDir() {
 }
 
 void Cgi::runCgi() {
-	int backup_stdin = dup(STDIN_FILENO);
-    if (backup_stdin == -1) {
-		return setStatusCode(INTERNAL_SERVER_ERROR);
-    }
-	int backup_stdout = dup(STDOUT_FILENO);
-    if (backup_stdout == -1) {
-		return setStatusCode(INTERNAL_SERVER_ERROR);
-    }
-
-
     std::string path = joinPath();
 	if (access(path.c_str(), X_OK) < 0) {
 		if (errno == EACCES) {
@@ -484,6 +474,18 @@ void Cgi::runCgi() {
 			return setStatusCode(NOT_FOUND);
 		}
 	}
+
+	int backup_stdin = dup(STDIN_FILENO);
+    if (backup_stdin == -1) {
+		return setStatusCode(INTERNAL_SERVER_ERROR);
+    }
+	int backup_stdout = dup(STDOUT_FILENO);
+    if (backup_stdout == -1) {
+		if (dup2(backup_stdin, STDIN_FILENO) == -1) {
+			std::cerr << "dup error" << std::endl;
+		}
+		return setStatusCode(INTERNAL_SERVER_ERROR);
+    }
 
 	forkProcess();
 

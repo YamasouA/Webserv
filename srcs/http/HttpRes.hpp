@@ -62,6 +62,7 @@ class HttpRes {
 		VirtualServer	vServer;
         Cgi				cgi;
 		Location		target;
+		int				origin_status_code;
 
 		bool isRedirectLimit();
 		void incrementRedirectCnt();

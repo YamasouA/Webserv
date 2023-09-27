@@ -123,7 +123,7 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 			std::cerr << "stream is broken" << std::endl;
 			std::exit(1);
 		}
-		if (ss.fail() || status_code > 999) {
+		if (ss.fail() || status_code > 999 || status_code < 0) {
 			continue;
 		}
 		error_pages[status_code] = path;

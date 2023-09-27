@@ -644,6 +644,7 @@ void HttpRes::headerFilter() {
 void HttpRes::sendHeader() {
     // check alredy sent
     if (err_status) {
+		origin_status_code = status_code;
         status_code = err_status;
     }
     return headerFilter();
@@ -922,9 +923,14 @@ int HttpRes::sendErrorPage() {
 			out_buf.erase();
 		}
 		staticHandler();
-		return OK;
+		if (200 <= origin_status_code && origin_status_code < 300) {
+//		if (out_buf.length() == 0) {
+			return OK;
+//			out_buf = createErrPage();
+		}
+		return DECLINED;
 	}
-	return 0;
+	return DECLINED;
 }
 
 int HttpRes::redirectHandle() {
@@ -942,7 +948,10 @@ int HttpRes::redirectHandle() {
     content_type.erase();
 
     if (target.getErrorPage(status_code) != "") {
-        return sendErrorPage();
+        int flag = sendErrorPage();
+		if (flag == OK) {
+			return OK;
+		}
     }
 //     discard request body
     if (out_buf.length()) {
@@ -1194,7 +1203,9 @@ bool HttpRes::isCgi() {
     std::vector<std::string> vec = location.getCgiExt();
 	if (vec.size() == 0)
 		return false;
-    std::string path = httpreq.getUri();
+//    std::string path = httpreq.getUri();
+    std::string path = httpreq.get_meta_variables()["SCRIPT_NAME"];
+
 	std::vector<std::string>::iterator it = vec.begin();
 	for (; it != vec.end(); it++) {
 		if (path.find(*it) != std::string::npos)
@@ -1218,6 +1229,7 @@ int HttpRes::checkClientBodySize() {
 
 void HttpRes::cgiHandler() {
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
+	target = location;
 	httpreq.setMetaVariables(location);
 	Cgi cgi(httpreq ,location);
 	cgi.runCgi();
