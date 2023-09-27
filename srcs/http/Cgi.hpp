@@ -1,9 +1,11 @@
 #ifndef CGI_HPP
 #define CGI_HPP
 
+#include <ctime>
 #include <cstring>
 #include <cstdlib>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 #include "HttpReq.hpp"

@@ -17,8 +17,8 @@ std::string getContentType(std::string type) {
         return "image/jpeg";
     else if (type == "wav")
         return "audio/" + type;
-
-	return "";
+	else
+		return "";
 }
 
 std::string getContentExtension(std::string content_type) {
@@ -740,7 +740,7 @@ int HttpRes::createDestFile(std::string& file_name) {
     } else {
         file_name = file_name + ss.str() + ext;
     }
-    std::ofstream tmp_ofs(file_name);
+    std::ofstream tmp_ofs(file_name.c_str(), std::ios_base::out);
     if (tmp_ofs.bad()) {
 		logger.logging("INTERNAL_SERVER_ERROR(createDestFile)");
         status_code = INTERNAL_SERVER_ERROR;
@@ -766,7 +766,7 @@ int HttpRes::handlePost(std::string& file_name) {
 			}
 		    status_code = CREATED;
             setLocationField(file_name);
-			std::ofstream tmp_ofs(file_name);
+			std::ofstream tmp_ofs(file_name.c_str(), std::ios_base::out);
 			if (tmp_ofs.bad()) {
 				logger.logging("INTERNAL_SERVER_ERROR(stat faile ENOENT)");
 				status_code = INTERNAL_SERVER_ERROR;
