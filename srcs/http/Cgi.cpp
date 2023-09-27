@@ -77,7 +77,6 @@ std::string Cgi::joinPath() {
 	return path_root + config_path + script_name;
 }
 
-
 void Cgi::envsFixUp() {
 	if (envs.count("CONTENT_LENGTH") == 0) {
 		envs["CONTENT_LENGTH"] = "0";
@@ -478,7 +477,7 @@ void Cgi::runCgi() {
 
 
     std::string path = joinPath();
-	if (access(path.c_str(), R_OK) < 0) {
+	if (access(path.c_str(), X_OK) < 0) {
 		if (errno == EACCES) {
 			return setStatusCode(FORBIDDEN);
 		} else {
