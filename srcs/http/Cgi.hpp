@@ -69,6 +69,7 @@ class Cgi {
         bool		isClientRedirect();
         void		detectResType();
 		bool		changeDir();
+		void		receiveCgiRes();
 };
 
 #endif
