@@ -252,8 +252,6 @@ void EventLoop::monitoringEvents() {
 					continue;
 //			} else if (reciver_event[i].filter ==  EVFILT_READ) {
 			} else if (reciver_event[i].events ==  EPOLLIN) {
-				char buf[1024];
-				std::memset(buf, 0, sizeof(buf));
 				readRequest(event_fd, fd_client_map[event_fd]);
 //			} else if (reciver_event[i].filter == EVFILT_WRITE) {
 			} else if (reciver_event[i].events == EPOLLOUT) {
