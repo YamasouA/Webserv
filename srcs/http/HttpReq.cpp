@@ -836,9 +836,13 @@ void HttpReq::setMetaVariables(Location loc) {
 			cgi_envs["SCRIPT_NAME"] = uri.substr(0, idx + len);
 			cgi_envs["PATH_INFO"] = uri.substr(idx + len);
 			if (cgi_envs["PATH_INFO"] != "")
-				cgi_envs["PATH_TRANSLATED"] = loc.getRoot() + cgi_envs["PATH_INFO"];
+				cgi_envs["PATH_TRANSLATED"] = loc.getRoot() + cgi_envs["SCRIPT_NAME"];
 			else
 				cgi_envs["PATH_TRANSLATED"] = "";
+		} else {
+			cgi_envs["SCRIPT_NAME"] = "";
+			cgi_envs["PATH_INFO"] = "";
+			cgi_envs["PATH_TRANSLATED"] = "";
 		}
 	}
 	cgi_envs["QUERY_STRING"] = percentEncode();

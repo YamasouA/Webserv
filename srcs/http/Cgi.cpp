@@ -92,6 +92,9 @@ void Cgi::envsFixUp() {
 		// PATH_INFOとPATH_TRANSLATEDはどちらも存在するかどちらも存在しない
 		setStatusCode(INTERNAL_SERVER_ERROR);
     }
+	if (envs.count("PATH_INFO") == 1) {
+		envs["PATH_INFO"] = joinPath();
+	}
     if (envs.count("REMOTE_ADDR") == 0) {
 		setStatusCode(INTERNAL_SERVER_ERROR);
     }
