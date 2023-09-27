@@ -175,6 +175,28 @@ void Cgi::runHandler() {
     }
 }
 
+void Cgi::receiveCgiRes() {
+    char tmp_buf[1024];
+	ssize_t receive_cnt = 0;
+
+	std::memset(tmp_buf, 0, sizeof(tmp_buf));
+	while (1) {
+		receive_cnt = read(0, &tmp_buf, sizeof(tmp_buf) - 1);
+		if (receive_cnt == 0) {
+			return;
+		} else if (receive_cnt == -1) {
+			return setStatusCode(INTERNAL_SERVER_ERROR);
+
+		}
+		tmp_buf[receive_cnt] = '\0';
+		buf += tmp_buf;
+		if (receive_cnt < 1023) {
+			return;
+		}
+	}
+
+}
+
 void Cgi::forkProcess() {
 	pid_t pid;
 	int fd[2];
@@ -235,10 +257,9 @@ void Cgi::forkProcess() {
 		}
 	}
 	close(fd[1]);
-    char tmp_buf;
-    while (read(0, &tmp_buf, 1) > 0 && status != HTTP_GATEWAY_TIME_OUT) {
-        buf += tmp_buf;
-    }
+	if (status != HTTP_GATEWAY_TIME_OUT) {
+		receiveCgiRes();
+	}
 	close(fd2[0]);
 }
 

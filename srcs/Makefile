@@ -1,6 +1,7 @@
 CXX = c++
 CXXFLAGS = -Werror -Wextra -Wall -std=c++98 -pedantic-errors -MMD -MP
 NAME = webserv
+
 SRCS = main.cpp Socket.cpp Logger.cpp Client.cpp EventLoop.cpp Epoll.cpp
 
 CONF_DIR = conf/
