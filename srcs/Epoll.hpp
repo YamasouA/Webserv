@@ -19,6 +19,7 @@ class Epoll {
 		int getEventsNum();
 		int setEvent(int fd, uint32_t event, int op);
 	private:
+		static const int kTimeout = 1000;
 		struct epoll_event reciver_event[10];
 		int epfd;
 

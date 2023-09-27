@@ -1,7 +1,7 @@
 #include "Epoll.hpp"
 
 Epoll::Epoll() {
-	epfd = epoll_create(1); //tmp size
+	epfd = epoll_create(10); //tmp size
 	if (epfd == -1) {
 		std::cerr << "epoll_create Error" << std::endl;
 		std::exit(1);
@@ -31,7 +31,7 @@ int Epoll::setEvent(int fd, uint32_t event, int op) {
 	register_event.data.fd = fd;
 	register_event.events = event;
 	if (epoll_ctl(epfd, op, fd, &register_event)) {
-		std::cout << "errno: " << errno << std::endl;
+		std::cerr << "errno: " << errno << std::endl;
 		perror("epoll Error(register)");
 		return -1;
 	}
@@ -39,9 +39,9 @@ int Epoll::setEvent(int fd, uint32_t event, int op) {
 }
 
 int Epoll::getEventsNum() {
-	int event_num = epoll_wait(epfd, reciver_event, 10, -1);
+	int event_num = epoll_wait(epfd, reciver_event, 10, kTimeout);
 	if (event_num == -1) {
-		std::cout << "errno: " << errno << std::endl;
+		std::cerr << "errno: " << errno << std::endl;
 		perror("epoll Error(reciver)");
 		return -1;
 	}

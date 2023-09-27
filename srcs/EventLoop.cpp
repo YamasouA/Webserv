@@ -180,7 +180,7 @@ void EventLoop::readRequest(int fd, Client& client) {
 }
 
 void EventLoop::checkRequestTimeOut() {
-	const int time_out = 1;
+	const int time_out = 8;
 	const int time_check_span = 3;
 	time_t now;
 

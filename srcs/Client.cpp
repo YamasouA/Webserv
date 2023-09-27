@@ -2,8 +2,9 @@
 
 Client::Client()
 : httpreq(),
-fd(0),
-last_recv_time(std::time(0))
+	fd(0),
+	last_recv_time(std::time(0)),
+	is_req_end(false)
 {}
 
 Client::Client(const Client& source)
