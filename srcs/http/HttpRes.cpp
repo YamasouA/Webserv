@@ -655,7 +655,7 @@ int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { /
         if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
             if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
                 return DECLINED;
-            } else if (target.getIndex().size() > 0 && uri[uri.length() - 1] == '/') {
+            } else if (target.getIsAutoindex() == false && uri[uri.length() - 1] == '/') {
 				logger.logging("FORBIDDEN(checkAccessToGET)");
 				status_code = FORBIDDEN;
                 return FORBIDDEN;
@@ -1204,6 +1204,7 @@ bool HttpRes::isCgi() {
 	if (vec.size() == 0)
 		return false;
 //    std::string path = httpreq.getUri();
+	httpreq.setMetaVariables(location);
     std::string path = httpreq.get_meta_variables()["SCRIPT_NAME"];
 
 	std::vector<std::string>::iterator it = vec.begin();
@@ -1230,7 +1231,7 @@ int HttpRes::checkClientBodySize() {
 void HttpRes::cgiHandler() {
 	Location location = getUri2Location(httpreq.getUri()); //req uri?
 	target = location;
-	httpreq.setMetaVariables(location);
+//	httpreq.setMetaVariables(location);
 	Cgi cgi(httpreq ,location);
 	cgi.runCgi();
 	int handler_status = 0;
