@@ -914,21 +914,16 @@ std::string HttpRes::createErrPage() {
 int HttpRes::sendErrorPage() {
     std::string path = target.getErrorPage(status_code);
     if (path[0] == '/') {
-        std::string method = httpreq.getMethod();
-//        if (method != "HEAD") { //we non-supported HEAD
-//            method = "GET";
-//        }
-        httpreq.setUri(path);
-        if (buf.length()) {
-            buf.erase();
-        }
-        if (out_buf.length()) {
-            out_buf.erase();
-        }
-        runHandlers();
-        return OK;
-    }
-
+		httpreq.setUri(path);
+		if (buf.length()) {
+			buf.erase();
+		}
+		if (out_buf.length()) {
+			out_buf.erase();
+		}
+		staticHandler();
+		return OK;
+	}
 	return 0;
 }
 
