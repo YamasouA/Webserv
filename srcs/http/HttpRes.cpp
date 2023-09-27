@@ -1246,7 +1246,6 @@ void HttpRes::cgiHandler() {
 		  }
 
     	  std::stringstream ss(content_length_str);
-//    	  std::stringstream ss(cgi.getHeaderFields()["content-length"]);
     	  ss >> body_size;
 		  if (ss.bad()) {
 			  logger.logging("INTERNAL_SERVER_ERROR(stream is broken)");
@@ -1265,7 +1264,7 @@ void HttpRes::cgiHandler() {
     	if (httpreq.getMethod() == "HEAD") {
     	  header_only = 1;
     	}
-    	return finalizeRes(status_code);
+    	return finalizeRes(OK);
 	} else if (cgi.getResType() == LOCAL_REDIRECT) {
 		if (httpreq.isRedirectLimit()) {
 			logger.logging("INTERNAL_SERVER_ERROR(Cgi Redirect limit)");
@@ -1281,7 +1280,7 @@ void HttpRes::cgiHandler() {
 		body = cgi.getCgiBody(); //body? out_buf?
 		headerFilter();
 
-		return finalizeRes(status_code);
+		return finalizeRes(OK);
     } else {
 		status_code = handler_status;
 		body_size = out_buf.length();
