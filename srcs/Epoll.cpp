@@ -39,7 +39,7 @@ int Epoll::setEvent(int fd, uint32_t event, int op) {
 }
 
 int Epoll::getEventsNum() {
-	int event_num = epoll_wait(epfd, reciver_event, 10, kTimeout);
+	int event_num = epoll_wait(epfd, reciver_event, 100, kTimeout);
 	if (event_num == -1) {
 		std::cerr << "errno: " << errno << std::endl;
 		perror("epoll Error(reciver)");
