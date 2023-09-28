@@ -116,6 +116,10 @@ void Location::setErrorPages(std::vector<std::string> tokens)
 	}
 	for (std::vector<std::string>::iterator it = tokens.begin();
 		it != tokens.end(); it++) {
+		std::string tmp = *it;
+		if (tmp.find_first_not_of("0123456789") != std::string::npos) {
+			continue;
+		}
 		std::stringstream ss(*it);
 		int status_code;
 		ss >> status_code;

@@ -651,27 +651,30 @@ void HttpRes::sendHeader() {
 }
 
 int HttpRes::checkAccessToGET(const char *file_name, const std::string& uri) { //or safe method
-    if (access(file_name, R_OK) < 0) {
-        if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
-            if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
-                return DECLINED;
-            } else if (target.getIsAutoindex() == false && uri[uri.length() - 1] == '/') {
-				logger.logging("FORBIDDEN(checkAccessToGET)");
-				status_code = FORBIDDEN;
-                return FORBIDDEN;
-            }
+	if (access(file_name, R_OK) < 0) {
+		if (errno == ENOENT || errno == ENOTDIR || errno == ENAMETOOLONG) {
+			if (target.getIsAutoindex() && uri[uri.length() - 1] == '/') {
+				return DECLINED;
+			} else if (target.getIsAutoindex() == false && uri[uri.length() - 1] == '/') {
+				std::string tmp_path = joinPathAutoindex();
+				if (access(tmp_path.c_str(), F_OK) == 0) {
+					logger.logging("FORBIDDEN(checkAccessToGET)");
+					status_code = FORBIDDEN;
+					return FORBIDDEN;
+				}
+			}
 			logger.logging("NOT_FOUND(checkAccessToGET)");
-            status_code = NOT_FOUND;
-            return NOT_FOUND;
-        } else if (errno == EACCES){
+			status_code = NOT_FOUND;
+			return NOT_FOUND;
+		} else if (errno == EACCES){
 			logger.logging("FORBIDDEN(checkAccessToGET(EACCESS))");
 			status_code = FORBIDDEN;
-            return FORBIDDEN;
-        }
+			return FORBIDDEN;
+		}
 		logger.logging("INTERNAL_SERVER_ERROR(checkAccessToGET)");
-        status_code = INTERNAL_SERVER_ERROR;
-        return INTERNAL_SERVER_ERROR;
-    }
+		status_code = INTERNAL_SERVER_ERROR;
+		return INTERNAL_SERVER_ERROR;
+	}
 	return OK;
 }
 
@@ -715,7 +718,7 @@ int HttpRes::checkAccessToPOST(const char *file_name) {
 			return NOT_FOUND;
 		} else if (EACCES){
 			logger.logging("NOT_FOUND(checkAccessToPost(EACCESS) )");
-			status_code = NOT_FOUND;
+			status_code = FORBIDDEN;
 			return FORBIDDEN;
 		}
 		logger.logging("INTERNAL_SERVER_ERROR(access faile)");
