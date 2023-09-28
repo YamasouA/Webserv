@@ -4,7 +4,9 @@ Client::Client()
 : httpreq(),
 	fd(0),
 	last_recv_time(std::time(0)),
-	is_req_end(false)
+	last_connect_time(std::time(0)),
+	is_req_end(false),
+	is_send_res(false)
 {}
 
 Client::Client(const Client& source)
@@ -15,7 +17,9 @@ Client::Client(const Client& source)
     client_ip(source.getClientIp()),
     port(source.getPort()),
 	last_recv_time(source.getLastRecvTime()),
-	is_req_end(source.isEndOfReq())
+	last_connect_time(source.getLastConnectTime()),
+	is_req_end(source.isEndOfReq()),
+	is_send_res(source.isSendRes())
 {}
 
 Client& Client::operator=(const Client& rhs)
@@ -30,7 +34,9 @@ Client& Client::operator=(const Client& rhs)
     client_ip = rhs.getClientIp();
     port = rhs.getPort();
 	last_recv_time = rhs.getLastRecvTime();
+	last_connect_time = rhs.getLastConnectTime();
 	is_req_end = rhs.isEndOfReq();
+	is_send_res = rhs.isSendRes();
     return *this;
 }
 
@@ -65,12 +71,24 @@ void Client::setLastRecvTime(time_t now) {
 	this->last_recv_time = now;
 }
 
+void Client::setLastConnectTime(time_t now) {
+	this->last_connect_time = now;
+}
+
 void Client::setEndOfReq(bool flag) {
 	this->is_req_end = flag;
 }
 
 bool Client::isEndOfReq() const {
 	return is_req_end;
+}
+
+void Client::setIsSendRes(bool flag) {
+	this->is_send_res = flag;
+}
+
+bool Client::isSendRes() const {
+	return is_send_res;
 }
 
 int Client::getFd() const{
@@ -99,4 +117,7 @@ int Client::getPort() const {
 }
 time_t Client::getLastRecvTime() const {
 	return last_recv_time;
+}
+time_t Client::getLastConnectTime() const {
+	return last_connect_time;
 }

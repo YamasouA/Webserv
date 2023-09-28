@@ -18,7 +18,9 @@ class Client {
         std::string client_ip;
         int port;
 		time_t last_recv_time;
+		time_t last_connect_time;
 		bool is_req_end;
+		bool is_send_res;
 	public:
 		Client();
 		~Client();
@@ -34,8 +36,11 @@ class Client {
         void setClientIp(std::string client_ip);
         void setPort(int port);
 		void setLastRecvTime(time_t now);
+		void setLastConnectTime(time_t now);
 		void setEndOfReq(bool flag);
 		bool isEndOfReq() const;
+		void setIsSendRes(bool flag);
+		bool isSendRes() const;
 
 		int getFd() const;
 		HttpReq getHttpReq() const;
@@ -43,6 +48,7 @@ class Client {
         HttpRes* getHttpResp() const;
 		VirtualServer getVserver() const;
 		time_t getLastRecvTime() const;
+		time_t getLastConnectTime() const;
         std::string getClientIp() const;
         int getPort() const;
 };
