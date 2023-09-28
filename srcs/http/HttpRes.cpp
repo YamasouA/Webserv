@@ -718,7 +718,7 @@ int HttpRes::checkAccessToPOST(const char *file_name) {
 			return NOT_FOUND;
 		} else if (EACCES){
 			logger.logging("NOT_FOUND(checkAccessToPost(EACCESS) )");
-			status_code = NOT_FOUND;
+			status_code = FORBIDDEN;
 			return FORBIDDEN;
 		}
 		logger.logging("INTERNAL_SERVER_ERROR(access faile)");
